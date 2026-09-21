@@ -5,6 +5,8 @@
 
 #include <optional>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace Fury
 {
@@ -15,6 +17,7 @@ public:
     [[nodiscard]] std::optional<HouseholdId> FindBySlug(std::string_view slug) const;
     [[nodiscard]] std::optional<HouseholdId> FindByAccount(uint32 accountId) const;
     [[nodiscard]] uint32 CountMembers(HouseholdId householdId) const;
+    [[nodiscard]] std::vector<std::pair<uint32, HouseholdId>> LoadMemberships() const;
 
     [[nodiscard]] std::optional<HouseholdId> CreateOrGet(
         std::string_view slug,
