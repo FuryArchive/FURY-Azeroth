@@ -18,7 +18,8 @@ Date: 2026-09-22
 - T05 Household: IN_PROGRESS on `agent/t05-household`; schema/repository/service and alt-bot lookup wired into the composition root, compile/tests pending.
 - T06 durable Event Store: IN_PROGRESS on `agent/t06-event-store`; schema, SHA-256 dedupe and append/query path implemented, compile/DB tests pending.
 - T07 consumer replay: IN_PROGRESS on `agent/t07-event-replay`; checkpoints, ordered replay and at-least-once bus implemented, compile/replay tests pending.
-- T08+ implementation: READY, not started.
+- T08 AzerothCore event collector: IN_PROGRESS on `agent/t08-event-collector`; login/level/zone/quest/kill/loot/craft normalization is implemented with random population bot filtering, compile/hook tests pending.
+- T09+ implementation: READY, not started.
 - M1 overall: IN_PROGRESS.
 - M2/M3: READY, blocked by prior milestone gates.
 
