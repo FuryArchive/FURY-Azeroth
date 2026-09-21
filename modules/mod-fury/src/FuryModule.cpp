@@ -2,6 +2,8 @@
 
 #include "core/FuryApp.h"
 
+void AddFuryDatabaseScripts();
+
 namespace
 {
 class FuryWorldScript final : public WorldScript
@@ -37,5 +39,6 @@ public:
 
 void AddFuryScripts()
 {
+    AddFuryDatabaseScripts();
     new FuryWorldScript();
 }
