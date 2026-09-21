@@ -222,19 +222,9 @@ FuryEvent FuryEventFactory::ItemCreated(
         itemGuid,
         count);
 
-    if (itemGuid)
-    {
-        uint64 const playerGuid = player ? player->GetGUID().GetRawValue() : 0;
-        event.dedupeIdentity = Acore::StringFormat(
-            "item-create:v1:{}:{}:{}",
-            playerGuid,
-            itemGuid,
-            count);
-    }
-    else
-    {
-        event.dedupeIdentity = OccurrenceIdentity("item-create", player);
-    }
+    // Crafting may merge into an existing stack and therefore reuse an item
+    // GUID. Treat each creation callback as a distinct occurrence.
+    event.dedupeIdentity = OccurrenceIdentity("item-create", player);
 
     return event;
 }
