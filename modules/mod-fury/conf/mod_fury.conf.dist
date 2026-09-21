@@ -1,0 +1,5 @@
+# FURY Azeroth
+# First-party gameplay framework.
+
+Fury.Enable = 1
+Fury.Debug = 0
