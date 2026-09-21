@@ -13,7 +13,8 @@ Date: 2026-09-22
 - T00.3 reproducible lock/resolver: IN_PROGRESS pending clean CI resolution/build proof.
 - T01 mod-fury skeleton: IN_PROGRESS pending compile/start acceptance.
 - T02 module-owned database: IN_PROGRESS on `agent/t02-fury-db`; source/schema present, compile/start acceptance pending.
-- T03+ implementation: READY, not started.
+- T03 FuryApp composition root: IN_PROGRESS on `agent/t03-fury-app`; throttled lifecycle implemented, compile/regression proof pending.
+- T04+ implementation: READY, not started.
 - M1 overall: IN_PROGRESS.
 - M2/M3: READY, blocked by prior milestone gates.
 
