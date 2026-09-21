@@ -218,7 +218,7 @@ Acceptance:
 - pending claims can be reconciled.
 
 ## T10 Chronicle projection
-Status: READY
+Status: IN_PROGRESS
 Depends on: T06, T07
 Commit target: `feat(chronicle): add Chronicle projection`
 
