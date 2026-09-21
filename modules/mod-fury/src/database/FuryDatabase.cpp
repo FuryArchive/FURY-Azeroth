@@ -1,5 +1,7 @@
 #include "FuryDatabase.h"
 
+#include "MySQLPreparedStatement.h"
+
 namespace Fury
 {
 DatabasePool FuryDatabase;
@@ -8,6 +10,8 @@ DatabaseConnection::DatabaseConnection(MySQLConnectionInfo& connInfo)
     : MySQLConnection(connInfo)
 {
 }
+
+DatabaseConnection::~DatabaseConnection() = default;
 
 void DatabaseConnection::DoPrepareStatements()
 {
