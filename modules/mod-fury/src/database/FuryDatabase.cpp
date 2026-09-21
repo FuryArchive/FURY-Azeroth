@@ -66,5 +66,18 @@ void DatabaseConnection::DoPrepareStatements()
         "INSERT INTO fury_event_consumer (consumer_key, last_event_id) VALUES (?, ?) "
         "ON DUPLICATE KEY UPDATE last_event_id = GREATEST(last_event_id, VALUES(last_event_id))",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_REWARD_POLICY,
+        "SELECT minimum_power_band, maximum_power_band FROM fury_reward_bundle WHERE reward_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_REWARD_CLAIM,
+        "SELECT id, status FROM fury_reward_claim "
+        "WHERE source_event_id = ? AND reward_key = ? AND beneficiary_kind = ? AND beneficiary_id = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_REWARD_CLAIM,
+        "INSERT IGNORE INTO fury_reward_claim "
+        "(source_event_id, reward_key, beneficiary_kind, beneficiary_id, status) "
+        "VALUES (?, ?, ?, ?, ?)",
+        CONNECTION_SYNCH);
 }
 }
