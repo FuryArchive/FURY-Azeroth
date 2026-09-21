@@ -3,6 +3,19 @@
 #include "Config.h"
 #include "Log.h"
 
+namespace
+{
+uint32 ReadTickInterval(char const* key, uint32 defaultValue)
+{
+    uint32 value = sConfigMgr->GetOption<uint32>(key, defaultValue);
+    if (value != 0)
+        return value;
+
+    LOG_WARN("server.loading", "[FURY] {} cannot be 0; using {} ms.", key, defaultValue);
+    return defaultValue;
+}
+}
+
 namespace Fury
 {
 App& App::Instance()
@@ -17,15 +30,41 @@ void App::Initialize()
         return;
 
     _enabled = sConfigMgr->GetOption<bool>("Fury.Enable", true);
+
+    _ticks.fastMs = ReadTickInterval("Fury.Tick.FastMs", 250);
+    _ticks.serviceMs = ReadTickInterval("Fury.Tick.ServiceMs", 1000);
+    _ticks.directorMs = ReadTickInterval("Fury.Tick.DirectorMs", 5000);
+    _ticks.reconcileMs = ReadTickInterval("Fury.Tick.ReconcileMs", 30000);
+
+    ResetTimers();
     _initialized = true;
 
-    LOG_INFO("server.loading", "[FURY] mod-fury initialized (enabled={}).", _enabled ? "true" : "false");
+    LOG_INFO(
+        "server.loading",
+        "[FURY] mod-fury initialized (enabled={}, ticks={}ms/{ }ms/{ }ms/{ }ms).",
+        _enabled ? "true" : "false",
+        _ticks.fastMs,
+        _ticks.serviceMs,
+        _ticks.directorMs,
+        _ticks.reconcileMs);
 }
 
-void App::Update(uint32 /*diff*/)
+void App::Update(uint32 diff)
 {
     if (!_initialized || !_enabled)
         return;
+
+    if (AdvanceTimer(_fastAccumulator, diff, _ticks.fastMs))
+        RunFastTick();
+
+    if (AdvanceTimer(_serviceAccumulator, diff, _ticks.serviceMs))
+        RunServiceTick();
+
+    if (AdvanceTimer(_directorAccumulator, diff, _ticks.directorMs))
+        RunDirectorTick();
+
+    if (AdvanceTimer(_reconcileAccumulator, diff, _ticks.reconcileMs))
+        RunReconcileTick();
 }
 
 void App::Shutdown()
@@ -35,7 +74,48 @@ void App::Shutdown()
 
     LOG_INFO("server.loading", "[FURY] mod-fury shutdown.");
 
+    ResetTimers();
     _enabled = false;
     _initialized = false;
+}
+
+bool App::AdvanceTimer(uint64& accumulator, uint32 diff, uint32 interval)
+{
+    accumulator += diff;
+    if (accumulator < interval)
+        return false;
+
+    // Run each cadence at most once per world update. If the server stalls,
+    // discard missed repetitions instead of causing a catch-up burst.
+    accumulator %= interval;
+    return true;
+}
+
+void App::ResetTimers()
+{
+    _fastAccumulator = 0;
+    _serviceAccumulator = 0;
+    _directorAccumulator = 0;
+    _reconcileAccumulator = 0;
+}
+
+void App::RunFastTick()
+{
+    // Reserved for cheap queue flushing. No database scans belong here.
+}
+
+void App::RunServiceTick()
+{
+    // Reserved for low-cost service maintenance.
+}
+
+void App::RunDirectorTick()
+{
+    // Director evaluation is introduced in M2.
+}
+
+void App::RunReconcileTick()
+{
+    // Persistent reconciliation is introduced as services gain state.
 }
 }
