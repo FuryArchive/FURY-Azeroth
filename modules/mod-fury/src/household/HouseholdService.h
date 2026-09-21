@@ -3,8 +3,11 @@
 
 #include "Household.h"
 
+#include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <string_view>
+#include <unordered_map>
 
 namespace Fury
 {
@@ -14,6 +17,9 @@ class HouseholdService final
 {
 public:
     explicit HouseholdService(HouseholdRepository const& repository);
+
+    bool Initialize();
+    void Shutdown();
 
     [[nodiscard]] HouseholdCreateResult CreateOrGet(
         std::string_view slug,
@@ -32,6 +38,9 @@ private:
     static constexpr uint32 MaxHumanMembers = 2;
 
     HouseholdRepository const& _repository;
+
+    mutable std::shared_mutex _membershipMutex;
+    mutable std::unordered_map<uint32, HouseholdId> _membershipByAccount;
 };
 }
 
