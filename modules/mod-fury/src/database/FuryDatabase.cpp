@@ -43,5 +43,15 @@ void DatabaseConnection::DoPrepareStatements()
     PrepareStatement(FURY_DEL_HOUSEHOLD_MEMBER,
         "DELETE FROM fury_household_member WHERE household_id = ? AND account_id = ?",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_EVENT_ID_BY_DEDUPE,
+        "SELECT id FROM fury_event WHERE dedupe_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_EVENT,
+        "INSERT IGNORE INTO fury_event "
+        "(event_type, actor_kind, actor_guid, account_id, household_id, map_id, zone_id, area_id, "
+        "subject_type, subject_id, source_system, correlation_key, dedupe_key, payload) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        CONNECTION_SYNCH);
 }
 }
