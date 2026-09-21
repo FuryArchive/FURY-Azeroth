@@ -180,7 +180,7 @@ Acceptance:
 - batch size configurable.
 
 ## T08 AzerothCore event collector
-Status: READY
+Status: IN_PROGRESS
 Depends on: T00.2, T06
 Commit target: `feat(events): add PlayerScript event collector`
 
