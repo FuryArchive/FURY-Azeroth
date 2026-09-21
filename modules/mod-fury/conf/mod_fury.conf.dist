@@ -9,3 +9,9 @@ Fury.Debug = 0
 FuryDatabaseInfo = "127.0.0.1;3306;acore;acore;acore_fury"
 FuryDatabase.SynchThreads = 1
 Fury.Updates.EnableDatabases = 1
+
+# Throttled internal service cadences. These prevent heavy work from running on every world tick.
+Fury.Tick.FastMs = 250
+Fury.Tick.ServiceMs = 1000
+Fury.Tick.DirectorMs = 5000
+Fury.Tick.ReconcileMs = 30000
