@@ -69,7 +69,7 @@ Acceptance:
 - no gameplay behavior yet.
 
 ## T02 Module-owned database
-Status: READY
+Status: IN_PROGRESS
 Depends on: T01
 Commit target: `feat(db): add module-owned acore_fury database`
 
@@ -624,6 +624,6 @@ Do not silently pull these into current scope:
 
 ---
 
-# Immediate next action when the repo becomes available
+# Immediate execution state
 
-Start at T00.1. Do not begin T01 from this bootstrap package alone. The first source change must be based on the actual repository state and exact pinned APIs.
+Gate 0 source/API intake is complete. T01 compile proof is running in CI. T02 source is now in progress on a dedicated branch and must not be marked GREEN until database startup/restart acceptance passes.
