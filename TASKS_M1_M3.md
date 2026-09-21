@@ -1,11 +1,11 @@
 # FURY Azeroth — Executable Backlog M1–M3
 
-Status at bootstrap creation: all implementation tasks are `READY`; upstream API observations are `VERIFIED-DESIGN`. No implementation is claimed because the actual FURY Azeroth repository was not present in the working session.
+Current execution status is tracked in this file and `docs/STATUS.md`. Do not infer GREEN from source presence alone; compilation/runtime acceptance remains mandatory.
 
 ## Gate 0 — Repository intake
 
 ### T00.1 Inspect repository
-Status: READY
+Status: GREEN
 
 Actions:
 - record branch, HEAD, remote and `git status`;
@@ -21,7 +21,7 @@ Acceptance:
 - DB bootstrap path identified.
 
 ### T00.2 Verify pinned upstream APIs
-Status: READY
+Status: GREEN
 Depends on: T00.1
 
 Verify in the actual checkout:
@@ -36,7 +36,7 @@ Acceptance:
 - every later task references only verified APIs.
 
 ### T00.3 Establish lock file
-Status: READY
+Status: IN_PROGRESS
 Depends on: T00.1
 
 Create/update `fury.lock.yaml` with exact commits for core and required modules.
@@ -50,7 +50,7 @@ Acceptance:
 # M1 — FURY Kernel
 
 ## T01 Module skeleton
-Status: READY
+Status: IN_PROGRESS
 Depends on: T00.2
 Commit target: `chore: add mod-fury skeleton`
 
