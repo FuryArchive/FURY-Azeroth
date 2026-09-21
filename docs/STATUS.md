@@ -20,7 +20,8 @@ Date: 2026-09-22
 - T07 consumer replay: IN_PROGRESS on `agent/t07-event-replay`; checkpoints, ordered replay and at-least-once bus implemented, compile/replay tests pending.
 - T08 AzerothCore event collector: IN_PROGRESS on `agent/t08-event-collector`; login/level/zone/quest/kill/loot/craft normalization is implemented with random population bot filtering, compile/hook tests pending.
 - T09 Reward Registry: IN_PROGRESS on `agent/t09-reward-claims`; power-band policy and idempotent claim uniqueness implemented, delivery intentionally deferred, compile/DB tests pending.
-- T10+ implementation: READY, not started.
+- T10 Chronicle: IN_PROGRESS on `agent/t10-chronicle`; sparse household history projection is registered as a durable replay consumer, compile/replay tests pending.
+- T11+ implementation: READY, not started.
 - M1 overall: IN_PROGRESS.
 - M2/M3: READY, blocked by prior milestone gates.
 
