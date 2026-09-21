@@ -143,7 +143,7 @@ Acceptance:
 - random bots remain RandomPlayerBot.
 
 ## T06 Durable Event Store
-Status: READY
+Status: IN_PROGRESS
 Depends on: T02, T04, T05
 Commit target: `feat(events): add durable Fury event store`
 
