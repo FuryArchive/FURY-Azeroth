@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-22",
+  "compatibility_status": "PINNED_NOT_YET_BUILD_VERIFIED",
+  "core": {
+    "repository": "mod-playerbots/azerothcore-wotlk",
+    "branch": "Playerbot",
+    "commit": "7f12e89ee5f467a50e62eba1d525eac7dc953d03"
+  },
+  "modules": {
+    "playerbots": {
+      "repository": "mod-playerbots/mod-playerbots",
+      "branch": "master",
+      "commit": "7bae1b5c58c76a0aa20381155edc08096d1485b2",
+      "required": true
+    },
+    "individual_progression": {
+      "repository": "ZhengPeiRu21/mod-individual-progression",
+      "branch": "master",
+      "commit": "977e2005bacf97f35e506eb27b8af6b2ea1136af",
+      "required": true
+    },
+    "living_world": {
+      "repository": "Hisha/mod-living-world",
+      "branch": "main",
+      "commit": "116926ef9ce42ee0bba223c1e406cf62cedd9904",
+      "required": true,
+      "patches": [
+        "vendor/patches/mod-living-world/0001-fury-bridge.patch"
+      ]
+    }
+  },
+  "deferred": {
+    "hunts": {
+      "repository": "Hisha/mod-hunts",
+      "milestone": "M4",
+      "reason": "Keep M3 focused on proving the FURY kernel and Living World integration before adding another external gameplay runtime."
+    }
+  }
+}
