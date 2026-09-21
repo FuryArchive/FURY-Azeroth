@@ -6,6 +6,8 @@
 #include "household/HouseholdRepository.h"
 #include "household/HouseholdService.h"
 #include "events/EventStore.h"
+#include "events/ConsumerCheckpointRepository.h"
+#include "events/EventBus.h"
 
 namespace Fury
 {
@@ -24,6 +26,7 @@ public:
     ActorResolver& Actors() { return _actors; }
     HouseholdService& Households() { return _households; }
     EventStore& Events() { return _events; }
+    EventBus& EventStream() { return _eventBus; }
 
 private:
     struct TickConfig
@@ -48,6 +51,8 @@ private:
     HouseholdService _households;
     ActorResolver _actors;
     EventStore _events;
+    ConsumerCheckpointRepository _consumerCheckpoints;
+    EventBus _eventBus;
 
     TickConfig _ticks;
 
