@@ -79,5 +79,16 @@ void DatabaseConnection::DoPrepareStatements()
         "(source_event_id, reward_key, beneficiary_kind, beneficiary_id, status) "
         "VALUES (?, ?, ?, ?, ?)",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_INS_CHRONICLE_ENTRY,
+        "INSERT IGNORE INTO fury_chronicle_entry "
+        "(household_id, entry_key, category, title, body, source_event_id, occurred_at, metadata) "
+        "SELECT ?, ?, ?, ?, ?, id, occurred_at, ? FROM fury_event WHERE id = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CHRONICLE_TIMELINE,
+        "SELECT id, entry_key, category, title, body, source_event_id, occurred_at, metadata "
+        "FROM fury_chronicle_entry WHERE household_id = ? "
+        "ORDER BY occurred_at DESC, id DESC LIMIT ?",
+        CONNECTION_SYNCH);
 }
 }
