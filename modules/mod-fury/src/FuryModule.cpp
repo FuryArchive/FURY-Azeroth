@@ -3,6 +3,7 @@
 #include "core/FuryApp.h"
 
 void AddFuryDatabaseScripts();
+void AddFuryPlayerScripts();
 
 namespace
 {
@@ -40,5 +41,6 @@ public:
 void AddFuryScripts()
 {
     AddFuryDatabaseScripts();
+    AddFuryPlayerScripts();
     new FuryWorldScript();
 }
