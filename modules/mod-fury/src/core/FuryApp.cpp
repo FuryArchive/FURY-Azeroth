@@ -20,7 +20,8 @@ namespace Fury
 {
 App::App()
     : _households(_householdRepository),
-      _actors(&_households)
+      _actors(&_households),
+      _eventBus(_events, _consumerCheckpoints)
 {
 }
 
@@ -41,6 +42,8 @@ void App::Initialize()
     _ticks.serviceMs = ReadTickInterval("Fury.Tick.ServiceMs", 1000);
     _ticks.directorMs = ReadTickInterval("Fury.Tick.DirectorMs", 5000);
     _ticks.reconcileMs = ReadTickInterval("Fury.Tick.ReconcileMs", 30000);
+    _eventBus.SetReplayBatchSize(
+        sConfigMgr->GetOption<uint32>("Fury.Event.ReplayBatchSize", 500));
 
     ResetTimers();
 
@@ -120,7 +123,7 @@ void App::RunFastTick()
 
 void App::RunServiceTick()
 {
-    // Reserved for low-cost service maintenance.
+    _eventBus.ReplayPending();
 }
 
 void App::RunDirectorTick()
