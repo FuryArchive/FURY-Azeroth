@@ -22,7 +22,7 @@ public:
     using Statements = DatabaseStatements;
 
     explicit DatabaseConnection(MySQLConnectionInfo& connInfo);
-    ~DatabaseConnection() override = default;
+    ~DatabaseConnection() override;
 
     void DoPrepareStatements() override;
 };
