@@ -8,6 +8,9 @@
 #include "events/EventStore.h"
 #include "events/ConsumerCheckpointRepository.h"
 #include "events/EventBus.h"
+#include "rewards/RewardRepository.h"
+#include "rewards/RewardPolicy.h"
+#include "rewards/RewardService.h"
 
 namespace Fury
 {
@@ -27,6 +30,7 @@ public:
     HouseholdService& Households() { return _households; }
     EventStore& Events() { return _events; }
     EventBus& EventStream() { return _eventBus; }
+    RewardService& Rewards() { return _rewards; }
 
 private:
     struct TickConfig
@@ -53,6 +57,10 @@ private:
     EventStore _events;
     ConsumerCheckpointRepository _consumerCheckpoints;
     EventBus _eventBus;
+
+    RewardRepository _rewardRepository;
+    RewardPolicy _rewardPolicy;
+    RewardService _rewards;
 
     TickConfig _ticks;
 
