@@ -18,6 +18,12 @@ uint32 ReadTickInterval(char const* key, uint32 defaultValue)
 
 namespace Fury
 {
+App::App()
+    : _households(_householdRepository),
+      _actors(&_households)
+{
+}
+
 App& App::Instance()
 {
     static App instance;
