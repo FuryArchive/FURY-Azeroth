@@ -12,7 +12,8 @@ Date: 2026-09-22
 - T00.2 pinned upstream API verification: GREEN.
 - T00.3 reproducible lock/resolver: IN_PROGRESS pending clean CI resolution/build proof.
 - T01 mod-fury skeleton: IN_PROGRESS pending compile/start acceptance.
-- T02+ implementation: READY, not started.
+- T02 module-owned database: IN_PROGRESS on `agent/t02-fury-db`; source/schema present, compile/start acceptance pending.
+- T03+ implementation: READY, not started.
 - M1 overall: IN_PROGRESS.
 - M2/M3: READY, blocked by prior milestone gates.
 
@@ -78,4 +79,4 @@ This is intentionally still `IN_PROGRESS`, not `GREEN`, until the locked workspa
 2. Inspect the first real configure/build failure.
 3. Fix only verified failures.
 4. When compile is green, add the startup/database smoke required for M1 rather than weakening the acceptance criteria.
-5. Begin T02 module-owned `acore_fury` database using the exact Playerbots `DatabaseScript` pattern already verified at the pin.
+5. Validate T02 compile and module-owned `acore_fury` create/populate/update/restart behavior once T01 compile proof completes.
