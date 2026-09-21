@@ -15,3 +15,6 @@ Fury.Tick.FastMs = 250
 Fury.Tick.ServiceMs = 1000
 Fury.Tick.DirectorMs = 5000
 Fury.Tick.ReconcileMs = 30000
+
+# Durable event consumers process at most this many events per consumer/service tick.
+Fury.Event.ReplayBatchSize = 500
