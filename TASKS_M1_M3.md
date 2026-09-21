@@ -90,7 +90,7 @@ Acceptance:
 - module revision is visible in diagnostics/logs.
 
 ## T03 FuryApp composition root
-Status: READY
+Status: IN_PROGRESS
 Depends on: T01, T02
 Commit target: `feat(core): add FuryApp composition root`
 
