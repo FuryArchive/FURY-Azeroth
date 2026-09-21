@@ -51,6 +51,24 @@ uint32 HouseholdRepository::CountMembers(HouseholdId householdId) const
     return fields[0].Get<uint32>();
 }
 
+std::vector<std::pair<uint32, HouseholdId>> HouseholdRepository::LoadMemberships() const
+{
+    std::vector<std::pair<uint32, HouseholdId>> memberships;
+
+    PreparedQueryResult result =
+        FuryDatabase.Query(FuryDatabase.GetPreparedStatement(FURY_SEL_HOUSEHOLD_MEMBERS));
+    if (!result)
+        return memberships;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        memberships.emplace_back(fields[0].Get<uint32>(), fields[1].Get<HouseholdId>());
+    } while (result->NextRow());
+
+    return memberships;
+}
+
 std::optional<HouseholdId> HouseholdRepository::CreateOrGet(
     std::string_view slug,
     std::string_view displayName) const
