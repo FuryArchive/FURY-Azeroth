@@ -27,6 +27,9 @@ void DatabaseConnection::DoPrepareStatements()
     PrepareStatement(FURY_SEL_HOUSEHOLD_BY_ACCOUNT,
         "SELECT household_id FROM fury_household_member WHERE account_id = ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_HOUSEHOLD_MEMBERS,
+        "SELECT account_id, household_id FROM fury_household_member",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_HOUSEHOLD_MEMBER_COUNT,
         "SELECT COUNT(*) FROM fury_household_member WHERE household_id = ?",
         CONNECTION_SYNCH);
