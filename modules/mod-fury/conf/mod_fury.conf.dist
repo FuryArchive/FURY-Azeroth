@@ -3,3 +3,9 @@
 
 Fury.Enable = 1
 Fury.Debug = 0
+
+# Module-owned FURY database.
+# Format: host;port_or_socket;user;password;database
+FuryDatabaseInfo = "127.0.0.1;3306;acore;acore;acore_fury"
+FuryDatabase.SynchThreads = 1
+Fury.Updates.EnableDatabases = 1
