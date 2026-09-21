@@ -105,7 +105,7 @@ Acceptance:
 - startup failure leaves a clear error.
 
 ## T04 ActorContext + actor resolver
-Status: READY
+Status: IN_PROGRESS
 Depends on: T00.2, T03
 Commit target: `feat(actor): add actor classification`
 
