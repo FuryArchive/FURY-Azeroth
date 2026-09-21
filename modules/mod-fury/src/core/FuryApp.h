@@ -11,6 +11,8 @@
 #include "rewards/RewardRepository.h"
 #include "rewards/RewardPolicy.h"
 #include "rewards/RewardService.h"
+#include "chronicle/ChronicleRepository.h"
+#include "chronicle/ChronicleService.h"
 
 namespace Fury
 {
@@ -31,6 +33,7 @@ public:
     EventStore& Events() { return _events; }
     EventBus& EventStream() { return _eventBus; }
     RewardService& Rewards() { return _rewards; }
+    ChronicleService& Chronicle() { return _chronicle; }
 
 private:
     struct TickConfig
@@ -61,6 +64,9 @@ private:
     RewardRepository _rewardRepository;
     RewardPolicy _rewardPolicy;
     RewardService _rewards;
+
+    ChronicleRepository _chronicleRepository;
+    ChronicleService _chronicle;
 
     TickConfig _ticks;
 
