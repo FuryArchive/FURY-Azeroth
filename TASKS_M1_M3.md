@@ -124,7 +124,7 @@ Acceptance:
 - tests do not depend on account-name heuristics.
 
 ## T05 Household schema/repository/service
-Status: READY
+Status: IN_PROGRESS
 Depends on: T02, T04
 Commit target: `feat(household): add household repository and service`
 
