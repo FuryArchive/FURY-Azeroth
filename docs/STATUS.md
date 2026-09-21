@@ -15,7 +15,8 @@ Date: 2026-09-22
 - T02 module-owned database: IN_PROGRESS on `agent/t02-fury-db`; source/schema present, compile/start acceptance pending.
 - T03 FuryApp composition root: IN_PROGRESS on `agent/t03-fury-app`; throttled lifecycle implemented, compile/regression proof pending.
 - T04 actor classification: IN_PROGRESS on `agent/t04-actor-resolver`; Human/HouseholdAltBot/RandomPlayerBot/System resolution implemented, compile/tests pending.
-- T05+ implementation: READY, not started.
+- T05 Household: IN_PROGRESS on `agent/t05-household`; schema/repository/service and alt-bot lookup wired into the composition root, compile/tests pending.
+- T06+ implementation: READY, not started.
 - M1 overall: IN_PROGRESS.
 - M2/M3: READY, blocked by prior milestone gates.
 
