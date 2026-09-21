@@ -3,6 +3,8 @@
 
 #include "FuryEvent.h"
 
+#include <string_view>
+
 class Creature;
 class Item;
 class Player;
