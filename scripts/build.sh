@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CORE="${ROOT}/upstream/azerothcore-wotlk"
+BUILD_DIR="${ROOT}/build/azerothcore"
+INSTALL_DIR="${ROOT}/build/dist"
+
+if [[ ! -f "${CORE}/CMakeLists.txt" ]]; then
+  echo "[FURY] AzerothCore workspace missing. Run: bash scripts/sync-upstreams.sh" >&2
+  exit 1
+fi
+
+mkdir -p "${BUILD_DIR}" "${INSTALL_DIR}"
+
+JOBS="${FURY_BUILD_JOBS:-2}"
+C_COMPILER="${CC:-clang}"
+CXX_COMPILER="${CXX:-clang++}"
+
+echo "[FURY] configure"
+cmake -S "${CORE}" -B "${BUILD_DIR}" \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
+  -DCMAKE_C_COMPILER="${C_COMPILER}" \
+  -DCMAKE_CXX_COMPILER="${CXX_COMPILER}" \
+  -DWITH_WARNINGS=1 \
+  -DTOOLS_BUILD=none \
+  -DSCRIPTS=static \
+  -DMODULES=static \
+  -DAPPS_BUILD=all
+
+echo "[FURY] build with ${JOBS} job(s)"
+cmake --build "${BUILD_DIR}" --parallel "${JOBS}"
+
+echo "[FURY] build complete"
