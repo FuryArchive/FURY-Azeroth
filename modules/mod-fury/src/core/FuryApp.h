@@ -18,7 +18,30 @@ public:
     [[nodiscard]] bool IsInitialized() const { return _initialized; }
 
 private:
+    struct TickConfig
+    {
+        uint32 fastMs = 250;
+        uint32 serviceMs = 1000;
+        uint32 directorMs = 5000;
+        uint32 reconcileMs = 30000;
+    };
+
     App() = default;
+
+    static bool AdvanceTimer(uint64& accumulator, uint32 diff, uint32 interval);
+
+    void ResetTimers();
+    void RunFastTick();
+    void RunServiceTick();
+    void RunDirectorTick();
+    void RunReconcileTick();
+
+    TickConfig _ticks;
+
+    uint64 _fastAccumulator = 0;
+    uint64 _serviceAccumulator = 0;
+    uint64 _directorAccumulator = 0;
+    uint64 _reconcileAccumulator = 0;
 
     bool _enabled = false;
     bool _initialized = false;
