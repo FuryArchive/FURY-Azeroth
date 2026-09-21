@@ -2,6 +2,9 @@
 #define MOD_FURY_APP_H
 
 #include "Define.h"
+#include "actors/ActorResolver.h"
+#include "household/HouseholdRepository.h"
+#include "household/HouseholdService.h"
 
 namespace Fury
 {
@@ -17,6 +20,9 @@ public:
     [[nodiscard]] bool IsEnabled() const { return _enabled; }
     [[nodiscard]] bool IsInitialized() const { return _initialized; }
 
+    ActorResolver& Actors() { return _actors; }
+    HouseholdService& Households() { return _households; }
+
 private:
     struct TickConfig
     {
@@ -26,7 +32,7 @@ private:
         uint32 reconcileMs = 30000;
     };
 
-    App() = default;
+    App();
 
     static bool AdvanceTimer(uint64& accumulator, uint32 diff, uint32 interval);
 
@@ -35,6 +41,10 @@ private:
     void RunServiceTick();
     void RunDirectorTick();
     void RunReconcileTick();
+
+    HouseholdRepository _householdRepository;
+    HouseholdService _households;
+    ActorResolver _actors;
 
     TickConfig _ticks;
 
