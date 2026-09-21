@@ -167,7 +167,7 @@ Acceptance:
 - dedupe key is based on authoritative identity, never wall-clock time alone.
 
 ## T07 Consumer checkpoint/replay
-Status: READY
+Status: IN_PROGRESS
 Depends on: T06
 Commit target: `feat(events): add consumer checkpoints and replay`
 
