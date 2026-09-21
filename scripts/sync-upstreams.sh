@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LOCK="${ROOT}/vendor/lock/fury.lock.yaml"
+UPSTREAM="${ROOT}/upstream"
+CORE_DIR="${UPSTREAM}/azerothcore-wotlk"
+
+if [[ ! -f "${LOCK}" ]]; then
+  echo "[FURY] missing lock file: ${LOCK}" >&2
+  exit 1
+fi
+
+read_lock() {
+  local path="$1"
+  local field="$2"
+
+  python3 - "${LOCK}" "${path}" "${field}" <<'PY'
+import json
+import sys
+
+lock_path, dotted_path, field = sys.argv[1:4]
+with open(lock_path, "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+
+node = data
+for part in dotted_path.split("."):
+    node = node[part]
+
+value = node[field]
+if not isinstance(value, (str, int, float, bool)):
+    raise SystemExit(f"lock value {dotted_path}.{field} is not scalar")
+print(value)
+PY
+}
+
+clone_pin() {
+  local key="$1"
+  local dest="$2"
+
+  local repository branch commit
+  repository="$(read_lock "${key}" repository)"
+  branch="$(read_lock "${key}" branch)"
+  commit="$(read_lock "${key}" commit)"
+
+  if [[ ! -d "${dest}/.git" ]]; then
+    echo "[FURY] clone ${repository} -> ${dest}"
+    mkdir -p "$(dirname "${dest}")"
+    git clone --filter=blob:none --no-checkout "https://github.com/${repository}.git" "${dest}"
+  fi
+
+  echo "[FURY] sync ${repository} @ ${commit}"
+  git -C "${dest}" remote set-url origin "https://github.com/${repository}.git"
+  git -C "${dest}" fetch --prune origin "${branch}"
+  git -C "${dest}" fetch origin "${commit}"
+  git -C "${dest}" checkout --detach "${commit}"
+
+  local actual
+  actual="$(git -C "${dest}" rev-parse HEAD)"
+  if [[ "${actual}" != "${commit}" ]]; then
+    echo "[FURY] pin mismatch for ${repository}: expected ${commit}, got ${actual}" >&2
+    exit 1
+  fi
+}
+
+mkdir -p "${UPSTREAM}"
+
+clone_pin "core" "${CORE_DIR}"
+mkdir -p "${CORE_DIR}/modules"
+
+clone_pin "modules.playerbots" "${CORE_DIR}/modules/mod-playerbots"
+clone_pin "modules.individual_progression" "${CORE_DIR}/modules/mod-individual-progression"
+clone_pin "modules.living_world" "${CORE_DIR}/modules/mod-living-world"
+
+if [[ -d "${ROOT}/modules/mod-fury" ]]; then
+  rm -rf "${CORE_DIR}/modules/mod-fury"
+  ln -s "${ROOT}/modules/mod-fury" "${CORE_DIR}/modules/mod-fury"
+  echo "[FURY] linked first-party module: modules/mod-fury"
+fi
+
+echo
+echo "[FURY] resolved workspace:"
+printf "  core:                  %s\n" "$(git -C "${CORE_DIR}" rev-parse HEAD)"
+printf "  mod-playerbots:        %s\n" "$(git -C "${CORE_DIR}/modules/mod-playerbots" rev-parse HEAD)"
+printf "  individual-progression:%s\n" "$(git -C "${CORE_DIR}/modules/mod-individual-progression" rev-parse HEAD)"
+printf "  living-world:          %s\n" "$(git -C "${CORE_DIR}/modules/mod-living-world" rev-parse HEAD)"
+
+echo
+echo "[FURY] upstream sync complete."
