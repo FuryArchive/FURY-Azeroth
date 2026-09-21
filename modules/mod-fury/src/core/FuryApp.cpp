@@ -41,7 +41,7 @@ void App::Initialize()
 
     LOG_INFO(
         "server.loading",
-        "[FURY] mod-fury initialized (enabled={}, ticks={}ms/{ }ms/{ }ms/{ }ms).",
+        "[FURY] mod-fury initialized (enabled={}, ticks={}ms/{}ms/{}ms/{}ms).",
         _enabled ? "true" : "false",
         _ticks.fastMs,
         _ticks.serviceMs,
