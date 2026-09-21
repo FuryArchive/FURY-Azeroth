@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS `fury_event` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `occurred_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `event_type` varchar(96) NOT NULL,
+  `actor_kind` tinyint unsigned NOT NULL,
+  `actor_guid` bigint unsigned DEFAULT NULL,
+  `account_id` int unsigned DEFAULT NULL,
+  `household_id` bigint unsigned DEFAULT NULL,
+  `map_id` int unsigned NOT NULL DEFAULT 0,
+  `zone_id` int unsigned NOT NULL DEFAULT 0,
+  `area_id` int unsigned NOT NULL DEFAULT 0,
+  `subject_type` varchar(48) DEFAULT NULL,
+  `subject_id` bigint unsigned DEFAULT NULL,
+  `source_system` varchar(48) NOT NULL,
+  `correlation_key` varchar(128) DEFAULT NULL,
+  `dedupe_key` binary(32) NOT NULL,
+  `payload` json DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_fury_event_dedupe` (`dedupe_key`),
+  KEY `ix_fury_event_household` (`household_id`, `id`),
+  KEY `ix_fury_event_type` (`event_type`, `id`),
+  KEY `ix_fury_event_subject` (`subject_type`, `subject_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
