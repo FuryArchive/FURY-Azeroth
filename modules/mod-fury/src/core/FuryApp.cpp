@@ -43,6 +43,13 @@ void App::Initialize()
     _ticks.reconcileMs = ReadTickInterval("Fury.Tick.ReconcileMs", 30000);
 
     ResetTimers();
+
+    if (_enabled && !_households.Initialize())
+    {
+        LOG_ERROR("server.loading", "[FURY] household service initialization failed.");
+        _enabled = false;
+    }
+
     _initialized = true;
 
     LOG_INFO(
@@ -80,6 +87,7 @@ void App::Shutdown()
 
     LOG_INFO("server.loading", "[FURY] mod-fury shutdown.");
 
+    _households.Shutdown();
     ResetTimers();
     _enabled = false;
     _initialized = false;
