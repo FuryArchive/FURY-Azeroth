@@ -199,7 +199,7 @@ Acceptance:
 - duplicate authoritative callbacks dedupe correctly where a stable identity exists.
 
 ## T09 Reward claim kernel
-Status: READY
+Status: IN_PROGRESS
 Depends on: T02, T06
 Commit target: `feat(rewards): add reward claim registry`
 
