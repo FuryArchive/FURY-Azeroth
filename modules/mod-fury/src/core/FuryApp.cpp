@@ -21,7 +21,9 @@ namespace Fury
 App::App()
     : _households(_householdRepository),
       _actors(&_households),
-      _eventBus(_events, _consumerCheckpoints)
+      _eventBus(_events, _consumerCheckpoints),
+      _rewardPolicy(_rewardRepository),
+      _rewards(_rewardRepository, _rewardPolicy)
 {
 }
 
