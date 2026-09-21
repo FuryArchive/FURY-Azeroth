@@ -6,6 +6,7 @@
 #include <array>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 namespace Fury
 {
@@ -13,6 +14,9 @@ class EventStore final
 {
 public:
     [[nodiscard]] std::optional<EventId> Append(FuryEvent const& event) const;
+    [[nodiscard]] std::vector<FuryEvent> ReadAfter(
+        EventId checkpoint,
+        uint32 limit) const;
 
 private:
     static std::array<uint8, 32> HashIdentity(std::string_view identity);
