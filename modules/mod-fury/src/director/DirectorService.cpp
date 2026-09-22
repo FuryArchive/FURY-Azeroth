@@ -201,6 +201,116 @@ DirectorResult DirectorService::AttachRuntime(
     return {DirectorOutcome::Updated, persisted};
 }
 
+DirectorResult DirectorService::GrantParticipation(
+    FuryEvent const& source,
+    DirectorRunId runId,
+    uint64 expectedRevision,
+    std::string_view contributionKey,
+    uint32 points) const
+{
+    if (!IsCanonicalKey(contributionKey) || points == 0 || points > 100)
+        return {DirectorOutcome::InvalidKey, std::nullopt};
+
+    std::optional<DirectorRun> run = _repository.FindRun(runId);
+    if (!run)
+        return {DirectorOutcome::RunNotFound, std::nullopt};
+
+    if (!source.actor.isEligibleForPersistentProgression ||
+        !IsMutationSource(source, run->householdId))
+    {
+        return {DirectorOutcome::InvalidSource, run};
+    }
+
+    if (IsTerminal(run->status) ||
+        run->status == DirectorRunStatus::Resolving)
+    {
+        return {DirectorOutcome::InvalidState, run};
+    }
+
+    if (std::optional<DirectorParticipation> existing =
+            _repository.FindParticipation(runId, contributionKey))
+    {
+        if (existing->points != points)
+            return {DirectorOutcome::ParticipationConflict, run};
+
+        std::optional<uint32> expectedScore =
+            _repository.ParticipationTotal(runId);
+        if (!expectedScore)
+            return {DirectorOutcome::PersistenceFailed, run};
+
+        if (run->participationScore != *expectedScore)
+        {
+            _repository.RecalculateParticipation(
+                runId,
+                run->householdId,
+                run->revision,
+                source.id);
+
+            run = _repository.FindRun(runId);
+            if (!run)
+                return {DirectorOutcome::PersistenceFailed, std::nullopt};
+
+            if (run->participationScore != *expectedScore)
+                return {DirectorOutcome::RevisionConflict, run};
+        }
+
+        if (!EmitParticipationEvent(source, *run, *existing))
+            return {DirectorOutcome::PersistenceFailed, run};
+
+        return {DirectorOutcome::AlreadyApplied, run};
+    }
+
+    if (run->revision != expectedRevision)
+        return {DirectorOutcome::RevisionConflict, run};
+
+    _repository.InsertParticipation(
+        runId,
+        run->householdId,
+        contributionKey,
+        points,
+        source.id,
+        expectedRevision);
+
+    std::optional<DirectorParticipation> persistedContribution =
+        _repository.FindParticipation(runId, contributionKey);
+    if (!persistedContribution)
+    {
+        std::optional<DirectorRun> latest = _repository.FindRun(runId);
+        return {DirectorOutcome::RevisionConflict, latest};
+    }
+
+    if (persistedContribution->points != points)
+        return {DirectorOutcome::ParticipationConflict, run};
+
+    std::optional<uint32> expectedScore =
+        _repository.ParticipationTotal(runId);
+    if (!expectedScore)
+        return {DirectorOutcome::PersistenceFailed, run};
+
+    _repository.RecalculateParticipation(
+        runId,
+        run->householdId,
+        expectedRevision,
+        source.id);
+
+    std::optional<DirectorRun> persisted = _repository.FindRun(runId);
+    if (!persisted)
+        return {DirectorOutcome::PersistenceFailed, std::nullopt};
+
+    if (persisted->participationScore != *expectedScore)
+        return {DirectorOutcome::RevisionConflict, persisted};
+
+    if (!EmitParticipationEvent(
+            source,
+            *persisted,
+            *persistedContribution))
+    {
+        return {DirectorOutcome::PersistenceFailed, persisted};
+    }
+
+    return {DirectorOutcome::Updated, persisted};
+}
+
 DirectorResult DirectorService::Resolve(
     FuryEvent const& source,
     DirectorRunId runId,
@@ -410,6 +520,39 @@ std::optional<EventId> DirectorService::EmitRuntimeEvent(
         *run.externalRuntimeId,
         run.revision,
         source.id);
+    return _events.Append(event);
+}
+
+std::optional<EventId> DirectorService::EmitParticipationEvent(
+    FuryEvent const& source,
+    DirectorRun const& run,
+    DirectorParticipation const& participation) const
+{
+    FuryEvent event;
+    event.type = "director.participation.granted";
+    event.actor = source.actor;
+    event.mapId = source.mapId;
+    event.zoneId = source.zoneId;
+    event.areaId = source.areaId;
+    event.subjectType = "director_run";
+    event.subjectId = run.id;
+    event.sourceSystem = "fury.director";
+    event.correlationKey = run.graphKey;
+    event.dedupeIdentity = Acore::StringFormat(
+        "director:participation:v1:{}:{}",
+        run.id,
+        participation.contributionKey);
+    event.payloadJson = Acore::StringFormat(
+        "{{\"run_id\":{},\"graph_key\":\"{}\","
+        "\"contribution_key\":\"{}\",\"points\":{},"
+        "\"participation_score\":{},\"source_event_id\":{}}}",
+        run.id,
+        run.graphKey,
+        participation.contributionKey,
+        participation.points,
+        run.participationScore,
+        participation.sourceEventId);
+
     return _events.Append(event);
 }
 
