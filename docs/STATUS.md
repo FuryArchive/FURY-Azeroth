@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13 Campaign, T14 Proof service, T15 Contracts core, and T16 Director runtime are GREEN; T17 Profession Orders is next.
+- M2 Campaign Platform: IN_PROGRESS — T13–T16 are GREEN; T17 Profession Orders is the only active scope.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,8 +123,13 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Begin **T17 Minimal profession-order subsystem** next.
+Complete **T17 Minimal profession-order subsystem** only:
 
-Full Runtime is no longer an automatic requirement for ordinary domain SQL/service changes. Fast MySQL golden gates plus Fast mod-fury compile are the default acceptance path; run Full Runtime manually for milestone closure or when the integration surface itself changes.
+1. durable household order definitions/options/instances;
+2. exact profession-skill + crafted-item matching;
+3. Human-only acceptance/progress through central actor policy;
+4. replay-safe progress and crash-recovery completion;
+5. no profession XP or richer crafting progression;
+6. keep M1 + T13–T16 fast regressions mandatory.
 
 T18+ remain READY and are intentionally outside this pass.

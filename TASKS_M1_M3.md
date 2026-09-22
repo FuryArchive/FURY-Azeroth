@@ -324,7 +324,7 @@ Acceptance:
 - Director state survives restart.
 
 ## T17 Minimal profession-order subsystem
-Status: READY
+Status: IN_PROGRESS
 Depends on: T08, T15
 Commit target: `feat(professions): add profession order tracking`
 
