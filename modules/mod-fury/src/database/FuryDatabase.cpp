@@ -107,6 +107,10 @@ void DatabaseConnection::DoPrepareStatements()
         "(household_id, entry_key, category, title, body, source_event_id, occurred_at, metadata) "
         "SELECT ?, ?, ?, ?, ?, id, occurred_at, ? FROM fury_event WHERE id = ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CHRONICLE_ENTRY_BY_SOURCE,
+        "SELECT id FROM fury_chronicle_entry "
+        "WHERE household_id = ? AND entry_key = ? AND source_event_id = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_CHRONICLE_TIMELINE,
         "SELECT id, entry_key, category, title, body, source_event_id, occurred_at, metadata "
         "FROM fury_chronicle_entry WHERE household_id = ? "
