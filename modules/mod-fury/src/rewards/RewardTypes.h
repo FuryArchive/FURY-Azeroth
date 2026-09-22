@@ -87,6 +87,16 @@ struct RewardClaimResult
             outcome == RewardClaimOutcome::AlreadyExists;
     }
 };
+
+struct RewardClaimView
+{
+    uint64 id = 0;
+    EventId sourceEventId = 0;
+    std::string rewardKey;
+    BeneficiaryKind beneficiaryKind = BeneficiaryKind::Character;
+    uint64 beneficiaryId = 0;
+    RewardClaimStatus status = RewardClaimStatus::Pending;
+};
 }
 
 #endif
