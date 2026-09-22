@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13–T17 are GREEN; T18 Minimal Bestiary projection is the only active scope.
+- M2 Campaign Platform: IN_PROGRESS — T13–T18 are GREEN; T19 Individual Progression read-only adapter is next.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,14 +123,8 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Complete **T18 Minimal Bestiary projection** only:
+Begin **T19 Individual Progression read-only adapter** next.
 
-1. account-level Unknown/Encountered/Studied/Mastered state;
-2. explicit enabled creature-to-entry mappings;
-3. Human-only projection authority;
-4. replay-safe kill counts and monotonic discovery level;
-5. explicit promotion does not inflate kill counts;
-6. no Hunt engine behavior or automatic kill-count thresholds;
-7. keep M1 + T13–T17 fast regressions mandatory.
+T18 is GREEN through fast policy/schema/replay gates plus Fast mod-fury compile. Full Runtime was intentionally not required because the narrowed integration trigger surface was not changed.
 
-T19+ remain READY and are intentionally outside this pass.
+T20 remains READY and is intentionally outside this pass.
