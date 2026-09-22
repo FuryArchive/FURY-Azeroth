@@ -1,6 +1,8 @@
 #include "CampaignService.h"
 #include "CampaignPolicy.h"
 
+#include "core/FuryKey.h"
+
 #include "events/EventStore.h"
 #include "StringFormat.h"
 
@@ -89,6 +91,9 @@ CampaignTransitionResult CampaignService::Transition(
 {
     if (!IsAuthorizedSource(source))
         return {CampaignTransitionOutcome::InvalidSource, CampaignStatus::Locked};
+
+    if (!IsCanonicalKey(nodeKey))
+        return {CampaignTransitionOutcome::NodeNotFound, CampaignStatus::Locked};
 
     HouseholdId const householdId = *source.actor.householdId;
 
