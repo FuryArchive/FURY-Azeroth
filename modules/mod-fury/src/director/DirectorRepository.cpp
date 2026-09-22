@@ -164,6 +164,62 @@ void DirectorRepository::AttachRuntime(
     FuryDatabase.Execute(stmt);
 }
 
+std::optional<DirectorParticipation> DirectorRepository::FindParticipation(
+    DirectorRunId runId,
+    std::string_view contributionKey) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_DIRECTOR_PARTICIPATION);
+    stmt->SetData(0, runId);
+    stmt->SetData(1, std::string(contributionKey));
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return std::nullopt;
+
+    Field* fields = result->Fetch();
+
+    DirectorParticipation participation;
+    participation.runId = runId;
+    participation.contributionKey = std::string(contributionKey);
+    participation.points = fields[0].Get<uint32>();
+    participation.sourceEventId = fields[1].Get<EventId>();
+    return participation;
+}
+
+void DirectorRepository::InsertParticipation(
+    DirectorRunId runId,
+    HouseholdId householdId,
+    std::string_view contributionKey,
+    uint32 points,
+    EventId sourceEventId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_INS_DIRECTOR_PARTICIPATION);
+    stmt->SetData(0, std::string(contributionKey));
+    stmt->SetData(1, points);
+    stmt->SetData(2, sourceEventId);
+    stmt->SetData(3, runId);
+    stmt->SetData(4, householdId);
+    FuryDatabase.Execute(stmt);
+}
+
+void DirectorRepository::RecalculateParticipation(
+    DirectorRunId runId,
+    HouseholdId householdId,
+    uint64 expectedRevision,
+    EventId sourceEventId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_RECALC_DIRECTOR_PARTICIPATION);
+    stmt->SetData(0, runId);
+    stmt->SetData(1, sourceEventId);
+    stmt->SetData(2, runId);
+    stmt->SetData(3, householdId);
+    stmt->SetData(4, expectedRevision);
+    FuryDatabase.Execute(stmt);
+}
+
 void DirectorRepository::Resolve(
     DirectorRunId runId,
     HouseholdId householdId,
