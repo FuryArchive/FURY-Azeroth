@@ -60,8 +60,9 @@ enum class CampaignCharacterAccessOutcome : uint8
     InvalidIpRequirement = 5,
     IpUnavailable = 6,
     IpDisabled = 7,
-    PlayerUnavailable = 8,
-    CharacterProgressTooLow = 9
+    IpPlayerSettingsDisabled = 8,
+    PlayerUnavailable = 9,
+    CharacterProgressTooLow = 10
 };
 
 struct CampaignCharacterAccessResult
