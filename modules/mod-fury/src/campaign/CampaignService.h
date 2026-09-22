@@ -3,11 +3,12 @@
 
 #include "CampaignRepository.h"
 
+class Player;
+
 namespace Fury
 {
 class EventStore;
 class IndividualProgressionAdapter;
-class Player;
 
 class CampaignService final
 {
