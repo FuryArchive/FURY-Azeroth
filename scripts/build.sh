@@ -22,7 +22,7 @@ BUILD_TYPE="${FURY_BUILD_TYPE:-RelWithDebInfo}"
 APPS_BUILD="${FURY_APPS_BUILD:-world-only}"
 
 CMAKE_GENERATOR_ARGS=()
-if command -v ninja >/dev/null 2>&1; then
+if [[ ! -f "${BUILD_DIR}/CMakeCache.txt" ]] && command -v ninja >/dev/null 2>&1; then
   CMAKE_GENERATOR_ARGS+=("-G" "Ninja")
 fi
 
