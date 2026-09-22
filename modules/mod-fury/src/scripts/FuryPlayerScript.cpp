@@ -1,22 +1,17 @@
 #include "core/FuryApp.h"
+#include "actors/ActorPolicy.h"
 #include "events/FuryEventFactory.h"
 
 #include "PlayerScript.h"
 
 namespace
 {
-bool ShouldPersistActor(Fury::ActorContext const& actor)
-{
-    return actor.kind == Fury::ActorKind::Human ||
-        actor.kind == Fury::ActorKind::HouseholdAltBot;
-}
-
 void Publish(Fury::FuryEvent event)
 {
     // Random world-population bots are intentionally not written to the
     // general durable spine. Recording every bot login/zone/kill with hundreds
     // of bots would create useless write amplification.
-    if (!ShouldPersistActor(event.actor))
+    if (!Fury::ShouldPersistGeneralEvent(event.actor.kind))
         return;
 
     Fury::App::Instance().Events().Append(event);
