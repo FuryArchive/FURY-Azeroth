@@ -28,7 +28,9 @@ App::App()
       _diagnostics(*this, _diagnosticsRepository),
       _campaign(_campaignRepository, _events),
       _proofs(_proofRepository, _events),
-      _contracts(_contractRepository, _events)
+      _contracts(_contractRepository, _events),
+      _director(_directorRepository, _events),
+      _directorReconciliation(_directorRepository)
 {
     _eventBus.RegisterConsumer(_chronicle);
     _eventBus.RegisterConsumer(_contracts);
