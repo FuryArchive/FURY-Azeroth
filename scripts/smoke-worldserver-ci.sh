@@ -43,6 +43,7 @@ export AC_BEEP_AT_START=0
 export AC_LOG_ASYNC_ENABLE=0
 
 export FURY_WORLDSERVER_CONF="${FURY_WORLDSERVER_CONF:-${CONF_DIR}/worldserver.conf.dist}"
+export FURY_STARTUP_TIMEOUT="${FURY_STARTUP_TIMEOUT:-600}"
 export FURY_SMOKE_RUNS="${FURY_SMOKE_RUNS:-2}"
 
 exec bash "${ROOT}/scripts/smoke-worldserver.sh"
