@@ -57,13 +57,22 @@ bool EventBus::ReplayConsumer(EventConsumer& consumer)
     EventId const checkpoint = _checkpoints.Load(consumer.Key());
     std::vector<FuryEvent> events = _store.ReadAfter(checkpoint, _replayBatchSize);
 
+    EventId lastHandled = checkpoint;
+
     for (FuryEvent const& event : events)
     {
         if (!consumer.Handle(event))
             return false;
 
-        _checkpoints.Advance(consumer.Key(), event.id);
+        lastHandled = event.id;
     }
+
+    // Checkpoint once per successfully processed batch. Consumers are required
+    // to be idempotent, so a crash before this write may replay part of the
+    // batch but can never skip durable events. This keeps write amplification
+    // bounded for long histories.
+    if (lastHandled != checkpoint)
+        _checkpoints.Advance(consumer.Key(), lastHandled);
 
     return true;
 }
