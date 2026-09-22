@@ -195,8 +195,13 @@ DirectorResult DirectorService::AttachRuntime(
     if (!persisted)
         return {DirectorOutcome::PersistenceFailed, std::nullopt};
 
+    if (persisted->externalRuntimeId &&
+        *persisted->externalRuntimeId != externalRuntimeId)
+    {
+        return {DirectorOutcome::RuntimeConflict, persisted};
+    }
+
     if (!persisted->externalRuntimeId ||
-        *persisted->externalRuntimeId != externalRuntimeId ||
         persisted->revision <= expectedRevision)
     {
         return {DirectorOutcome::RevisionConflict, persisted};
