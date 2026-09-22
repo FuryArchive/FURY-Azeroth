@@ -26,6 +26,7 @@ Date: 2026-09-22
 - M1 overall: IN_PROGRESS.
 - M2 T13 Campaign + T14 Proofs: IN_PROGRESS in PR #8 on `agent/m2-campaign-proofs`; schema/repositories/services implemented, M2 DB gate added, merge blocked on M1 GREEN.
 - M2 T15 Contracts: IN_PROGRESS on `agent/m2-contracts`; definitions/runtime/progress consumers and reward-claim consumer implemented, dedicated DB replay gate added, merge blocked on T13/T14 + M1 GREEN.
+- M2 T16 Director: IN_PROGRESS on `agent/m2-director`; persistent graph/run service, exclusive scope, optimistic revisions, external runtime attachment and terminal outcomes implemented; dedicated DB gate added, merge blocked on earlier gates.
 - M2 remaining/M3: READY, blocked by prior milestone gates.
 
 ## Repository baseline
