@@ -86,6 +86,11 @@ jobs:
           MYSQL_PASSWORD: fury
         run: bash scripts/smoke-fury-db-lifecycle.sh
 
+      - name: Reclaim compile workspace before runtime data
+        run: |
+          rm -rf build/azerothcore
+          df -h .
+
       - name: Restore pinned AzerothCore runtime-data archive
         uses: actions/cache@v4
         with:
