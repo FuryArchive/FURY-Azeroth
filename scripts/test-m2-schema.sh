@@ -58,12 +58,23 @@ assert_eq "1" "$(sql "SELECT revision FROM fury_campaign_state WHERE household_i
 sql "UPDATE fury_campaign_state SET status=4, revision=revision+1 WHERE household_id=1 AND node_key='golden.campaign' AND revision=0;"
 assert_eq "3" "$(sql "SELECT status FROM fury_campaign_state WHERE household_id=1 AND node_key='golden.campaign';")" "stale campaign revision cannot overwrite state"
 
-echo "[FURY] household power band monotonicity"
-sql "UPDATE fury_household SET current_power_band=110 WHERE id=1;"
-sql "UPDATE fury_household SET current_power_band=GREATEST(current_power_band, 100) WHERE id=1;"
-assert_eq "110" "$(sql "SELECT current_power_band FROM fury_household WHERE id=1;")" "power band never moves backwards"
-sql "UPDATE fury_household SET current_power_band=GREATEST(current_power_band, 120) WHERE id=1;"
-assert_eq "120" "$(sql "SELECT current_power_band FROM fury_household WHERE id=1;")" "power band can advance"
+echo "[FURY] household power band derives from completed campaign nodes"
+sql "UPDATE fury_campaign_state SET status=4, revision=revision+1 WHERE household_id=1 AND node_key='golden.campaign';"
+sql "INSERT INTO fury_campaign_node (node_key, era, ordinal, display_name, required_power_band, grants_power_band, enabled) VALUES ('golden.campaign.high', 1, 2, 'Golden Campaign High', 110, 120, 1);"
+sql "INSERT INTO fury_campaign_state (household_id, node_key, status, source_event_id, revision) VALUES (1, 'golden.campaign.high', 3, 1, 0);"
+
+recalc_power_band="UPDATE fury_household h SET current_power_band=COALESCE((SELECT MAX(n.grants_power_band) FROM fury_campaign_state s JOIN fury_campaign_node n ON n.node_key=s.node_key WHERE s.household_id=h.id AND s.status=4),0), revision=revision+1 WHERE h.id=1;"
+
+sql "${recalc_power_band}"
+assert_eq "110" "$(sql "SELECT current_power_band FROM fury_household WHERE id=1;")" "active higher node does not raise power band"
+
+sql "UPDATE fury_campaign_state SET status=4, revision=revision+1 WHERE household_id=1 AND node_key='golden.campaign.high';"
+sql "${recalc_power_band}"
+assert_eq "120" "$(sql "SELECT current_power_band FROM fury_household WHERE id=1;")" "completed higher node advances power band"
+
+sql "UPDATE fury_campaign_state SET status=3, revision=revision+1 WHERE household_id=1 AND node_key='golden.campaign.high';"
+sql "${recalc_power_band}"
+assert_eq "110" "$(sql "SELECT current_power_band FROM fury_household WHERE id=1;")" "power band is repaired from canonical completion state"
 
 echo "[FURY] durable household proofs"
 sql "INSERT IGNORE INTO fury_proof (household_id, proof_key, source_event_id, metadata) VALUES (1, 'golden.proof', 1, JSON_OBJECT('pass', 1));"
