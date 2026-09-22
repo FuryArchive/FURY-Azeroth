@@ -40,6 +40,7 @@ ValidationReport DiagnosticsService::Validate() const
             "app.enabled",
             "FURY is disabled by configuration."
         });
+        return report;
     }
 
     std::optional<KernelSnapshot> snapshot = _repository.Snapshot();
