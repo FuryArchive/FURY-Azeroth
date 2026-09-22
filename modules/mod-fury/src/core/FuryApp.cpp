@@ -31,11 +31,13 @@ App::App()
       _contracts(_contractRepository, _events),
       _director(_directorRepository, _events),
       _directorReconciliation(_directorRepository),
-      _professionOrders(_professionOrderRepository, _events)
+      _professionOrders(_professionOrderRepository, _events),
+      _bestiary(_bestiaryRepository, _events)
 {
     _eventBus.RegisterConsumer(_chronicle);
     _eventBus.RegisterConsumer(_contracts);
     _eventBus.RegisterConsumer(_professionOrders);
+    _eventBus.RegisterConsumer(_bestiary);
 }
 
 App& App::Instance()
