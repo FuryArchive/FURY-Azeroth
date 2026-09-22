@@ -160,5 +160,72 @@ void DatabaseConnection::DoPrepareStatements()
         "(household_id, proof_key, source_event_id, metadata) "
         "VALUES (?, ?, ?, ?)",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_CONTRACT_DEFINITION,
+        "SELECT board_key, title, campaign_node_key, director_phase, repeat_policy, reward_key, enabled "
+        "FROM fury_contract WHERE contract_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_ACTIVE_INSTANCE,
+        "SELECT id, status, accepted_event_id, completed_event_id, revision "
+        "FROM fury_contract_instance "
+        "WHERE household_id = ? AND contract_key = ? AND status = 2 "
+        "ORDER BY id DESC LIMIT 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_COMPLETED_INSTANCE,
+        "SELECT id FROM fury_contract_instance "
+        "WHERE household_id = ? AND contract_key = ? AND status = 3 "
+        "ORDER BY id DESC LIMIT 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_CONTRACT_INSTANCE,
+        "INSERT IGNORE INTO fury_contract_instance "
+        "(household_id, contract_key, director_run_id, status, accepted_event_id) "
+        "VALUES (?, ?, ?, 2, ?)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_CONTRACT_PROGRESS_ROWS,
+        "INSERT IGNORE INTO fury_contract_progress "
+        "(instance_id, objective_ordinal) "
+        "SELECT ?, ordinal FROM fury_contract_objective WHERE contract_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_MATCHING_OBJECTIVES,
+        "SELECT i.id, i.contract_key, o.ordinal, o.required_count, "
+        "p.progress_count, p.last_event_id "
+        "FROM fury_contract_instance i "
+        "JOIN fury_contract_objective o ON o.contract_key = i.contract_key "
+        "JOIN fury_contract_progress p ON p.instance_id = i.id "
+        "AND p.objective_ordinal = o.ordinal "
+        "WHERE i.household_id = ? AND i.status = 2 "
+        "AND o.event_type = ? "
+        "AND (o.subject_type IS NULL OR o.subject_type = ?) "
+        "AND (o.subject_id IS NULL OR o.subject_id = ?)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_CONTRACT_PROGRESS,
+        "UPDATE fury_contract_progress p "
+        "JOIN fury_contract_objective o "
+        "ON o.contract_key = ? AND o.ordinal = p.objective_ordinal "
+        "SET p.progress_count = LEAST(o.required_count, p.progress_count + 1), "
+        "p.completed_at = CASE "
+        "WHEN p.progress_count + 1 >= o.required_count "
+        "THEN COALESCE(p.completed_at, CURRENT_TIMESTAMP(6)) "
+        "ELSE p.completed_at END, "
+        "p.last_event_id = ?, "
+        "p.revision = p.revision + 1 "
+        "WHERE p.instance_id = ? AND p.objective_ordinal = ? "
+        "AND p.last_event_id < ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_INCOMPLETE_COUNT,
+        "SELECT COUNT(*) "
+        "FROM fury_contract_progress p "
+        "JOIN fury_contract_instance i ON i.id = p.instance_id "
+        "JOIN fury_contract_objective o "
+        "ON o.contract_key = i.contract_key "
+        "AND o.ordinal = p.objective_ordinal "
+        "WHERE p.instance_id = ? AND p.progress_count < o.required_count",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_CONTRACT_COMPLETE,
+        "UPDATE fury_contract_instance SET "
+        "status = 3, completed_event_id = ?, "
+        "completed_at = CURRENT_TIMESTAMP(6), revision = revision + 1 "
+        "WHERE id = ? AND status = 2",
+        CONNECTION_SYNCH);
 }
 }
