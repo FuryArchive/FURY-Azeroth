@@ -34,12 +34,26 @@ ValidationReport DiagnosticsService::Validate() const
 
     if (!_app.IsEnabled())
     {
-        report.issues.push_back({
-            ValidationSeverity::Warning,
-            "core",
-            "app.enabled",
-            "FURY is disabled by configuration."
-        });
+        if (_app.IsConfiguredEnabled())
+        {
+            report.issues.push_back({
+                ValidationSeverity::Fatal,
+                "core",
+                "app.operational",
+                "FURY was enabled by configuration but failed to become operational. "
+                "Check startup logs for the subsystem that failed initialization."
+            });
+        }
+        else
+        {
+            report.issues.push_back({
+                ValidationSeverity::Warning,
+                "core",
+                "app.enabled",
+                "FURY is disabled by configuration."
+            });
+        }
+
         return report;
     }
 
