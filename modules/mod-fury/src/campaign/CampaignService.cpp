@@ -145,6 +145,9 @@ CampaignCharacterAccessResult CampaignService::CheckCharacterAccess(
         case IndividualProgressionGateOutcome::ModuleDisabled:
             outcome = CampaignCharacterAccessOutcome::IpDisabled;
             break;
+        case IndividualProgressionGateOutcome::PlayerSettingsDisabled:
+            outcome = CampaignCharacterAccessOutcome::IpPlayerSettingsDisabled;
+            break;
         case IndividualProgressionGateOutcome::PlayerUnavailable:
             outcome = CampaignCharacterAccessOutcome::PlayerUnavailable;
             break;
