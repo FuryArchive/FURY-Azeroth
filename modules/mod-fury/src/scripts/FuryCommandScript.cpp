@@ -72,6 +72,25 @@ char const* BeneficiaryKindName(Fury::BeneficiaryKind kind)
     return "Unknown";
 }
 
+char const* HouseholdResultName(Fury::HouseholdMemberResult result)
+{
+    switch (result)
+    {
+        case Fury::HouseholdMemberResult::Added:
+            return "added";
+        case Fury::HouseholdMemberResult::AlreadyMember:
+            return "already-member";
+        case Fury::HouseholdMemberResult::AccountInOtherHousehold:
+            return "account-in-other-household";
+        case Fury::HouseholdMemberResult::HouseholdFull:
+            return "household-full";
+        case Fury::HouseholdMemberResult::HouseholdNotFound:
+            return "household-not-found";
+    }
+
+    return "unknown";
+}
+
 char const* SeverityName(Fury::ValidationSeverity severity)
 {
     switch (severity)
@@ -101,6 +120,8 @@ public:
     {
         static ChatCommandTable householdTable = {
             {"status", HandleHouseholdStatus, SEC_GAMEMASTER, Console::No},
+            {"create", HandleHouseholdCreate, SEC_GAMEMASTER, Console::No},
+            {"add", HandleHouseholdAdd, SEC_GAMEMASTER, Console::No},
         };
 
         static ChatCommandTable eventTable = {
@@ -185,6 +206,115 @@ private:
             actor.isEligibleForPersistentProgression ? "yes" : "no");
 
         return true;
+    }
+
+    static bool HandleHouseholdCreate(ChatHandler* handler, char const* args)
+    {
+        Player* player = handler->GetPlayer();
+        if (!player)
+        {
+            handler->SendErrorMessage("This command requires an in-game player.");
+            return false;
+        }
+
+        Fury::ActorContext actor =
+            Fury::App::Instance().Actors().Resolve(player);
+
+        if (actor.householdId)
+        {
+            handler->SendErrorMessage("This account already belongs to a FURY household.");
+            return false;
+        }
+
+        if (!args || !*args)
+        {
+            handler->SendErrorMessage("Usage: .fury household create <slug>");
+            return false;
+        }
+
+        std::string slug(args);
+        if (slug.find_first_of(" \t\r\n") != std::string::npos)
+        {
+            handler->SendErrorMessage("Household slug must not contain whitespace.");
+            return false;
+        }
+
+        Fury::HouseholdCreateResult created =
+            Fury::App::Instance().Households().CreateOrGet(slug, slug);
+        if (!created.Succeeded())
+        {
+            handler->SendErrorMessage("Could not create or resolve FURY household.");
+            return false;
+        }
+
+        Fury::HouseholdMemberResult added =
+            Fury::App::Instance().Households().AddMember(
+                *created.householdId,
+                actor.accountId);
+
+        if (added != Fury::HouseholdMemberResult::Added &&
+            added != Fury::HouseholdMemberResult::AlreadyMember)
+        {
+            handler->SendErrorMessage(
+                "Household created but account attach failed: {}",
+                HouseholdResultName(added));
+            return false;
+        }
+
+        handler->PSendSysMessage(
+            "FURY household created: id={} slug={} account={}",
+            *created.householdId,
+            slug,
+            actor.accountId);
+
+        return true;
+    }
+
+    static bool HandleHouseholdAdd(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* owner = handler->GetPlayer();
+        if (!owner)
+        {
+            handler->SendErrorMessage("This command requires an in-game player.");
+            return false;
+        }
+
+        Fury::ActorContext ownerActor =
+            Fury::App::Instance().Actors().Resolve(owner);
+        if (!ownerActor.householdId)
+        {
+            handler->SendErrorMessage(
+                "Create a household first with .fury household create <slug>.");
+            return false;
+        }
+
+        Player* target = handler->getSelectedPlayerOrSelf();
+        if (!target)
+        {
+            handler->SendErrorMessage("Select an online player to add.");
+            return false;
+        }
+
+        Fury::ActorContext targetActor =
+            Fury::App::Instance().Actors().Resolve(target);
+        if (!targetActor.accountId)
+        {
+            handler->SendErrorMessage("Selected player has no account id.");
+            return false;
+        }
+
+        Fury::HouseholdMemberResult result =
+            Fury::App::Instance().Households().AddMember(
+                *ownerActor.householdId,
+                targetActor.accountId);
+
+        handler->PSendSysMessage(
+            "FURY household add: account={} result={}",
+            targetActor.accountId,
+            HouseholdResultName(result));
+
+        return result == Fury::HouseholdMemberResult::Added ||
+            result == Fury::HouseholdMemberResult::AlreadyMember;
     }
 
     static bool HandleHouseholdStatus(ChatHandler* handler, char const* /*args*/)
