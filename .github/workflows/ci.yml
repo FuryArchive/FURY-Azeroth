@@ -163,6 +163,18 @@ jobs:
           FURY_BUILD_TARGET: fury-only
         run: bash scripts/build.sh
 
+  campaign-policy-golden:
+    name: T13 Campaign policy golden gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Run Campaign transition policy golden scenarios
+        run: bash scripts/test-m2-campaign-policy.sh
+
   campaign-schema-golden:
     name: T13 Campaign schema golden gate
     runs-on: ubuntu-24.04
