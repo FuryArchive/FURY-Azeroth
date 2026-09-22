@@ -178,6 +178,11 @@ std::vector<ContractObjectiveMatch> ContractRepository::FindMatchingObjectives(
     else
         stmt->SetData(3, nullptr);
 
+    if (!event.correlationKey.empty())
+        stmt->SetData(4, event.correlationKey);
+    else
+        stmt->SetData(4, nullptr);
+
     PreparedQueryResult result = FuryDatabase.Query(stmt);
     if (!result)
         return matches;
