@@ -8,13 +8,21 @@ namespace
 {
 void Publish(Fury::FuryEvent event)
 {
+    Fury::App& app = Fury::App::Instance();
+
+    // DatabaseScript intentionally does not open acore_fury when the module is
+    // disabled. Player hooks remain registered, so they must never touch the
+    // event store unless FuryApp completed an enabled startup.
+    if (!app.IsInitialized() || !app.IsEnabled())
+        return;
+
     // Random world-population bots are intentionally not written to the
     // general durable spine. Recording every bot login/zone/kill with hundreds
     // of bots would create useless write amplification.
     if (!Fury::ShouldPersistGeneralEvent(event.actor.kind))
         return;
 
-    Fury::App::Instance().Events().Append(event);
+    app.Events().Append(event);
 }
 
 class FuryPlayerScript final : public PlayerScript
