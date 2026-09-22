@@ -12,6 +12,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  actor-policy-golden:
+    name: M1 actor-policy golden gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Run actor classification golden scenarios
+        run: bash scripts/test-m1-actor-policy.sh
+
   build:
     name: Locked upstream build
     runs-on: ubuntu-24.04
@@ -51,8 +63,6 @@ jobs:
         env:
           FURY_BUILD_JOBS: "4"
         run: bash scripts/build.sh
-
-
 
   module-compile:
     name: Fast mod-fury compile
