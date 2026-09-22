@@ -18,6 +18,9 @@ public:
         HouseholdId householdId,
         std::string_view nodeKey) const;
 
+    [[nodiscard]] std::optional<PowerBand> CurrentPowerBand(
+        HouseholdId householdId) const;
+
     [[nodiscard]] CampaignTransitionResult MarkAvailable(
         FuryEvent const& source,
         std::string_view nodeKey) const;
