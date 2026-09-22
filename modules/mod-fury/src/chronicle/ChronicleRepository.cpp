@@ -8,7 +8,7 @@
 
 namespace Fury
 {
-void ChronicleRepository::Insert(
+bool ChronicleRepository::Insert(
     HouseholdId householdId,
     EventId sourceEventId,
     std::string_view entryKey,
@@ -38,6 +38,14 @@ void ChronicleRepository::Insert(
 
     stmt->SetData(index++, sourceEventId);
     FuryDatabase.Execute(stmt);
+
+    DatabasePreparedStatement* verify =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_CHRONICLE_ENTRY_BY_SOURCE);
+    verify->SetData(0, householdId);
+    verify->SetData(1, std::string(entryKey));
+    verify->SetData(2, sourceEventId);
+
+    return static_cast<bool>(FuryDatabase.Query(verify));
 }
 
 std::vector<ChronicleEntry> ChronicleRepository::Timeline(
