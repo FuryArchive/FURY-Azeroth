@@ -16,6 +16,7 @@ struct KernelSnapshot
     uint64 consumers = 0;
     uint64 rewardClaims = 0;
     uint64 chronicleEntries = 0;
+    uint64 overfullHouseholds = 0;
 };
 
 enum class ValidationSeverity : uint8
