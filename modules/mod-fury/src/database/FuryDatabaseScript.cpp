@@ -58,7 +58,11 @@ public:
 
         if (updatesEnabled)
         {
-            std::string const moduleRoot = BuiltInConfig::GetSourceDirectory() + "/modules/mod-fury";
+            std::string moduleRoot =
+                sConfigMgr->GetOption<std::string>("Fury.Database.SourceDirectory", "");
+
+            if (moduleRoot.empty())
+                moduleRoot = BuiltInConfig::GetSourceDirectory() + "/modules/mod-fury";
             DBUpdaterInfo const info = {
                 "FURY",
                 moduleRoot,
