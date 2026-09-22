@@ -176,6 +176,9 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE household_id = ? AND contract_key = ? AND status = 3 "
         "ORDER BY id DESC LIMIT 1",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_OBJECTIVE_COUNT,
+        "SELECT COUNT(*) FROM fury_contract_objective WHERE contract_key = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_INS_CONTRACT_INSTANCE,
         "INSERT IGNORE INTO fury_contract_instance "
         "(household_id, contract_key, director_run_id, status, accepted_event_id) "
@@ -202,11 +205,11 @@ void DatabaseConnection::DoPrepareStatements()
         "UPDATE fury_contract_progress p "
         "JOIN fury_contract_objective o "
         "ON o.contract_key = ? AND o.ordinal = p.objective_ordinal "
-        "SET p.progress_count = LEAST(o.required_count, p.progress_count + 1), "
-        "p.completed_at = CASE "
+        "SET p.completed_at = CASE "
         "WHEN p.progress_count + 1 >= o.required_count "
         "THEN COALESCE(p.completed_at, CURRENT_TIMESTAMP(6)) "
         "ELSE p.completed_at END, "
+        "p.progress_count = LEAST(o.required_count, p.progress_count + 1), "
         "p.last_event_id = ?, "
         "p.revision = p.revision + 1 "
         "WHERE p.instance_id = ? AND p.objective_ordinal = ? "
