@@ -88,7 +88,18 @@ void HouseholdService::RemoveMember(HouseholdId householdId, uint32 accountId) c
     std::lock_guard<std::mutex> mutationLock(_mutationMutex);
     _repository.RemoveMember(householdId, accountId);
 
+    // Re-read the authoritative row before touching the cache. A failed DELETE
+    // must not make ActorResolver believe the account left its household.
+    std::optional<HouseholdId> persisted =
+        _repository.FindByAccount(accountId);
+
     std::unique_lock lock(_membershipMutex);
+    if (persisted)
+    {
+        _membershipByAccount[accountId] = *persisted;
+        return;
+    }
+
     auto itr = _membershipByAccount.find(accountId);
     if (itr != _membershipByAccount.end() && itr->second == householdId)
         _membershipByAccount.erase(itr);
