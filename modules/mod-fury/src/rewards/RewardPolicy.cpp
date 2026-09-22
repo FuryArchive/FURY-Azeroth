@@ -24,18 +24,10 @@ RewardClaimOutcome RewardPolicy::Evaluate(
     if (!bounds)
         return RewardClaimOutcome::UnknownReward;
 
-    uint16 const current = static_cast<uint16>(request.currentPowerBand);
-    uint16 const minimum = static_cast<uint16>(bounds->minimum);
-
-    if (current < minimum)
-        return RewardClaimOutcome::BelowPowerBand;
-
-    if (bounds->maximum &&
-        current > static_cast<uint16>(*bounds->maximum))
-    {
-        return RewardClaimOutcome::AbovePowerBand;
-    }
-
-    return RewardClaimOutcome::Created;
+    return EvaluatePowerBand(
+        request.currentPowerBand,
+        bounds->minimum,
+        bounds->maximum.has_value(),
+        bounds->maximum.value_or(PowerBand::None));
 }
 }
