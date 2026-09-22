@@ -54,7 +54,12 @@ done
 assert_eq "skill_id,item_id,order_key,ordinal" "$(sql "SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema='${MYSQL_DATABASE}' AND table_name='fury_profession_order_option' AND index_name='ix_fury_profession_order_option_target';")" "target index is exact profession/item first"
 
 household_id="$(sql "SELECT id FROM fury_household WHERE slug='alpha' LIMIT 1;")"
-accept_event_id="$(sql "SELECT MIN(id) FROM fury_event WHERE household_id=${household_id};")"
+sql "INSERT INTO fury_event
+  (event_type, actor_kind, household_id, source_system, dedupe_key, payload)
+  VALUES
+  ('golden.profession.accept',1,${household_id},'golden.professions',
+   UNHEX(SHA2('golden-profession-accept',256)),JSON_OBJECT());"
+accept_event_id="$(sql "SELECT id FROM fury_event WHERE dedupe_key=UNHEX(SHA2('golden-profession-accept',256));")"
 
 sql "INSERT INTO fury_profession_order
   (order_key, title, repeat_policy, enabled)
