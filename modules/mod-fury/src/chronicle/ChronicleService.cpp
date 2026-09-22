@@ -57,18 +57,16 @@ bool ChronicleService::Handle(FuryEvent const& event)
         return true;
     }
 
-    Record(
+    return Record(
         event,
         entryKey,
         category,
         title,
         {},
         event.payloadJson);
-
-    return true;
 }
 
-void ChronicleService::Record(
+bool ChronicleService::Record(
     FuryEvent const& event,
     std::string_view entryKey,
     std::string_view category,
@@ -82,10 +80,10 @@ void ChronicleService::Record(
         category.empty() ||
         title.empty())
     {
-        return;
+        return false;
     }
 
-    _repository.Insert(
+    return _repository.Insert(
         *event.actor.householdId,
         event.id,
         entryKey,
