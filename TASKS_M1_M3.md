@@ -626,4 +626,4 @@ Do not silently pull these into current scope:
 
 # Immediate execution state
 
-Gate 0 source/API intake is complete. T01 compile proof is running in CI. T02 source is now in progress on a dedicated branch and must not be marked GREEN until database startup/restart acceptance passes.
+Gate 0 source/API intake is complete. The consolidated M1 implementation lives on `agent/m1-replay-batching` / PR #7. Fast `mod-fury` compilation and the MySQL 8 schema/idempotency golden gate are GREEN. The full locked AzerothCore build remains the active compile gate, and M1 must stay IN_PROGRESS until a real worldserver startup/validation/shutdown plus second-start database restart acceptance passes with valid external AzerothCore client server-data.
