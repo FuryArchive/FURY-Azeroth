@@ -133,18 +133,16 @@ bool CampaignRepository::UpdateState(
 bool CampaignRepository::RecalculateHouseholdPowerBand(
     HouseholdId householdId) const
 {
-    std::optional<PowerBand> derived = CalculateHouseholdPowerBand(householdId);
-    if (!derived)
-        return false;
-
+    // Derive and update in one SQL statement so a stale caller cannot
+    // overwrite a newer completion with an older precomputed power band.
     DatabasePreparedStatement* stmt =
         FuryDatabase.GetPreparedStatement(FURY_UPD_HOUSEHOLD_POWER_BAND);
-    stmt->SetData(0, *derived);
+    stmt->SetData(0, householdId);
     stmt->SetData(1, householdId);
-    stmt->SetData(2, *derived);
     FuryDatabase.Execute(stmt);
 
+    std::optional<PowerBand> derived = CalculateHouseholdPowerBand(householdId);
     std::optional<PowerBand> persisted = FindHouseholdPowerBand(householdId);
-    return persisted && *persisted == *derived;
+    return derived && persisted && *persisted == *derived;
 }
 }
