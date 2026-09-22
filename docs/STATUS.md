@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13 Campaign, T14 Proof service, and T15 Contracts core are GREEN; T16 Director runtime is the only active scope.
+- M2 Campaign Platform: IN_PROGRESS — T13 Campaign, T14 Proof service, T15 Contracts core, and T16 Director runtime are GREEN; T17 Profession Orders is next.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,14 +123,8 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Complete **T16 Director runtime** only:
+Begin **T17 Minimal profession-order subsystem** next.
 
-1. persistent graph/run state with one active graph per household scope;
-2. Human-only start authority and Human/System controlled mutations;
-3. optimistic revision reload/re-evaluation;
-4. stable phase/runtime/terminal durable events;
-5. deterministic reconciliation planning without M3 bridge side effects;
-6. restart/schema re-apply preserves active Director state;
-7. keep M1 + T13 + T14 + T15 regressions mandatory.
+Full Runtime is no longer an automatic requirement for ordinary domain SQL/service changes. Fast MySQL golden gates plus Fast mod-fury compile are the default acceptance path; run Full Runtime manually for milestone closure or when the integration surface itself changes.
 
-T17+ remain READY and are intentionally outside this pass.
+T18+ remain READY and are intentionally outside this pass.
