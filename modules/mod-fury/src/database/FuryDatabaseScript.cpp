@@ -9,8 +9,35 @@
 
 #include <mysqld_error.h>
 
+#include <filesystem>
+#include <system_error>
+
 namespace
 {
+std::string ResolveFuryDatabaseRoot()
+{
+    std::string configured =
+        sConfigMgr->GetOption<std::string>("Fury.Database.SourceDirectory", "");
+    if (!configured.empty())
+        return configured;
+
+    std::filesystem::path configDir(sConfigMgr->GetConfigPath());
+    if (configDir.filename().empty())
+        configDir = configDir.parent_path();
+
+    std::filesystem::path installedRoot =
+        configDir.parent_path() / "share" / "fury";
+    std::error_code error;
+    if (std::filesystem::is_directory(
+            installedRoot / "data" / "sql" / "fury" / "base",
+            error))
+    {
+        return installedRoot.string();
+    }
+
+    return BuiltInConfig::GetSourceDirectory() + "/modules/mod-fury";
+}
+
 class FuryDatabaseScript final : public DatabaseScript
 {
 public:
@@ -58,11 +85,12 @@ public:
 
         if (updatesEnabled)
         {
-            std::string moduleRoot =
-                sConfigMgr->GetOption<std::string>("Fury.Database.SourceDirectory", "");
+            std::string const moduleRoot = ResolveFuryDatabaseRoot();
+            LOG_INFO(
+                "server.loading",
+                "[FURY] FURY database SQL root: {}",
+                moduleRoot);
 
-            if (moduleRoot.empty())
-                moduleRoot = BuiltInConfig::GetSourceDirectory() + "/modules/mod-fury";
             DBUpdaterInfo const info = {
                 "FURY",
                 moduleRoot,
