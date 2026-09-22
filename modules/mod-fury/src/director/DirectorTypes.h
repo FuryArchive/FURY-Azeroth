@@ -46,6 +46,14 @@ struct DirectorRun
     uint64 revision = 0;
 };
 
+struct DirectorParticipation
+{
+    DirectorRunId runId = 0;
+    std::string contributionKey;
+    uint32 points = 0;
+    EventId sourceEventId = 0;
+};
+
 enum class DirectorOutcome : uint8
 {
     Started = 1,
