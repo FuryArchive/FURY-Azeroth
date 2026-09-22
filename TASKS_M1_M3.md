@@ -269,7 +269,7 @@ M1 is GREEN only when all mandatory scenarios, clean module build, and worldserv
 # M2 — Campaign Platform
 
 ## T13 Campaign schema/service
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: M1 GREEN
 Commit target: `feat(campaign): add household campaign state`
 
@@ -628,4 +628,4 @@ Do not silently pull these into current scope:
 
 Gate 0 and **M1 FURY Kernel are GREEN**. PR #7 passed fast module compilation, MySQL 8 schema/idempotency, actor-policy golden scenarios, the pinned production worldserver build, real module database create/populate/update/restart, and two consecutive full worldserver startup/validation/shutdown smokes with pinned runtime data.
 
-M2 is now unblocked. Execute T13–T20 in dependency order and keep the full M1 regression gate mandatory for M2 acceptance.
+T13 Campaign schema/service is GREEN. Continue with T14–T20 in dependency order and keep the full M1 regression gate mandatory for M2 acceptance.
