@@ -163,6 +163,43 @@ jobs:
           FURY_BUILD_TARGET: fury-only
         run: bash scripts/build.sh
 
+  campaign-schema-golden:
+    name: T13 Campaign schema golden gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y default-mysql-client
+
+      - name: Run T13 Campaign schema golden gate
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+          MYSQL_DATABASE: acore_fury
+        run: bash scripts/test-m2-campaign-schema.sh
+
   schema-golden:
     name: M1 schema golden gate
     runs-on: ubuntu-24.04
