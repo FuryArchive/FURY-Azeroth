@@ -1,6 +1,7 @@
 #ifndef MOD_FURY_CONTRACT_TYPES_H
 #define MOD_FURY_CONTRACT_TYPES_H
 
+#include "core/FuryIds.h"
 #include "events/FuryEvent.h"
 
 #include <optional>
@@ -9,7 +10,6 @@
 namespace Fury
 {
 using ContractInstanceId = uint64;
-using DirectorRunId = uint64;
 
 enum class ContractRepeatPolicy : uint8
 {

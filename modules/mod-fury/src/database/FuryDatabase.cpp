@@ -263,5 +263,62 @@ void DatabaseConnection::DoPrepareStatements()
         "completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP(6)), revision = revision + 1 "
         "WHERE id = ? AND status = 2",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_DIRECTOR_GRAPH,
+        "SELECT scope_key, display_name, campaign_node_key, enabled "
+        "FROM fury_director_graph WHERE graph_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_RUN_BY_ID,
+        "SELECT id, household_id, graph_key, scope_key, status, phase_key, "
+        "external_runtime_id, started_event_id, last_event_id, "
+        "resolved_event_id, outcome_key, revision "
+        "FROM fury_director_run WHERE id = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_ACTIVE_SCOPE,
+        "SELECT id, household_id, graph_key, scope_key, status, phase_key, "
+        "external_runtime_id, started_event_id, last_event_id, "
+        "resolved_event_id, outcome_key, revision "
+        "FROM fury_director_run "
+        "WHERE household_id = ? AND scope_key = ? AND status IN (1, 2, 3) "
+        "ORDER BY id DESC LIMIT 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_ACTIVE_RUNS,
+        "SELECT id, household_id, graph_key, scope_key, status, phase_key, "
+        "external_runtime_id, started_event_id, last_event_id, "
+        "resolved_event_id, outcome_key, revision "
+        "FROM fury_director_run WHERE status IN (1, 2, 3) ORDER BY id ASC",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_DIRECTOR_RUN,
+        "INSERT IGNORE INTO fury_director_run "
+        "(household_id, graph_key, scope_key, status, phase_key, "
+        "started_event_id, last_event_id) "
+        "VALUES (?, ?, ?, 2, ?, ?, ?)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_DIRECTOR_PHASE,
+        "UPDATE fury_director_run SET "
+        "status = 2, phase_key = ?, last_event_id = ?, revision = revision + 1 "
+        "WHERE id = ? AND household_id = ? AND revision = ? "
+        "AND status IN (1, 2)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_DIRECTOR_RUNTIME,
+        "UPDATE fury_director_run SET "
+        "external_runtime_id = ?, last_event_id = ?, revision = revision + 1 "
+        "WHERE id = ? AND household_id = ? AND revision = ? "
+        "AND status IN (1, 2, 3) AND external_runtime_id IS NULL",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_DIRECTOR_RESOLVE,
+        "UPDATE fury_director_run SET "
+        "status = 4, outcome_key = ?, resolved_event_id = ?, last_event_id = ?, "
+        "completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP(6)), revision = revision + 1 "
+        "WHERE id = ? AND household_id = ? AND revision = ? "
+        "AND status IN (1, 2, 3)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_DIRECTOR_ABORT,
+        "UPDATE fury_director_run SET "
+        "status = 6, outcome_key = ?, resolved_event_id = ?, last_event_id = ?, "
+        "completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP(6)), revision = revision + 1 "
+        "WHERE id = ? AND household_id = ? AND revision = ? "
+        "AND status IN (1, 2, 3)",
+        CONNECTION_SYNCH);
 }
 }

@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13 Campaign, T14 Proof service, and T15 Contracts core are GREEN; T16 Director runtime is next.
+- M2 Campaign Platform: IN_PROGRESS — T13 Campaign, T14 Proof service, and T15 Contracts core are GREEN; T16 Director runtime is the only active scope.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,6 +123,14 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-CI latency reduction is complete. Begin **T16 Director runtime** next.
+Complete **T16 Director runtime** only:
 
-T16+ remain READY and are intentionally outside the Contracts pass.
+1. persistent graph/run state with one active graph per household scope;
+2. Human-only start authority and Human/System controlled mutations;
+3. optimistic revision reload/re-evaluation;
+4. stable phase/runtime/terminal durable events;
+5. deterministic reconciliation planning without M3 bridge side effects;
+6. restart/schema re-apply preserves active Director state;
+7. keep M1 + T13 + T14 + T15 regressions mandatory.
+
+T17+ remain READY and are intentionally outside this pass.
