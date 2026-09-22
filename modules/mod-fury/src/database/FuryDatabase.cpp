@@ -290,6 +290,10 @@ void DatabaseConnection::DoPrepareStatements()
         "FROM fury_director_participation "
         "WHERE run_id = ? AND contribution_key = ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_PARTICIPATION_TOTAL,
+        "SELECT LEAST(100, COALESCE(SUM(points), 0)) "
+        "FROM fury_director_participation WHERE run_id = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_INS_DIRECTOR_PARTICIPATION,
         "INSERT IGNORE INTO fury_director_participation "
         "(run_id, contribution_key, points, source_event_id) "
