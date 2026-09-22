@@ -65,6 +65,12 @@ struct ContractInstance
     uint64 revision = 0;
 };
 
+struct ContractObjectiveProgress
+{
+    uint32 progressCount = 0;
+    EventId lastEventId = 0;
+};
+
 struct ContractObjectiveMatch
 {
     ContractInstanceId instanceId = 0;
