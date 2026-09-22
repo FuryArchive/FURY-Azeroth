@@ -203,7 +203,8 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE i.household_id = ? AND i.status = 2 "
         "AND o.event_type = ? "
         "AND (o.subject_type IS NULL OR o.subject_type = ?) "
-        "AND (o.subject_id IS NULL OR o.subject_id = ?)",
+        "AND (o.subject_id IS NULL OR o.subject_id = ?) "
+        "AND (o.correlation_key IS NULL OR o.correlation_key = ?)",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_CONTRACT_PROGRESS_ROW,
         "SELECT progress_count, last_event_id "
