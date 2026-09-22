@@ -10,6 +10,7 @@ if [[ ! -f "${WORLDSERVER_CONF}" && -f "${WORLDSERVER_CONF}.dist" ]]; then
 fi
 STARTUP_TIMEOUT="${FURY_STARTUP_TIMEOUT:-180}"
 SMOKE_RUNS="${FURY_SMOKE_RUNS:-2}"
+EXPECT_DATABASE_READY="${FURY_EXPECT_DATABASE_READY:-1}"
 
 if [[ ! -x "${WORLDSERVER}" ]]; then
   echo "[FURY][FAIL] worldserver not found or not executable: ${WORLDSERVER}" >&2
@@ -76,7 +77,12 @@ run_smoke_once() (
   # Keep the FIFO writer open for the lifetime of this smoke run.
   exec 3>"${fifo}"
 
-  wait_for_log "[FURY] FURY database ready." "FURY database startup"
+  if [[ "${EXPECT_DATABASE_READY}" == "1" ]]; then
+    wait_for_log "[FURY] FURY database ready." "FURY database startup"
+  else
+    wait_for_log "[FURY] module disabled; skipping FURY database startup." "disabled FURY database skip"
+  fi
+
   wait_for_log "[FURY] mod-fury initialized" "FuryApp startup"
   wait_for_log "worldserver-daemon) ready..." "worldserver ready"
 
