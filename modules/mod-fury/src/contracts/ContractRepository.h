@@ -46,6 +46,10 @@ public:
         ContractObjectiveMatch const& objective,
         EventId eventId) const;
 
+    [[nodiscard]] std::optional<ContractObjectiveProgress> FindProgress(
+        ContractInstanceId instanceId,
+        uint16 objectiveOrdinal) const;
+
     [[nodiscard]] std::optional<uint32> CountIncompleteObjectives(
         ContractInstanceId instanceId) const;
 
