@@ -412,7 +412,7 @@ Acceptance:
 - a compatibility guard fails clearly after incompatible upstream changes.
 
 ## T23 FURY LivingWorldAdapter
-Status: READY
+Status: GREEN
 Depends on: T22
 Commit target: `feat(lw): add Living World adapter`
 
