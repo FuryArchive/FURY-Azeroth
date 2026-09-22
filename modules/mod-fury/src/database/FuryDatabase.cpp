@@ -52,6 +52,11 @@ void DatabaseConnection::DoPrepareStatements()
         "map_id, zone_id, area_id, subject_type, subject_id, source_system, correlation_key, payload "
         "FROM fury_event WHERE id > ? ORDER BY id ASC LIMIT ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_EVENT_TAIL,
+        "SELECT id, event_type, actor_kind, actor_guid, account_id, household_id, "
+        "map_id, zone_id, area_id, subject_type, subject_id, source_system, correlation_key, payload "
+        "FROM fury_event ORDER BY id DESC LIMIT ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_INS_EVENT,
         "INSERT IGNORE INTO fury_event "
         "(event_type, actor_kind, actor_guid, account_id, household_id, map_id, zone_id, area_id, "
@@ -78,6 +83,10 @@ void DatabaseConnection::DoPrepareStatements()
         "INSERT IGNORE INTO fury_reward_claim "
         "(source_event_id, reward_key, beneficiary_kind, beneficiary_id, status) "
         "VALUES (?, ?, ?, ?, ?)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_REWARD_CLAIM_TAIL,
+        "SELECT id, source_event_id, reward_key, beneficiary_kind, beneficiary_id, status "
+        "FROM fury_reward_claim ORDER BY id DESC LIMIT ?",
         CONNECTION_SYNCH);
 
     PrepareStatement(FURY_INS_CHRONICLE_ENTRY,
