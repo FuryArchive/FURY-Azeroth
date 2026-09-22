@@ -269,7 +269,7 @@ M1 is GREEN only when all mandatory scenarios, clean module build, and worldserv
 # M2 — Campaign Platform
 
 ## T13 Campaign schema/service
-Status: READY
+Status: IN_PROGRESS
 Depends on: M1 GREEN
 Commit target: `feat(campaign): add household campaign state`
 
