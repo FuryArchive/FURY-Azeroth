@@ -35,6 +35,82 @@ LivingWorldAvailability LivingWorldAdapter::Availability() const
 #endif
 }
 
+std::optional<LivingWorldInvasionMetadata>
+LivingWorldAdapter::Invasion(uint32 invasionId) const
+{
+#if !FURY_HAS_LIVING_WORLD
+    (void)invasionId;
+    return std::nullopt;
+#else
+    lw::InvasionDefinition const* definition =
+        sLivingWorldDataMgr.GetDefinition(invasionId);
+    if (!definition)
+        return std::nullopt;
+
+    return LivingWorldInvasionMetadata{
+        definition->Id,
+        definition->MapId,
+        definition->ZoneId,
+        definition->AllowRandomStart,
+        definition->Enabled
+    };
+#endif
+}
+
+std::vector<LivingWorldStageMetadata>
+LivingWorldAdapter::Stages(uint32 invasionId) const
+{
+#if !FURY_HAS_LIVING_WORLD
+    (void)invasionId;
+    return {};
+#else
+    std::vector<LivingWorldStageMetadata> result;
+
+    std::vector<lw::InvasionStageDefinition> const* stages =
+        sLivingWorldDataMgr.GetStages(invasionId);
+    if (!stages)
+        return result;
+
+    result.reserve(stages->size());
+    for (lw::InvasionStageDefinition const& stage : *stages)
+    {
+        result.push_back({
+            stage.Id,
+            stage.StageOrder,
+            stage.CompletionType,
+            stage.CompletionTargetId,
+            stage.Enabled
+        });
+    }
+
+    return result;
+#endif
+}
+
+bool LivingWorldAdapter::HasRuntimeSignal(uint32 signalId) const
+{
+#if !FURY_HAS_LIVING_WORLD
+    (void)signalId;
+    return false;
+#else
+    lw::RuntimeSignalDefinition const* signal =
+        sLivingWorldDataMgr.GetRuntimeSignal(signalId);
+    return signal && signal->Enabled;
+#endif
+}
+
+bool LivingWorldAdapter::HasSpawnGroup(uint32 spawnGroupId) const
+{
+#if !FURY_HAS_LIVING_WORLD
+    (void)spawnGroupId;
+    return false;
+#else
+    lw::SpawnGroupDefinition const* group =
+        sLivingWorldDataMgr.GetSpawnGroup(spawnGroupId);
+    return group && group->Enabled;
+#endif
+}
+
 bool LivingWorldAdapter::ManageGraph(
     std::string_view graphKey,
     uint32 invasionId)
