@@ -514,3 +514,16 @@ jobs:
         env:
           FURY_BUILD_JOBS: "4"
         run: bash scripts/test-t22-living-world-bridge.sh
+
+
+  living-world-adapter:
+    name: T23 Living World adapter boundary gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Run Living World adapter policy/boundary scenarios
+        run: bash scripts/test-t23-living-world-adapter.sh

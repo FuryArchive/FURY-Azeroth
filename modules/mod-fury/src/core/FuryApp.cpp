@@ -26,6 +26,7 @@ App::App()
       _rewards(_rewardRepository, _rewardPolicy),
       _chronicle(_chronicleRepository),
       _diagnostics(*this, _diagnosticsRepository),
+      _livingWorld(_events),
       _campaign(_campaignRepository, _events, _individualProgression),
       _proofs(_proofRepository, _events),
       _contracts(_contractRepository, _events),
@@ -105,6 +106,7 @@ void App::Shutdown()
 
     LOG_INFO("server.loading", "[FURY] mod-fury shutdown.");
 
+    _livingWorld.Reset();
     _households.Shutdown();
     ResetTimers();
     _enabled = false;
@@ -149,7 +151,15 @@ void App::RunDirectorTick()
 
 void App::RunReconcileTick()
 {
-    // T16 exposes a deterministic reconciliation planner. M3 supplies the
-    // external runtime probe/bridge that can execute those decisions.
+    // Living World exposes stable runtime queries rather than a generic
+    // lifecycle callback surface. Normalize currently managed runtimes into
+    // replay-safe FURY events, then let the existing Director reconciler
+    // inspect the same adapter boundary. T33 executes non-trivial recovery
+    // decisions; T23 establishes the probe/integration seam only.
+    _livingWorld.PollManagedRuntimes();
+
+    auto const plan =
+        _directorReconciliation.BuildPlan(_livingWorld);
+    (void)plan;
 }
 }
