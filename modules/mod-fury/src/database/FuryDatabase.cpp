@@ -139,9 +139,16 @@ void DatabaseConnection::DoPrepareStatements()
         "revision = revision + 1 "
         "WHERE household_id = ? AND node_key = ? AND revision = ?",
         CONNECTION_SYNCH);
-    PrepareStatement(FURY_UPD_HOUSEHOLD_POWER_BAND,
-        "UPDATE fury_household SET current_power_band = GREATEST(current_power_band, ?), "
-        "revision = revision + 1 WHERE id = ?",
+    PrepareStatement(FURY_RECALC_HOUSEHOLD_POWER_BAND,
+        "UPDATE fury_household h SET "
+        "current_power_band = COALESCE(("
+        "SELECT MAX(n.grants_power_band) "
+        "FROM fury_campaign_state s "
+        "JOIN fury_campaign_node n ON n.node_key = s.node_key "
+        "WHERE s.household_id = h.id AND s.status = 4"
+        "), 0), "
+        "revision = revision + 1 "
+        "WHERE h.id = ?",
         CONNECTION_SYNCH);
 
     PrepareStatement(FURY_SEL_PROOF,
