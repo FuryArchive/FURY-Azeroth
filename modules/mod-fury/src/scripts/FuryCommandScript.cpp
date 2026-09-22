@@ -137,6 +137,12 @@ private:
             app.IsInitialized() ? "yes" : "no",
             app.IsEnabled() ? "yes" : "no");
 
+        if (!app.IsEnabled())
+        {
+            handler->PSendSysMessage("FURY database is not opened while the module is disabled.");
+            return true;
+        }
+
         std::optional<Fury::KernelSnapshot> snapshot =
             app.Diagnostics().Snapshot();
         if (!snapshot)
