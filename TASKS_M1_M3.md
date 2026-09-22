@@ -348,7 +348,7 @@ Acceptance:
 - no Hunt engine behavior in M2.
 
 ## T19 Individual Progression read-only adapter
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T00.2, T13
 Commit target: `feat(ip): add read-only Individual Progression adapter`
 
