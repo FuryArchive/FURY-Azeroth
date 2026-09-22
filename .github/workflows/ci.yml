@@ -25,9 +25,9 @@ jobs:
         run: bash scripts/test-m1-actor-policy.sh
 
   build:
-    name: Locked upstream build + DB lifecycle
+    name: Locked worldserver + M1 runtime
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 240
 
     services:
       mysql:
@@ -51,7 +51,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git cmake make ninja-build gcc g++ clang ccache \
+            git cmake make ninja-build gcc g++ clang ccache curl unzip \
             libssl-dev libbz2-dev libreadline-dev libncurses-dev \
             libboost-all-dev libmysqlclient-dev default-mysql-client
 
@@ -85,6 +85,37 @@ jobs:
           MYSQL_USER: root
           MYSQL_PASSWORD: fury
         run: bash scripts/smoke-fury-db-lifecycle.sh
+
+      - name: Restore pinned AzerothCore runtime-data archive
+        uses: actions/cache@v4
+        with:
+          path: .cache/ac-data-v20.0/Data.zip
+          key: ac-data-v20.0-enUS-a3d4df635ae6c2c8
+
+      - name: Install pinned AzerothCore runtime data
+        run: bash scripts/fetch-ac-data.sh
+
+      - name: Run full M1 worldserver smoke twice
+        env:
+          FURY_STARTUP_TIMEOUT: "600"
+          FURY_SMOKE_RUNS: "2"
+          FURY_WORLDSERVER_CONF: ${{ github.workspace }}/build/dist/etc/worldserver.conf.dist
+          AC_DATA_DIR: ${{ github.workspace }}/build/dist/data
+          AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
+          AC_WORLD_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_world"
+          AC_CHARACTER_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_characters"
+          AC_UPDATES_ENABLE_DATABASES: "7"
+          AC_UPDATES_AUTO_SETUP: "1"
+          AC_PLAYERBOTS_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_playerbots"
+          AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_ENABLE: "1"
+          AC_FURY_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_fury"
+          AC_FURY_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_DATABASE_SOURCE_DIRECTORY: ${{ github.workspace }}/modules/mod-fury
+          AC_CONSOLE_ENABLE: "1"
+          AC_BEEP_AT_START: "0"
+          AC_LOG_ASYNC_ENABLE: "0"
+        run: bash scripts/smoke-worldserver.sh
 
   module-compile:
     name: Fast mod-fury compile
