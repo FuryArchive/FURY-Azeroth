@@ -247,7 +247,7 @@ void DatabaseConnection::DoPrepareStatements()
         "FROM fury_director_graph WHERE graph_key = ?",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_DIRECTOR_RUN_BY_ID,
-        "SELECT household_id, graph_key, scope_key, status, phase_key, "
+        "SELECT id, household_id, graph_key, scope_key, status, phase_key, "
         "external_runtime_id, participation_score, started_event_id, "
         "last_event_id, resolved_event_id, outcome_key, revision "
         "FROM fury_director_run WHERE id = ?",
