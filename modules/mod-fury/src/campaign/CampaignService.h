@@ -3,17 +3,28 @@
 
 #include "CampaignRepository.h"
 
+class Player;
+
 namespace Fury
 {
 class EventStore;
+class IndividualProgressionAdapter;
 
 class CampaignService final
 {
 public:
-    CampaignService(CampaignRepository const& repository, EventStore const& events);
+    CampaignService(
+        CampaignRepository const& repository,
+        EventStore const& events,
+        IndividualProgressionAdapter const& individualProgression);
 
     [[nodiscard]] CampaignStatus GetStatus(HouseholdId householdId, std::string_view nodeKey) const;
     [[nodiscard]] std::optional<PowerBand> GetHouseholdPowerBand(HouseholdId householdId) const;
+
+    [[nodiscard]] CampaignCharacterAccessResult CheckCharacterAccess(
+        Player* player,
+        HouseholdId householdId,
+        std::string_view nodeKey) const;
 
     [[nodiscard]] CampaignTransitionResult MarkAvailable(FuryEvent const& source, std::string_view nodeKey) const;
     [[nodiscard]] CampaignTransitionResult Activate(FuryEvent const& source, std::string_view nodeKey) const;
@@ -34,6 +45,7 @@ private:
 
     CampaignRepository const& _repository;
     EventStore const& _events;
+    IndividualProgressionAdapter const& _individualProgression;
 };
 }
 
