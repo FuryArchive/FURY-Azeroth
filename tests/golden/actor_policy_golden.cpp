@@ -1,4 +1,5 @@
 #include "ActorPolicy.h"
+#include "rewards/RewardTypes.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -46,6 +47,27 @@ int main()
     Require(!ShouldPersistGeneralEvent(ActorKind::RandomPlayerBot),
         "RandomPlayerBot general events are filtered");
 
-    std::cout << "[FURY][PASS] M1 actor-policy golden gate passed\n";
+    Require(
+        EvaluatePowerBand(PowerBand::ClassicMC, PowerBand::ClassicBWL) ==
+            RewardClaimOutcome::BelowPowerBand,
+        "reward policy returns stable BelowPowerBand reason");
+    Require(
+        EvaluatePowerBand(
+            PowerBand::ClassicNaxx,
+            PowerBand::ClassicPreRaid,
+            true,
+            PowerBand::ClassicBWL) ==
+            RewardClaimOutcome::AbovePowerBand,
+        "reward policy returns stable AbovePowerBand reason");
+    Require(
+        EvaluatePowerBand(
+            PowerBand::ClassicBWL,
+            PowerBand::ClassicMC,
+            true,
+            PowerBand::ClassicNaxx) ==
+            RewardClaimOutcome::Created,
+        "reward policy accepts power band inside configured bounds");
+
+    std::cout << "[FURY][PASS] M1 kernel-policy golden gate passed\n";
     return 0;
 }
