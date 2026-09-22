@@ -25,9 +25,9 @@ public:
         std::string_view slug,
         std::string_view displayName) const;
 
-    [[nodiscard]] HouseholdMemberResult AddMember(
+    [[nodiscard]] HouseholdMemberResult AddHumanMember(
         HouseholdId householdId,
-        uint32 accountId,
+        ActorContext const& actor,
         uint8 role = 1) const;
 
     void RemoveMember(HouseholdId householdId, uint32 accountId) const;
@@ -36,6 +36,11 @@ public:
     [[nodiscard]] uint32 CountMembers(HouseholdId householdId) const;
 
 private:
+    [[nodiscard]] HouseholdMemberResult AddMemberAccount(
+        HouseholdId householdId,
+        uint32 accountId,
+        uint8 role) const;
+
     static constexpr uint32 MaxHumanMembers = 2;
 
     HouseholdRepository const& _repository;
