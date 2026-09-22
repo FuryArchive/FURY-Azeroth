@@ -125,9 +125,7 @@ CampaignTransitionResult CampaignService::Transition(
         // and its follow-up side effects.
         if (target == CampaignStatus::Complete)
         {
-            _repository.RaiseHouseholdPowerBand(
-                householdId,
-                node->grantsPowerBand);
+            _repository.RecalculateHouseholdPowerBand(householdId);
         }
 
         EmitTransitionEvent(source, *node, target);
@@ -162,9 +160,7 @@ CampaignTransitionResult CampaignService::Transition(
 
     if (target == CampaignStatus::Complete)
     {
-        _repository.RaiseHouseholdPowerBand(
-            householdId,
-            node->grantsPowerBand);
+        _repository.RecalculateHouseholdPowerBand(householdId);
     }
 
     EmitTransitionEvent(source, *node, target);
