@@ -29,6 +29,7 @@ Date: 2026-09-22
 - M2 T16 Director: IN_PROGRESS on `agent/m2-director`; persistent graph/run service, exclusive scope, optimistic revisions, external runtime attachment and terminal outcomes implemented; dedicated DB gate added, merge blocked on earlier gates.
 - M2 T17 Profession Orders: IN_PROGRESS on `agent/m2-professions-v2`; exact craft-spell → profession-skill event normalization, replay-safe order runtime and DB gate implemented, merge blocked on prior M2/M1 gates.
 - M2 T18 Bestiary: IN_PROGRESS on `agent/m2-bestiary`; explicit creature mappings, account-level replay-safe projection and manual promotion API implemented, no Hunt engine behavior included.
+- M2 T19 Individual Progression adapter: IN_PROGRESS on `agent/m2-ip-adapter`; read-only pinned API adapter, Player Settings prerequisite validation and household+character campaign access query implemented.
 - M2 remaining/M3: READY, blocked by prior milestone gates.
 
 ## Repository baseline
