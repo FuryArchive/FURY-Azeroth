@@ -20,6 +20,7 @@ CXX_COMPILER="${CXX:-clang++}"
 TARGET="${FURY_BUILD_TARGET:-}"
 BUILD_TYPE="${FURY_BUILD_TYPE:-RelWithDebInfo}"
 APPS_BUILD="${FURY_APPS_BUILD:-world-only}"
+DISABLE_PCH="${FURY_DISABLE_PCH:-0}"
 
 CMAKE_GENERATOR_ARGS=()
 if command -v ninja >/dev/null 2>&1; then
@@ -27,11 +28,12 @@ if command -v ninja >/dev/null 2>&1; then
 fi
 
 CMAKE_FAST_ARGS=()
-if [[ "${TARGET}" == "fury-only" ]]; then
-  CMAKE_FAST_ARGS+=(
-    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-    "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"
-  )
+if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "configure-only" ]]; then
+  CMAKE_FAST_ARGS+=("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
+fi
+
+if [[ "${TARGET}" == "fury-only" || "${DISABLE_PCH}" == "1" ]]; then
+  CMAKE_FAST_ARGS+=("-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON")
 fi
 
 CMAKE_LAUNCHER_ARGS=()
@@ -58,7 +60,9 @@ cmake -S "${CORE}" -B "${BUILD_DIR}" \
   "${CMAKE_LAUNCHER_ARGS[@]}" \
   "${CMAKE_FAST_ARGS[@]}"
 
-if [[ "${TARGET}" == "fury-only" ]]; then
+if [[ "${TARGET}" == "configure-only" ]]; then
+  echo "[FURY] configure-only target complete"
+elif [[ "${TARGET}" == "fury-only" ]]; then
   echo "[FURY] compile mod-fury translation units only"
   FURY_BUILD_JOBS="${JOBS}" python3 "${ROOT}/scripts/compile-fury-only.py" \
     "${BUILD_DIR}/compile_commands.json"
