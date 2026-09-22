@@ -27,7 +27,7 @@ if command -v ninja >/dev/null 2>&1; then
 fi
 
 CMAKE_FAST_ARGS=()
-if [[ "${TARGET}" == "fury-only" ]]; then
+if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "living-world-only" ]]; then
   CMAKE_FAST_ARGS+=(
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
     "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"
@@ -60,7 +60,11 @@ cmake -S "${CORE}" -B "${BUILD_DIR}" \
 
 if [[ "${TARGET}" == "fury-only" ]]; then
   echo "[FURY] compile mod-fury translation units only"
-  FURY_BUILD_JOBS="${JOBS}" python3 "${ROOT}/scripts/compile-fury-only.py" \
+  FURY_BUILD_JOBS="${JOBS}" FURY_SOURCE_MODULE="mod-fury" python3 "${ROOT}/scripts/compile-fury-only.py" \
+    "${BUILD_DIR}/compile_commands.json"
+elif [[ "${TARGET}" == "living-world-only" ]]; then
+  echo "[FURY] compile mod-living-world translation units only"
+  FURY_BUILD_JOBS="${JOBS}" FURY_SOURCE_MODULE="mod-living-world" python3 "${ROOT}/scripts/compile-fury-only.py" \
     "${BUILD_DIR}/compile_commands.json"
 elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
