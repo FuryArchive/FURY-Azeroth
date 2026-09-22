@@ -24,6 +24,8 @@
 #include "director/DirectorRepository.h"
 #include "director/DirectorService.h"
 #include "director/DirectorReconciliation.h"
+#include "professions/ProfessionOrderRepository.h"
+#include "professions/ProfessionOrderService.h"
 
 namespace Fury
 {
@@ -53,6 +55,10 @@ public:
     DirectorReconciliationService& DirectorReconciliation()
     {
         return _directorReconciliation;
+    }
+    ProfessionOrderService& ProfessionOrders()
+    {
+        return _professionOrders;
     }
 
 private:
@@ -103,6 +109,9 @@ private:
     DirectorRepository _directorRepository;
     DirectorService _director;
     DirectorReconciliationService _directorReconciliation;
+
+    ProfessionOrderRepository _professionOrderRepository;
+    ProfessionOrderService _professionOrders;
 
     TickConfig _ticks;
 
