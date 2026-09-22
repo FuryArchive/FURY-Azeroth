@@ -23,7 +23,7 @@ if ! [[ "${SMOKE_RUNS}" =~ ^[1-9][0-9]*$ ]]; then
   exit 2
 fi
 
-run_smoke_once() {
+run_smoke_once() (
   local run_number="$1"
   local workdir fifo log server_pid=""
   workdir="$(mktemp -d)"
@@ -64,7 +64,7 @@ run_smoke_once() {
     return 1
   }
 
-  trap cleanup_run RETURN
+  trap cleanup_run EXIT
 
   echo "[FURY] starting worldserver smoke run ${run_number}/${SMOKE_RUNS}"
   "${WORLDSERVER}" -c "${WORLDSERVER_CONF}" <"${fifo}" >"${log}" 2>&1 &
@@ -108,7 +108,7 @@ run_smoke_once() {
   fi
 
   echo "[FURY][PASS] run ${run_number}: startup/validation/shutdown"
-}
+)
 
 for ((run_number = 1; run_number <= SMOKE_RUNS; run_number++)); do
   run_smoke_once "${run_number}"
