@@ -6,6 +6,7 @@
 #include <optional>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace Fury
 {
@@ -19,6 +20,8 @@ public:
         RewardRequest const& request) const;
 
     void InsertClaim(RewardRequest const& request) const;
+
+    [[nodiscard]] std::vector<RewardClaimView> TailClaims(uint32 limit) const;
 };
 }
 
