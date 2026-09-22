@@ -1,8 +1,10 @@
 #include "CampaignService.h"
 #include "CampaignPolicy.h"
+#include "CampaignAccessPolicy.h"
 
 #include "core/FuryKey.h"
 #include "events/EventStore.h"
+#include "integrations/IndividualProgressionAdapter.h"
 #include "StringFormat.h"
 
 namespace Fury
@@ -46,9 +48,11 @@ char const* TransitionKey(CampaignStatus status)
 
 CampaignService::CampaignService(
     CampaignRepository const& repository,
-    EventStore const& events)
+    EventStore const& events,
+    IndividualProgressionAdapter const& individualProgression)
     : _repository(repository),
-      _events(events)
+      _events(events),
+      _individualProgression(individualProgression)
 {
 }
 
@@ -66,6 +70,71 @@ std::optional<PowerBand> CampaignService::GetHouseholdPowerBand(
     HouseholdId householdId) const
 {
     return _repository.CalculateHouseholdPowerBand(householdId);
+}
+
+CampaignCharacterAccessResult CampaignService::CheckCharacterAccess(
+    Player* player,
+    HouseholdId householdId,
+    std::string_view nodeKey) const
+{
+    if (!IsCanonicalKey(nodeKey))
+    {
+        return {
+            CampaignCharacterAccessOutcome::NodeNotFound,
+            CampaignStatus::Locked,
+            0,
+            0
+        };
+    }
+
+    std::optional<CampaignNodeDefinition> node =
+        _repository.FindNode(nodeKey);
+    if (!node)
+    {
+        return {
+            CampaignCharacterAccessOutcome::NodeNotFound,
+            CampaignStatus::Locked,
+            0,
+            0
+        };
+    }
+
+    if (!node->enabled)
+    {
+        return {
+            CampaignCharacterAccessOutcome::NodeDisabled,
+            CampaignStatus::Locked,
+            node->ipRequiredState,
+            0
+        };
+    }
+
+    CampaignStatus const householdStatus =
+        GetStatus(householdId, nodeKey);
+
+    if (householdStatus == CampaignStatus::Locked)
+    {
+        return {
+            CampaignCharacterAccessOutcome::HouseholdLocked,
+            householdStatus,
+            node->ipRequiredState,
+            0
+        };
+    }
+
+    IndividualProgressionGateResult const gate =
+        _individualProgression.Check(
+            player,
+            node->ipRequiredState);
+
+    return {
+        EvaluateCampaignCharacterAccess(
+            householdStatus,
+            gate.outcome),
+        householdStatus,
+        gate.requiredState,
+        gate.currentState
+    };
 }
 
 CampaignTransitionResult CampaignService::MarkAvailable(

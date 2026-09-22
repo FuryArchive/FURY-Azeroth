@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13–T18 are GREEN; T19 Individual Progression read-only adapter is next.
+- M2 Campaign Platform: IN_PROGRESS — T13–T18 are GREEN; T19 Individual Progression read-only adapter is the only active scope.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,8 +123,13 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Begin **T19 Individual Progression read-only adapter** next.
+Complete **T19 Individual Progression read-only adapter** only:
 
-T18 is GREEN through fast policy/schema/replay gates plus Fast mod-fury compile. Full Runtime was intentionally not required because the narrowed integration trigger surface was not changed.
+1. read pinned IP progression without mutation APIs or IP-owned DB writes;
+2. compile cleanly when IndividualProgression.h is absent;
+3. fail closed for unavailable/disabled/incompatible required IP gates;
+4. keep ip_required_state as content metadata on Campaign nodes;
+5. combine household unlock + character gate only at CheckCharacterAccess();
+6. keep M1 + T13–T18 fast regressions mandatory.
 
 T20 remains READY and is intentionally outside this pass.

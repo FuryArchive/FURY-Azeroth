@@ -26,7 +26,7 @@ App::App()
       _rewards(_rewardRepository, _rewardPolicy),
       _chronicle(_chronicleRepository),
       _diagnostics(*this, _diagnosticsRepository),
-      _campaign(_campaignRepository, _events),
+      _campaign(_campaignRepository, _events, _individualProgression),
       _proofs(_proofRepository, _events),
       _contracts(_contractRepository, _events),
       _director(_directorRepository, _events),
