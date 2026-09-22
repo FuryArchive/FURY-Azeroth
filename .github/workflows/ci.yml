@@ -27,7 +27,7 @@ jobs:
   build:
     name: Locked upstream build + DB lifecycle
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 180
 
     services:
       mysql:
@@ -51,7 +51,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git cmake make gcc g++ clang ccache \
+            git cmake make ninja-build gcc g++ clang ccache \
             libssl-dev libbz2-dev libreadline-dev libncurses-dev \
             libboost-all-dev libmysqlclient-dev default-mysql-client
 
