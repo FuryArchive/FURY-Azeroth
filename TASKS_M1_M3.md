@@ -292,7 +292,7 @@ Acceptance:
 - proof lookup is cheap and indexed.
 
 ## T15 Contracts core
-Status: READY
+Status: IN_PROGRESS
 Depends on: T07, T09, T13
 Commit target: `feat(contracts): add contract definitions and runtime`
 
