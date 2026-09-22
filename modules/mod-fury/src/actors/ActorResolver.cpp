@@ -1,4 +1,5 @@
 #include "ActorResolver.h"
+#include "ActorPolicy.h"
 
 #include "household/HouseholdService.h"
 #include "Player.h"
@@ -28,27 +29,18 @@ ActorContext ActorResolver::Resolve(Player* player) const
     if (WorldSession* session = player->GetSession())
         result.accountId = session->GetAccountId();
 
-    if (IsRealPlayer(player))
-    {
-        result.kind = ActorKind::Human;
-        result.isEligibleForPersistentProgression = true;
-
-        if (_households && result.accountId)
-            result.householdId = _households->FindByAccount(result.accountId);
-
-        return result;
-    }
+    bool const isReal = IsRealPlayer(player);
 
     if (_households && result.accountId)
         result.householdId = _households->FindByAccount(result.accountId);
 
-    if (result.householdId)
-    {
-        result.kind = ActorKind::HouseholdAltBot;
-        return result;
-    }
+    result.kind = ClassifyActor(
+        true,
+        isReal,
+        result.householdId.has_value());
+    result.isEligibleForPersistentProgression =
+        IsPersistentProgressionAuthority(result.kind);
 
-    result.kind = ActorKind::RandomPlayerBot;
     return result;
 }
 }
