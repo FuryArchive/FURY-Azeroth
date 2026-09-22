@@ -63,6 +63,12 @@ CampaignStatus CampaignService::GetStatus(
     return state ? state->status : CampaignStatus::Locked;
 }
 
+std::optional<PowerBand> CampaignService::CurrentPowerBand(
+    HouseholdId householdId) const
+{
+    return _repository.FindHouseholdPowerBand(householdId);
+}
+
 CampaignTransitionResult CampaignService::MarkAvailable(
     FuryEvent const& source,
     std::string_view nodeKey) const
