@@ -11,7 +11,8 @@ enum class IndividualProgressionAvailability : uint8
 {
     Unavailable = 1,
     Disabled = 2,
-    Available = 3
+    PlayerSettingsDisabled = 3,
+    Available = 4
 };
 
 enum class IndividualProgressionGateOutcome : uint8
@@ -20,9 +21,10 @@ enum class IndividualProgressionGateOutcome : uint8
     NotRequired = 2,
     ModuleUnavailable = 3,
     ModuleDisabled = 4,
-    InvalidRequiredState = 5,
-    PlayerUnavailable = 6,
-    NotPassed = 7
+    PlayerSettingsDisabled = 5,
+    InvalidRequiredState = 6,
+    PlayerUnavailable = 7,
+    NotPassed = 8
 };
 
 struct IndividualProgressionGateResult
