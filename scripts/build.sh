@@ -45,6 +45,9 @@ cmake --build "${BUILD_DIR}" --target modules --parallel "${JOBS}"
 echo "[FURY] build full server with ${JOBS} job(s)"
 cmake --build "${BUILD_DIR}" --parallel "${JOBS}"
 
+echo "[FURY] install build artifacts"
+cmake --install "${BUILD_DIR}"
+
 if command -v ccache >/dev/null 2>&1; then
   ccache --show-stats || true
 fi
