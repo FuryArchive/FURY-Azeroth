@@ -298,7 +298,8 @@ void DatabaseConnection::DoPrepareStatements()
         "INSERT IGNORE INTO fury_director_participation "
         "(run_id, contribution_key, points, source_event_id) "
         "SELECT id, ?, ?, ? FROM fury_director_run "
-        "WHERE id = ? AND household_id = ? AND status IN (1, 2, 3)",
+        "WHERE id = ? AND household_id = ? AND revision = ? "
+        "AND status IN (1, 2)",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_RECALC_DIRECTOR_PARTICIPATION,
         "UPDATE fury_director_run SET "
