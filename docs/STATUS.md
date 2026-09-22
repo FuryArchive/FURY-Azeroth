@@ -25,7 +25,8 @@ Date: 2026-09-23
 - T20 M2 automated gate: GREEN.
 - **M2 Campaign Platform: GREEN.**
 - T21 Living World source audit: GREEN.
-- M3 Defias Resurgence vertical slice: IN_PROGRESS — T22 narrow Living World bridge patch is next.
+- T22 Living World external bridge patch: GREEN.
+- M3 Defias Resurgence vertical slice: IN_PROGRESS — T23 FURY LivingWorldAdapter is next.
 
 ## Repository baseline
 
@@ -137,4 +138,6 @@ The fast `mod-fury` compile passed in the same run. Full AzerothCore/worldserver
 
 T21 is GREEN. See `docs/T21_LIVING_WORLD_AUDIT.md`.
 
-Begin **T22 Living World external bridge patch** next. After T21, the bridge scope is narrowed to stable creature-GUID -> runtime/spawn-group metadata lookup plus a compatibility guard; controlled start, runtime query, signal emission and authored-data validation already exist publicly.
+T22 is GREEN through PR #23 / commit `4697a9dc58c78a0a1b44187cb416c490ccf13667`. Fast CI run #122 passed the strict pinned patch-application guard, standalone patched Living World translation-unit compile with `mod-fury` removed, Fast mod-fury compile, and M2 regressions.
+
+Begin **T23 FURY LivingWorldAdapter** next. All Living World calls from first-party FURY code must terminate at this adapter boundary.
