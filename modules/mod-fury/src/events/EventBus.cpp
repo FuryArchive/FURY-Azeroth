@@ -71,8 +71,11 @@ bool EventBus::ReplayConsumer(EventConsumer& consumer)
     // to be idempotent, so a crash before this write may replay part of the
     // batch but can never skip durable events. This keeps write amplification
     // bounded for long histories.
-    if (lastHandled != checkpoint)
-        _checkpoints.Advance(consumer.Key(), lastHandled);
+    if (lastHandled != checkpoint &&
+        !_checkpoints.Advance(consumer.Key(), lastHandled))
+    {
+        return false;
+    }
 
     return true;
 }
