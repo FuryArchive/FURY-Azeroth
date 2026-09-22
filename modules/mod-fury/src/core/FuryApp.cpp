@@ -69,6 +69,29 @@ void App::Initialize()
         _enabled = false;
     }
 
+    if (_enabled && !_defiasContent.Initialize(_livingWorld))
+    {
+        LOG_ERROR(
+            "server.loading",
+            "[FURY] Defias content validation failed; M3 Defias content is disabled.");
+
+        for (Defias::ContentIssue const& issue :
+             _defiasContent.Validation().issues)
+        {
+            LOG_ERROR(
+                "server.loading",
+                "[FURY] Defias content issue [{}]: {}",
+                issue.key,
+                issue.message);
+        }
+    }
+    else if (_enabled)
+    {
+        LOG_INFO(
+            "server.loading",
+            "[FURY] Defias authored-content contract validated.");
+    }
+
     _initialized = true;
 
     LOG_INFO(
@@ -106,6 +129,7 @@ void App::Shutdown()
 
     LOG_INFO("server.loading", "[FURY] mod-fury shutdown.");
 
+    _defiasContent.Reset();
     _livingWorld.Reset();
     _households.Shutdown();
     ResetTimers();
