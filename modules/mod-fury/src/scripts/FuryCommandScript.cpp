@@ -88,6 +88,8 @@ char const* HouseholdResultName(Fury::HouseholdMemberResult result)
             return "household-not-found";
         case Fury::HouseholdMemberResult::PersistenceFailed:
             return "persistence-failed";
+        case Fury::HouseholdMemberResult::ActorNotEligible:
+            return "actor-not-eligible";
     }
 
     return "unknown";
@@ -275,9 +277,9 @@ private:
         }
 
         Fury::HouseholdMemberResult added =
-            Fury::App::Instance().Households().AddMember(
+            Fury::App::Instance().Households().AddHumanMember(
                 *created.householdId,
-                actor.accountId);
+                actor);
 
         if (added != Fury::HouseholdMemberResult::Added &&
             added != Fury::HouseholdMemberResult::AlreadyMember)
@@ -341,9 +343,9 @@ private:
         }
 
         Fury::HouseholdMemberResult result =
-            Fury::App::Instance().Households().AddMember(
+            Fury::App::Instance().Households().AddHumanMember(
                 *ownerActor.householdId,
-                targetActor.accountId);
+                targetActor);
 
         handler->PSendSysMessage(
             "FURY household add: account={} result={}",
