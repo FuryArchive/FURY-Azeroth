@@ -25,9 +25,23 @@ jobs:
         run: bash scripts/test-m1-actor-policy.sh
 
   build:
-    name: Locked upstream build
+    name: Locked upstream build + DB lifecycle
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
 
     steps:
       - name: Checkout FURY
@@ -39,7 +53,7 @@ jobs:
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
             git cmake make gcc g++ clang ccache \
             libssl-dev libbz2-dev libreadline-dev libncurses-dev \
-            libboost-all-dev libmysqlclient-dev
+            libboost-all-dev libmysqlclient-dev default-mysql-client
 
       - name: Restore compiler cache
         uses: actions/cache@v4
@@ -63,6 +77,14 @@ jobs:
         env:
           FURY_BUILD_JOBS: "4"
         run: bash scripts/build.sh
+
+      - name: Run real FURY database lifecycle smoke
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+        run: bash scripts/smoke-fury-db-lifecycle.sh
 
   module-compile:
     name: Fast mod-fury compile
