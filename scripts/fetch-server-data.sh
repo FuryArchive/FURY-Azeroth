@@ -70,7 +70,13 @@ import zipfile
 
 archive = Path(sys.argv[1])
 target = Path(sys.argv[2])
-wanted_dirs = {"dbc", "maps", "vmaps", "cameras"}
+canonical_dirs = {
+    "dbc": "dbc",
+    "maps": "maps",
+    "vmaps": "vmaps",
+    "cameras": "Cameras",
+}
+wanted_dirs = set(canonical_dirs)
 copied = {name: 0 for name in wanted_dirs}
 
 with zipfile.ZipFile(archive) as zf:
@@ -95,8 +101,10 @@ with zipfile.ZipFile(archive) as zf:
             else:
                 continue
         else:
-            relative_parts = parts[root_index:]
-            destination = target.joinpath(*relative_parts)
+            relative_parts = parts[root_index + 1:]
+            destination = target / canonical_dirs[canonical_root.lower()]
+            if relative_parts:
+                destination = destination.joinpath(*relative_parts)
 
         destination.parent.mkdir(parents=True, exist_ok=True)
         with zf.open(info) as source, destination.open("wb") as sink:
