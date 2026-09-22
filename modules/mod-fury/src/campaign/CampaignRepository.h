@@ -34,9 +34,7 @@ public:
         EventId sourceEventId,
         uint64 expectedRevision) const;
 
-    void RaiseHouseholdPowerBand(
-        HouseholdId householdId,
-        PowerBand powerBand) const;
+    void RecalculateHouseholdPowerBand(HouseholdId householdId) const;
 };
 }
 
