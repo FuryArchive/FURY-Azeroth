@@ -187,6 +187,20 @@ std::optional<DirectorParticipation> DirectorRepository::FindParticipation(
     return participation;
 }
 
+std::optional<uint32> DirectorRepository::ParticipationTotal(
+    DirectorRunId runId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_DIRECTOR_PARTICIPATION_TOTAL);
+    stmt->SetData(0, runId);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return std::nullopt;
+
+    return result->Fetch()[0].Get<uint32>();
+}
+
 void DirectorRepository::InsertParticipation(
     DirectorRunId runId,
     HouseholdId householdId,
