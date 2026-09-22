@@ -2,7 +2,10 @@
 
 #include "HouseholdRepository.h"
 
+#include "Log.h"
+
 #include <string>
+#include <unordered_map>
 
 namespace Fury
 {
@@ -14,6 +17,26 @@ HouseholdService::HouseholdService(HouseholdRepository const& repository)
 bool HouseholdService::Initialize()
 {
     auto memberships = _repository.LoadMemberships();
+
+    std::unordered_map<HouseholdId, uint32> counts;
+    for (auto const& [accountId, householdId] : memberships)
+    {
+        (void)accountId;
+        uint32& count = counts[householdId];
+        ++count;
+
+        if (count > MaxHumanMembers)
+        {
+            LOG_ERROR(
+                "server.loading",
+                "[FURY] household {} has {} member accounts; M1 maximum is {}. "
+                "Refusing to initialize the household cache.",
+                householdId,
+                count,
+                MaxHumanMembers);
+            return false;
+        }
+    }
 
     std::unique_lock lock(_membershipMutex);
     _membershipByAccount.clear();
