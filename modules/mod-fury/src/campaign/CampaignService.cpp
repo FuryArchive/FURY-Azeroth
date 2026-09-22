@@ -1,4 +1,5 @@
 #include "CampaignService.h"
+#include "CampaignPolicy.h"
 
 #include "events/EventStore.h"
 #include "StringFormat.h"
@@ -115,30 +116,16 @@ CampaignTransitionResult CampaignService::Transition(
     CampaignStatus const current =
         state ? state->status : CampaignStatus::Locked;
 
-    if (static_cast<uint8>(current) >= static_cast<uint8>(target))
+    CampaignTransitionDisposition const disposition =
+        EvaluateCampaignTransition(current, target);
+
+    if (disposition == CampaignTransitionDisposition::AlreadyApplied)
     {
         EmitTransitionEvent(source, *node, target);
         return {CampaignTransitionOutcome::AlreadyApplied, current};
     }
 
-    bool valid = false;
-    if (current == CampaignStatus::Locked &&
-        target == CampaignStatus::Available)
-    {
-        valid = true;
-    }
-    else if (current == CampaignStatus::Available &&
-             target == CampaignStatus::Active)
-    {
-        valid = true;
-    }
-    else if (current == CampaignStatus::Active &&
-             target == CampaignStatus::Complete)
-    {
-        valid = true;
-    }
-
-    if (!valid)
+    if (disposition == CampaignTransitionDisposition::Reject)
         return {CampaignTransitionOutcome::InvalidTransition, current};
 
     if (!state)
