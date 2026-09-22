@@ -42,7 +42,7 @@ assert_eq() {
   echo "[FURY][PASS] ${message}"
 }
 
-for table in fury_director_graph fury_director_run; do
+for table in fury_director_graph fury_director_run fury_director_participation; do
   present="$(sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '${MYSQL_DATABASE}' AND table_name = '${table}';")"
   assert_eq "1" "${present}" "table ${table} exists"
 done
@@ -86,6 +86,33 @@ assert_eq "2" "$(sql "SELECT revision FROM fury_director_run WHERE id=${run_id};
 sql "UPDATE fury_director_run SET external_runtime_id=9999, revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=2 AND status IN (1,2,3) AND (external_runtime_id IS NULL OR external_runtime_id=9999);"
 assert_eq "7001" "$(sql "SELECT external_runtime_id FROM fury_director_run WHERE id=${run_id};")" "different runtime cannot replace attached runtime"
 assert_eq "2" "$(sql "SELECT revision FROM fury_director_run WHERE id=${run_id};")" "runtime conflict leaves revision unchanged"
+
+echo "[FURY] participation contributions are idempotent and self-healing"
+participation_event_hash="UNHEX(SHA2('golden:director:participation:scouts', 256))"
+sql "INSERT INTO fury_event (event_type, actor_kind, actor_guid, account_id, household_id, source_system, dedupe_key, payload) VALUES ('golden.director.participation', 1, 1, 1001, 1, 'golden', ${participation_event_hash}, JSON_OBJECT());"
+participation_event_id="$(sql "SELECT id FROM fury_event WHERE dedupe_key=${participation_event_hash};")"
+
+sql "INSERT IGNORE INTO fury_director_participation (run_id, contribution_key, points, source_event_id) SELECT id, 'golden.scouts', 10, ${participation_event_id} FROM fury_director_run WHERE id=${run_id} AND household_id=1 AND revision=2 AND status IN (1,2);"
+sql "INSERT IGNORE INTO fury_director_participation (run_id, contribution_key, points, source_event_id) SELECT id, 'golden.scouts', 10, ${participation_event_id} FROM fury_director_run WHERE id=${run_id} AND household_id=1 AND revision=2 AND status IN (1,2);"
+assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_director_participation WHERE run_id=${run_id} AND contribution_key='golden.scouts';")" "duplicate participation contribution is stored once"
+
+sql "UPDATE fury_director_run SET participation_score=LEAST(100,COALESCE((SELECT SUM(points) FROM fury_director_participation WHERE run_id=${run_id}),0)), last_event_id=GREATEST(last_event_id,${participation_event_id}), revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=5 AND status IN (1,2,3);"
+assert_eq "10" "$(sql "SELECT participation_score FROM fury_director_run WHERE id=${run_id};")" "participation score derives from contribution rows"
+assert_eq "3" "$(sql "SELECT revision FROM fury_director_run WHERE id=${run_id};")" "participation recompute advances revision"
+
+sql "UPDATE fury_director_run SET participation_score=0 WHERE id=${run_id};"
+assert_eq "0" "$(sql "SELECT participation_score FROM fury_director_run WHERE id=${run_id};")" "simulated crash can leave stale score cache"
+sql "UPDATE fury_director_run SET participation_score=LEAST(100,COALESCE((SELECT SUM(points) FROM fury_director_participation WHERE run_id=${run_id}),0)), last_event_id=GREATEST(last_event_id,${participation_event_id}), revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=3 AND status IN (1,2,3);"
+assert_eq "10" "$(sql "SELECT participation_score FROM fury_director_run WHERE id=${run_id};")" "participation score self-heals from canonical contributions"
+assert_eq "4" "$(sql "SELECT revision FROM fury_director_run WHERE id=${run_id};")" "self-heal advances revision"
+
+participation2_hash="UNHEX(SHA2('golden:director:participation:garrick', 256))"
+sql "INSERT INTO fury_event (event_type, actor_kind, actor_guid, account_id, household_id, source_system, dedupe_key, payload) VALUES ('golden.director.participation', 1, 1, 1001, 1, 'golden', ${participation2_hash}, JSON_OBJECT());"
+participation2_id="$(sql "SELECT id FROM fury_event WHERE dedupe_key=${participation2_hash};")"
+sql "INSERT IGNORE INTO fury_director_participation (run_id, contribution_key, points, source_event_id) SELECT id, 'golden.garrick', 95, ${participation2_id} FROM fury_director_run WHERE id=${run_id} AND household_id=1 AND revision=4 AND status IN (1,2);"
+sql "UPDATE fury_director_run SET participation_score=LEAST(100,COALESCE((SELECT SUM(points) FROM fury_director_participation WHERE run_id=${run_id}),0)), last_event_id=GREATEST(last_event_id,${participation2_id}), revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=4 AND status IN (1,2,3);"
+assert_eq "100" "$(sql "SELECT participation_score FROM fury_director_run WHERE id=${run_id};")" "participation score is capped at 100"
+assert_eq "5" "$(sql "SELECT revision FROM fury_director_run WHERE id=${run_id};")" "second contribution advances revision"
 
 echo "[FURY] terminal run frees exclusive scope"
 resolve_event_hash="UNHEX(SHA2('golden:director:resolve', 256))"
