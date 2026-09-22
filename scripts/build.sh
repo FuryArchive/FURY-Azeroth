@@ -17,6 +17,16 @@ JOBS="${FURY_BUILD_JOBS:-2}"
 C_COMPILER="${CC:-clang}"
 CXX_COMPILER="${CXX:-clang++}"
 
+TARGET="${FURY_BUILD_TARGET:-}"
+
+CMAKE_FAST_ARGS=()
+if [[ "${TARGET}" == "fury-only" ]]; then
+  CMAKE_FAST_ARGS+=(
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"
+  )
+fi
+
 CMAKE_LAUNCHER_ARGS=()
 if command -v ccache >/dev/null 2>&1; then
   echo "[FURY] ccache enabled"
@@ -37,11 +47,14 @@ cmake -S "${CORE}" -B "${BUILD_DIR}" \
   -DSCRIPTS=static \
   -DMODULES=static \
   -DAPPS_BUILD=all \
-  "${CMAKE_LAUNCHER_ARGS[@]}"
+  "${CMAKE_LAUNCHER_ARGS[@]}" \
+  "${CMAKE_FAST_ARGS[@]}"
 
-TARGET="${FURY_BUILD_TARGET:-}"
-
-if [[ -n "${TARGET}" ]]; then
+if [[ "${TARGET}" == "fury-only" ]]; then
+  echo "[FURY] compile mod-fury translation units only"
+  FURY_BUILD_JOBS="${JOBS}" python3 "${ROOT}/scripts/compile-fury-only.py" \
+    "${BUILD_DIR}/compile_commands.json"
+elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
   cmake --build "${BUILD_DIR}" --target "${TARGET}" --parallel "${JOBS}"
 else
