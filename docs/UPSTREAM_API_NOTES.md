@@ -162,6 +162,8 @@ Pinned module:
 
 ### Invasion runtime
 
+Important T21 correction/refinement: the preferred controlled-start API is public `InvasionScheduler::TriggerInvasion(uint32 invasionId)`, which updates scheduler persistence and delegates to the runtime manager. FURY must use the scheduler entrypoint rather than calling the runtime manager directly.
+
 Verified file:
 
 `src/invasions/InvasionRuntimeManager.h`
@@ -308,9 +310,12 @@ Already public:
 - emit runtime signal;
 - query authored definitions/stages/groups/signals.
 
-Still to verify/implement for M3:
-- stable reverse lookup from runtime-spawned `Creature` to runtime id + authored spawn group id;
-- lifecycle/stage-change callback surface suitable for `mod-fury`, or a clean polling/reconciliation alternative if callbacks would over-couple the modules.
+Still to implement for M3:
+- stable reverse lookup from runtime-spawned `Creature`/GUID to runtime id + authored spawn group id.
+
+T21 selected the polling/reconciliation alternative for lifecycle/stage observation. Existing public runtime/current-stage query APIs are sufficient, so no lifecycle callback framework should be added.
+
+T21 also verified that runtime signals are in-memory only; FURY reconciliation must re-emit a durable objective's signal when needed after restart. `EmitSignal` is idempotent within one runtime.
 
 Policy:
 
