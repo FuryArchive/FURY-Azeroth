@@ -18,7 +18,7 @@ public:
 
     bool Handle(FuryEvent const& event) override;
 
-    void Record(
+    [[nodiscard]] bool Record(
         FuryEvent const& event,
         std::string_view entryKey,
         std::string_view category,
