@@ -15,6 +15,10 @@
 #include "chronicle/ChronicleService.h"
 #include "diagnostics/DiagnosticsRepository.h"
 #include "diagnostics/DiagnosticsService.h"
+#include "campaign/CampaignRepository.h"
+#include "campaign/CampaignService.h"
+#include "proofs/ProofRepository.h"
+#include "proofs/ProofService.h"
 
 namespace Fury
 {
@@ -37,6 +41,8 @@ public:
     RewardService& Rewards() { return _rewards; }
     ChronicleService& Chronicle() { return _chronicle; }
     DiagnosticsService& Diagnostics() { return _diagnostics; }
+    CampaignService& Campaign() { return _campaign; }
+    ProofService& Proofs() { return _proofs; }
 
 private:
     struct TickConfig
@@ -73,6 +79,12 @@ private:
 
     DiagnosticsRepository _diagnosticsRepository;
     DiagnosticsService _diagnostics;
+
+    CampaignRepository _campaignRepository;
+    CampaignService _campaign;
+
+    ProofRepository _proofRepository;
+    ProofService _proofs;
 
     TickConfig _ticks;
 
