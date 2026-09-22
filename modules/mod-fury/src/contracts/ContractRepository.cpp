@@ -109,7 +109,7 @@ bool ContractRepository::HasCompletedInstance(
     return static_cast<bool>(FuryDatabase.Query(stmt));
 }
 
-uint32 ContractRepository::CountObjectives(
+std::optional<uint32> ContractRepository::CountObjectives(
     std::string_view contractKey) const
 {
     DatabasePreparedStatement* stmt =
@@ -118,7 +118,7 @@ uint32 ContractRepository::CountObjectives(
 
     PreparedQueryResult result = FuryDatabase.Query(stmt);
     if (!result)
-        return 0;
+        return std::nullopt;
 
     return result->Fetch()[0].Get<uint32>();
 }
