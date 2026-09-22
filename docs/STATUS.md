@@ -24,7 +24,7 @@ Date: 2026-09-22
 - T11 diagnostics: IN_PROGRESS on `agent/t11-diagnostics`; `.fury status/actor/household/event/reward/validate` implemented, compile/permission/runtime tests pending.
 - T12 M1 gate: IN_PROGRESS on `agent/t12-m1-gate`; fast MySQL 8 schema/idempotency gate is GREEN, full locked build/worldserver acceptance still required.
 - M1 overall: IN_PROGRESS.
-- M2 T13 Campaign + T14 Proofs: IN_PROGRESS on stacked branch `agent/m2-campaign-proofs`; schema/repositories/services implemented, M2 DB gate added, merge blocked on M1 GREEN.
+- M2 T13 Campaign + T14 Proofs: IN_PROGRESS in PR #8 on `agent/m2-campaign-proofs`; schema/repositories/services implemented, M2 DB gate added, merge blocked on M1 GREEN.
 - M2 remaining/M3: READY, blocked by prior milestone gates.
 
 ## Repository baseline
