@@ -130,5 +130,41 @@ void DatabaseConnection::DoPrepareStatements()
         "GROUP BY household_id HAVING COUNT(*) > 2"
         ") overfull)",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_CAMPAIGN_NODE,
+        "SELECT era, ordinal, display_name, required_power_band, grants_power_band, enabled "
+        "FROM fury_campaign_node WHERE node_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CAMPAIGN_STATE,
+        "SELECT status, source_event_id, revision "
+        "FROM fury_campaign_state WHERE household_id = ? AND node_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_HOUSEHOLD_POWER_BAND,
+        "SELECT current_power_band FROM fury_household WHERE id = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DERIVED_CAMPAIGN_POWER_BAND,
+        "SELECT COALESCE(MAX(n.grants_power_band), 0) "
+        "FROM fury_campaign_state s "
+        "JOIN fury_campaign_node n ON n.node_key = s.node_key "
+        "WHERE s.household_id = ? AND s.status = 4",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_CAMPAIGN_STATE,
+        "INSERT IGNORE INTO fury_campaign_state "
+        "(household_id, node_key, status, source_event_id, revision) "
+        "VALUES (?, ?, ?, ?, 0)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_CAMPAIGN_STATE,
+        "UPDATE fury_campaign_state SET "
+        "status = ?, "
+        "activated_at = CASE WHEN ? = 3 AND activated_at IS NULL THEN CURRENT_TIMESTAMP(6) ELSE activated_at END, "
+        "completed_at = CASE WHEN ? = 4 AND completed_at IS NULL THEN CURRENT_TIMESTAMP(6) ELSE completed_at END, "
+        "source_event_id = ?, "
+        "revision = revision + 1 "
+        "WHERE household_id = ? AND node_key = ? AND revision = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_HOUSEHOLD_POWER_BAND,
+        "UPDATE fury_household SET current_power_band = ?, revision = revision + 1 "
+        "WHERE id = ? AND current_power_band <> ?",
+        CONNECTION_SYNCH);
 }
 }
