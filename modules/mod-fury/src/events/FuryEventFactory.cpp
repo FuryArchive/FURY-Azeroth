@@ -204,6 +204,34 @@ FuryEvent FuryEventFactory::ItemLooted(
     return event;
 }
 
+FuryEvent FuryEventFactory::ProfessionCrafted(
+    Player* player,
+    uint32 skillId,
+    uint32 recipeSpellId,
+    uint32 itemId,
+    uint32 count)
+{
+    FuryEvent event = Base(player, "profession.crafted");
+
+    uint64 const target =
+        (static_cast<uint64>(skillId) << 32) |
+        static_cast<uint64>(itemId);
+
+    event.subjectType = "profession_craft";
+    event.subjectId = target;
+    event.payloadJson = Acore::StringFormat(
+        "{{\"skill_id\":{},\"recipe_spell_id\":{},"
+        "\"item_id\":{},\"count\":{}}}",
+        skillId,
+        recipeSpellId,
+        itemId,
+        count);
+    event.dedupeIdentity =
+        OccurrenceIdentity("profession-craft", player);
+
+    return event;
+}
+
 FuryEvent FuryEventFactory::ItemCreated(
     Player* player,
     Item* item,
