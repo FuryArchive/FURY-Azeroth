@@ -69,7 +69,8 @@ enum class DirectorOutcome : uint8
     InvalidState = 11,
     RevisionConflict = 12,
     RuntimeConflict = 13,
-    PersistenceFailed = 14
+    PersistenceFailed = 14,
+    ParticipationConflict = 15
 };
 
 struct DirectorResult
