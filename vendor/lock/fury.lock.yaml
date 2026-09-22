@@ -36,5 +36,19 @@
       "milestone": "M4",
       "reason": "Keep M3 focused on proving the FURY kernel and Living World integration before adding another external gameplay runtime."
     }
+  },
+  "client_data": {
+    "repository": "wowgaming/client-data",
+    "release": "v20.0",
+    "asset": "Data.zip",
+    "sha256": "a3d4df635ae6c2c8f08052c32a79e0f806955150ad36b014a823dd08a32a4610",
+    "size_bytes": 1196168257,
+    "locale": "enUS",
+    "required_directories": [
+      "dbc",
+      "maps",
+      "vmaps"
+    ],
+    "note": "Pinned pre-extracted data release linked by the official AzerothCore server setup documentation. mmaps are intentionally omitted from CI startup smoke."
   }
 }

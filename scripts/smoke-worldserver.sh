@@ -5,6 +5,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 WORLDSERVER="${FURY_WORLDSERVER:-${ROOT}/build/dist/bin/worldserver}"
 WORLDSERVER_CONF="${FURY_WORLDSERVER_CONF:-${ROOT}/build/dist/etc/worldserver.conf}"
+if [[ ! -f "${WORLDSERVER_CONF}" && -f "${WORLDSERVER_CONF}.dist" ]]; then
+  WORLDSERVER_CONF="${WORLDSERVER_CONF}.dist"
+fi
 STARTUP_TIMEOUT="${FURY_STARTUP_TIMEOUT:-180}"
 SMOKE_RUNS="${FURY_SMOKE_RUNS:-2}"
 

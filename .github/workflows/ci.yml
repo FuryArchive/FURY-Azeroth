@@ -51,7 +51,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git cmake make ninja-build gcc g++ clang ccache \
+            git cmake make ninja-build gcc g++ clang ccache curl \
             libssl-dev libbz2-dev libreadline-dev libncurses-dev \
             libboost-all-dev libmysqlclient-dev default-mysql-client
 
@@ -85,6 +85,26 @@ jobs:
           MYSQL_USER: root
           MYSQL_PASSWORD: fury
         run: bash scripts/smoke-fury-db-lifecycle.sh
+
+      - name: Free compiler intermediates
+        run: rm -rf build/azerothcore
+
+      - name: Restore pinned server-data cache
+        uses: actions/cache@v4
+        with:
+          path: build/server-data
+          key: fury-server-data-v20-a3d4df635ae6c2c8
+
+      - name: Fetch pinned startup server data
+        run: bash scripts/fetch-server-data.sh
+
+      - name: Run full worldserver startup/restart smoke
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+        run: bash scripts/smoke-worldserver-ci.sh
 
   module-compile:
     name: Fast mod-fury compile
