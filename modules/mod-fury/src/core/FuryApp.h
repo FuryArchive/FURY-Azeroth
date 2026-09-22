@@ -18,6 +18,7 @@
 #include "campaign/CampaignRepository.h"
 #include "campaign/CampaignService.h"
 #include "integrations/IndividualProgressionAdapter.h"
+#include "integrations/LivingWorldAdapter.h"
 #include "proofs/ProofRepository.h"
 #include "proofs/ProofService.h"
 #include "contracts/ContractRepository.h"
@@ -55,6 +56,10 @@ public:
     IndividualProgressionAdapter& IndividualProgression()
     {
         return _individualProgression;
+    }
+    LivingWorldAdapter& LivingWorld()
+    {
+        return _livingWorld;
     }
     ProofService& Proofs() { return _proofs; }
     ContractService& Contracts() { return _contracts; }
@@ -106,6 +111,7 @@ private:
     DiagnosticsService _diagnostics;
 
     IndividualProgressionAdapter _individualProgression;
+    LivingWorldAdapter _livingWorld;
     CampaignRepository _campaignRepository;
     CampaignService _campaign;
 
