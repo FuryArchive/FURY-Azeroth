@@ -21,7 +21,7 @@ Date: 2026-09-22
 - T11 diagnostics/validation shell: GREEN.
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
-- M2 Campaign Platform: READY and now unblocked.
+- M2 Campaign Platform: IN_PROGRESS — T13 Campaign schema/service is the only active M2 scope.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -101,13 +101,11 @@ The M1 gate therefore satisfies the repository rule that source presence alone i
 
 ## Immediate next gate
 
-Begin **M2 — Campaign Platform**:
+Complete **T13 Campaign schema/service** only:
 
-1. T13 Campaign schema/service.
-2. T14 durable Proof service.
-3. T15 Contracts core.
-4. T16 persistent Director runtime.
-5. T17 profession-order subsystem.
-6. T18 minimal Bestiary projection.
-7. T19 read-only Individual Progression adapter.
-8. T20 M2 regression/golden gate, with M1 remaining mandatory.
+1. fresh-install and M1-upgrade schema paths;
+2. forward-only transitions with optimistic revisions;
+3. household power band derived only from completed campaign nodes;
+4. idempotent recovery and stale-revision tests.
+
+T14+ remain READY and are intentionally outside this pass.
