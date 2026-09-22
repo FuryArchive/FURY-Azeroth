@@ -358,7 +358,7 @@ Acceptance:
 - campaign eligibility combines household unlock + character gate at service boundary.
 
 ## T20 M2 automated gate
-Status: READY
+Status: GREEN
 Depends on: T13–T19
 Commit target: `test: add campaign platform golden suite`
 
@@ -628,4 +628,6 @@ Do not silently pull these into current scope:
 
 Gate 0 and **M1 FURY Kernel are GREEN**. PR #7 passed fast module compilation, MySQL 8 schema/idempotency, actor-policy golden scenarios, the pinned production worldserver build, real module database create/populate/update/restart, and two consecutive full worldserver startup/validation/shutdown smokes with pinned runtime data.
 
-T13 Campaign schema/service is GREEN. Continue with T14–T20 in dependency order and keep the full M1 regression gate mandatory for M2 acceptance.
+T13–T20 are GREEN and **M2 Campaign Platform is GREEN**. GitHub Actions run #118 passed the dedicated T20 aggregate gate, all M1 regressions, T13–T19 policy/schema scenarios, and Fast mod-fury compile.
+
+Continue with **T21 Living World source audit** using only the exact pinned upstream revision before any M3 bridge/content code.
