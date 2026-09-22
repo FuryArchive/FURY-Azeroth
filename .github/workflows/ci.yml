@@ -49,7 +49,7 @@ jobs:
 
       - name: Build
         env:
-          FURY_BUILD_JOBS: "2"
+          FURY_BUILD_JOBS: "4"
         run: bash scripts/build.sh
 
 
