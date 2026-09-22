@@ -27,6 +27,8 @@
 #include "director/DirectorReconciliation.h"
 #include "professions/ProfessionOrderRepository.h"
 #include "professions/ProfessionOrderService.h"
+#include "bestiary/BestiaryRepository.h"
+#include "bestiary/BestiaryService.h"
 
 namespace Fury
 {
@@ -58,6 +60,7 @@ public:
         return _directorReconciliation;
     }
     ProfessionOrderService& ProfessionOrders() { return _professionOrders; }
+    BestiaryService& Bestiary() { return _bestiary; }
 
 private:
     struct TickConfig
@@ -111,6 +114,9 @@ private:
 
     ProfessionOrderRepository _professionOrderRepository;
     ProfessionOrderService _professionOrders;
+
+    BestiaryRepository _bestiaryRepository;
+    BestiaryService _bestiary;
 
     TickConfig _ticks;
 
