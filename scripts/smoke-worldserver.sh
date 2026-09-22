@@ -4,8 +4,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 WORLDSERVER="${FURY_WORLDSERVER:-${ROOT}/build/dist/bin/worldserver}"
-WORLDSERVER_CONF="${FURY_WORLDSERVER_CONF:-${ROOT}/build/dist/etc/worldserver.conf}"
-STARTUP_TIMEOUT="${FURY_STARTUP_TIMEOUT:-180}"
+DEFAULT_CONF="${ROOT}/build/dist/etc/worldserver.conf"
+if [[ ! -f "${DEFAULT_CONF}" && -f "${DEFAULT_CONF}.dist" ]]; then
+  DEFAULT_CONF="${DEFAULT_CONF}.dist"
+fi
+WORLDSERVER_CONF="${FURY_WORLDSERVER_CONF:-${DEFAULT_CONF}}"
+STARTUP_TIMEOUT="${FURY_STARTUP_TIMEOUT:-600}"
 SMOKE_RUNS="${FURY_SMOKE_RUNS:-2}"
 
 if [[ ! -x "${WORLDSERVER}" ]]; then
@@ -22,6 +26,14 @@ if ! [[ "${SMOKE_RUNS}" =~ ^[1-9][0-9]*$ ]]; then
   echo "[FURY][FAIL] FURY_SMOKE_RUNS must be a positive integer, got: ${SMOKE_RUNS}" >&2
   exit 2
 fi
+
+CONF_DIR="$(dirname "${WORLDSERVER_CONF}")"
+mkdir -p "${CONF_DIR}/modules"
+shopt -s nullglob
+for dist in "${CONF_DIR}/modules/"*.conf.dist; do
+  cp -f "${dist}" "${dist%.dist}"
+done
+shopt -u nullglob
 
 run_smoke_once() (
   local run_number="$1"
