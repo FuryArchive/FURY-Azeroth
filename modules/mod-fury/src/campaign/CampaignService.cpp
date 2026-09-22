@@ -121,6 +121,15 @@ CampaignTransitionResult CampaignService::Transition(
 
     if (disposition == CampaignTransitionDisposition::AlreadyApplied)
     {
+        // Heal derived state after a crash between the canonical transition
+        // and its follow-up side effects.
+        if (target == CampaignStatus::Complete)
+        {
+            _repository.RaiseHouseholdPowerBand(
+                householdId,
+                node->grantsPowerBand);
+        }
+
         EmitTransitionEvent(source, *node, target);
         return {CampaignTransitionOutcome::AlreadyApplied, current};
     }
