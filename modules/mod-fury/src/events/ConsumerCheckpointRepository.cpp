@@ -21,7 +21,7 @@ EventId ConsumerCheckpointRepository::Load(std::string_view consumerKey) const
     return fields[0].Get<EventId>();
 }
 
-void ConsumerCheckpointRepository::Advance(
+bool ConsumerCheckpointRepository::Advance(
     std::string_view consumerKey,
     EventId eventId) const
 {
@@ -30,5 +30,7 @@ void ConsumerCheckpointRepository::Advance(
     stmt->SetData(0, std::string(consumerKey));
     stmt->SetData(1, eventId);
     FuryDatabase.Execute(stmt);
+
+    return Load(consumerKey) >= eventId;
 }
 }
