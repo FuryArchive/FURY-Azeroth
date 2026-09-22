@@ -165,19 +165,18 @@ std::vector<ContractObjectiveMatch> ContractRepository::FindMatchingObjectives(
     DatabasePreparedStatement* stmt =
         FuryDatabase.GetPreparedStatement(FURY_SEL_CONTRACT_MATCHING_OBJECTIVES);
 
-    stmt->SetData(0, event.type);
+    stmt->SetData(0, *event.actor.householdId);
+    stmt->SetData(1, event.type);
 
     if (!event.subjectType.empty())
-        stmt->SetData(1, event.subjectType);
-    else
-        stmt->SetData(1, nullptr);
-
-    if (event.subjectId)
-        stmt->SetData(2, *event.subjectId);
+        stmt->SetData(2, event.subjectType);
     else
         stmt->SetData(2, nullptr);
 
-    stmt->SetData(3, *event.actor.householdId);
+    if (event.subjectId)
+        stmt->SetData(3, *event.subjectId);
+    else
+        stmt->SetData(3, nullptr);
 
     PreparedQueryResult result = FuryDatabase.Query(stmt);
     if (!result)
