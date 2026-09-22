@@ -27,9 +27,13 @@ App::App()
       _chronicle(_chronicleRepository),
       _diagnostics(*this, _diagnosticsRepository),
       _campaign(_campaignRepository, _events),
-      _proofs(_proofRepository, _events)
+      _proofs(_proofRepository, _events),
+      _contracts(_contractRepository, _events),
+      _contractRewards(_contractRepository, _campaign, _rewards)
 {
     _eventBus.RegisterConsumer(_chronicle);
+    _eventBus.RegisterConsumer(_contracts);
+    _eventBus.RegisterConsumer(_contractRewards);
 }
 
 App& App::Instance()
