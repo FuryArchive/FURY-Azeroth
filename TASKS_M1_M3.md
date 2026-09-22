@@ -269,7 +269,7 @@ M1 is GREEN only when all mandatory scenarios, clean module build, and worldserv
 # M2 — Campaign Platform
 
 ## T13 Campaign schema/service
-Status: READY
+Status: IN_PROGRESS
 Depends on: M1 GREEN
 Commit target: `feat(campaign): add household campaign state`
 
@@ -281,7 +281,7 @@ Acceptance:
 - household current power band derives from canonical campaign progression, not arbitrary module state.
 
 ## T14 Proof service
-Status: READY
+Status: IN_PROGRESS
 Depends on: T13
 Commit target: `feat(proofs): add durable household proofs`
 
@@ -626,4 +626,4 @@ Do not silently pull these into current scope:
 
 # Immediate execution state
 
-Gate 0 source/API intake is complete. T01 compile proof is running in CI. T02 source is now in progress on a dedicated branch and must not be marked GREEN until database startup/restart acceptance passes.
+M1 source is consolidated in PR #7 and its MySQL schema gate is GREEN; compile/worldserver acceptance is still pending. M2 T13/T14 are being developed only on the stacked `agent/m2-campaign-proofs` branch and must not merge before M1 is GREEN.
