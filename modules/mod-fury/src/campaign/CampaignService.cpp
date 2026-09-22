@@ -1,5 +1,6 @@
 #include "CampaignService.h"
 #include "CampaignPolicy.h"
+#include "CampaignAccessPolicy.h"
 
 #include "core/FuryKey.h"
 #include "integrations/IndividualProgressionAdapter.h"
@@ -127,34 +128,10 @@ CampaignCharacterAccessResult CampaignService::CheckCharacterAccess(
             player,
             node->ipRequiredState);
 
-    CampaignCharacterAccessOutcome outcome =
-        CampaignCharacterAccessOutcome::Allowed;
-
-    switch (gate.outcome)
-    {
-        case IndividualProgressionGateOutcome::Allowed:
-        case IndividualProgressionGateOutcome::NotRequired:
-            outcome = CampaignCharacterAccessOutcome::Allowed;
-            break;
-        case IndividualProgressionGateOutcome::InvalidRequiredState:
-            outcome = CampaignCharacterAccessOutcome::InvalidIpRequirement;
-            break;
-        case IndividualProgressionGateOutcome::ModuleUnavailable:
-            outcome = CampaignCharacterAccessOutcome::IpUnavailable;
-            break;
-        case IndividualProgressionGateOutcome::ModuleDisabled:
-            outcome = CampaignCharacterAccessOutcome::IpDisabled;
-            break;
-        case IndividualProgressionGateOutcome::PlayerSettingsDisabled:
-            outcome = CampaignCharacterAccessOutcome::IpPlayerSettingsDisabled;
-            break;
-        case IndividualProgressionGateOutcome::PlayerUnavailable:
-            outcome = CampaignCharacterAccessOutcome::PlayerUnavailable;
-            break;
-        case IndividualProgressionGateOutcome::NotPassed:
-            outcome = CampaignCharacterAccessOutcome::CharacterProgressTooLow;
-            break;
-    }
+    CampaignCharacterAccessOutcome const outcome =
+        EvaluateCampaignCharacterAccess(
+            householdStatus,
+            gate.outcome);
 
     return {
         outcome,
