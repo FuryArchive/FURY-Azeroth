@@ -325,6 +325,13 @@ private:
             return false;
         }
 
+        if (targetActor.kind != Fury::ActorKind::Human)
+        {
+            handler->SendErrorMessage(
+                "Only a real human player account can be added as a household member.");
+            return false;
+        }
+
         Fury::HouseholdMemberResult result =
             Fury::App::Instance().Households().AddMember(
                 *ownerActor.householdId,
