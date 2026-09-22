@@ -311,7 +311,7 @@ Acceptance:
 - bot eligibility policy is enforced centrally.
 
 ## T16 Director runtime
-Status: READY
+Status: IN_PROGRESS
 Depends on: T07, T13, T14
 Commit target: `feat(director): add persistent Director runtime`
 
