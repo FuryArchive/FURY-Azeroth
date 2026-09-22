@@ -63,7 +63,18 @@ HouseholdCreateResult HouseholdService::CreateOrGet(
     return {_repository.CreateOrGet(slug, displayName)};
 }
 
-HouseholdMemberResult HouseholdService::AddMember(
+HouseholdMemberResult HouseholdService::AddHumanMember(
+    HouseholdId householdId,
+    ActorContext const& actor,
+    uint8 role) const
+{
+    if (actor.kind != ActorKind::Human || !actor.accountId)
+        return HouseholdMemberResult::ActorNotEligible;
+
+    return AddMemberAccount(householdId, actor.accountId, role);
+}
+
+HouseholdMemberResult HouseholdService::AddMemberAccount(
     HouseholdId householdId,
     uint32 accountId,
     uint8 role) const
