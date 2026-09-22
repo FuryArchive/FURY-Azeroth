@@ -1,6 +1,7 @@
 #include "FuryEventFactory.h"
 
 #include "core/FuryApp.h"
+#include "core/FuryTargetId.h"
 #include "Creature.h"
 #include "Item.h"
 #include "Player.h"
@@ -214,8 +215,7 @@ FuryEvent FuryEventFactory::ProfessionCrafted(
     FuryEvent event = Base(player, "profession.crafted");
 
     uint64 const target =
-        (static_cast<uint64>(skillId) << 32) |
-        static_cast<uint64>(itemId);
+        MakeProfessionCraftTarget(skillId, itemId);
 
     event.subjectType = "profession_craft";
     event.subjectId = target;
