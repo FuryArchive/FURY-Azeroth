@@ -140,6 +140,56 @@ run_until_fury_disabled() (
   return 1
 )
 
+run_expect_fury_db_failure() (
+  local workdir log pid="" rc=0
+  workdir="$(mktemp -d)"
+  log="${workdir}/worldserver.log"
+
+  cleanup() {
+    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+      kill -KILL "${pid}" 2>/dev/null || true
+      wait "${pid}" 2>/dev/null || true
+    fi
+    rm -rf "${workdir}"
+  }
+  trap cleanup EXIT
+
+  echo "[FURY] negative startup: invalid FuryDatabaseInfo must fail clearly"
+  "${WORLDSERVER}" -c "${WORLDSERVER_CONF}" </dev/null >"${log}" 2>&1 &
+  pid=$!
+
+  local deadline=$((SECONDS + 60))
+  while kill -0 "${pid}" 2>/dev/null && (( SECONDS < deadline )); do
+    sleep 1
+  done
+
+  if kill -0 "${pid}" 2>/dev/null; then
+    echo "[FURY][FAIL] invalid FURY DB credentials did not stop worldserver" >&2
+    tail -n 250 "${log}" >&2 || true
+    return 1
+  fi
+
+  set +e
+  wait "${pid}"
+  rc=$?
+  set -e
+  pid=""
+
+  if [[ "${rc}" -eq 0 ]]; then
+    echo "[FURY][FAIL] invalid FURY DB credentials exited successfully" >&2
+    tail -n 250 "${log}" >&2 || true
+    return 1
+  fi
+
+  if ! grep -Fq "[FURY] cannot connect to FURY database" "${log}"; then
+    echo "[FURY][FAIL] invalid FURY DB startup lacked actionable FURY error" >&2
+    tail -n 250 "${log}" >&2 || true
+    return 1
+  fi
+
+  echo "[FURY][PASS] invalid FURY DB credentials fail startup with actionable error"
+)
+
 run_until_fury_db_ready() (
   local run_number="$1"
   local workdir log pid=""
@@ -196,6 +246,12 @@ run_until_fury_disabled
 assert_eq "0" "$(sql_global "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='acore_fury';")"   "disabled mode does not create acore_fury"
 
 export AC_FURY_ENABLE=1
+
+good_fury_db_info="$(db_info acore_fury)"
+export AC_FURY_DATABASE_INFO="127.0.0.1;${MYSQL_PORT};${MYSQL_USER};definitely-wrong-password;acore_fury"
+run_expect_fury_db_failure
+export AC_FURY_DATABASE_INFO="${good_fury_db_info}"
+
 run_until_fury_db_ready 1
 
 assert_eq "1" "$(sql_global "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='acore_fury';")"   "FURY database auto-created by worldserver"
