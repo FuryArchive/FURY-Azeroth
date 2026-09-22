@@ -378,7 +378,7 @@ M2 is GREEN only with M1 regression gate also green.
 # M3 — Defias Resurgence Vertical Slice
 
 ## T21 Living World source audit
-Status: READY
+Status: GREEN
 Depends on: M2 GREEN, T00.2
 Commit target: documentation only unless mismatch found
 
@@ -399,12 +399,11 @@ Status: READY
 Depends on: T21
 Patch queue target: `vendor/patches/mod-living-world/0001-fury-bridge.patch`
 
-Expose only what FURY requires:
-- controlled start;
-- runtime state query;
-- signal send;
-- runtime entity metadata lookup;
-- lifecycle/stage callbacks.
+Expose only what FURY still requires after T21:
+- stable reverse runtime entity metadata lookup by creature GUID;
+- compatibility guard for the pinned API/structure.
+
+Do not patch APIs that T21 confirmed are already public: scheduler controlled start, runtime/state query, signal send, authored-data query. Use polling/reconciliation instead of adding lifecycle/stage callbacks.
 
 Acceptance:
 - bridge contains no FURY Household/Contracts/Reward concepts;
