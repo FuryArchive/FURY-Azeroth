@@ -107,7 +107,11 @@ void DatabaseConnection::DoPrepareStatements()
         "(SELECT COUNT(*) FROM fury_event), "
         "(SELECT COUNT(*) FROM fury_event_consumer), "
         "(SELECT COUNT(*) FROM fury_reward_claim), "
-        "(SELECT COUNT(*) FROM fury_chronicle_entry)",
+        "(SELECT COUNT(*) FROM fury_chronicle_entry), "
+        "(SELECT COUNT(*) FROM ("
+        "SELECT household_id FROM fury_household_member "
+        "GROUP BY household_id HAVING COUNT(*) > 2"
+        ") overfull)",
         CONNECTION_SYNCH);
 }
 }
