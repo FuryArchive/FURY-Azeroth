@@ -19,6 +19,9 @@ public:
         HouseholdId householdId,
         std::string_view contractKey) const;
 
+    [[nodiscard]] std::optional<ContractInstance> FindInstance(
+        ContractInstanceId instanceId) const;
+
     [[nodiscard]] bool HasCompletedInstance(
         HouseholdId householdId,
         std::string_view contractKey) const;
@@ -43,7 +46,7 @@ public:
         ContractObjectiveMatch const& objective,
         EventId eventId) const;
 
-    [[nodiscard]] uint32 CountIncompleteObjectives(
+    [[nodiscard]] std::optional<uint32> CountIncompleteObjectives(
         ContractInstanceId instanceId) const;
 
     void MarkComplete(
