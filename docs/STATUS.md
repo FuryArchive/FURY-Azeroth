@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T09 Reward Registry: IN_PROGRESS on `agent/t09-reward-claims`; power-band policy and idempotent claim uniqueness implemented, delivery intentionally deferred, compile/DB tests pending.
 - T10 Chronicle: IN_PROGRESS on `agent/t10-chronicle`; sparse household history projection is registered as a durable replay consumer, compile/replay tests pending.
 - T11 diagnostics: IN_PROGRESS on `agent/t11-diagnostics`; `.fury status/actor/household/event/reward/validate` implemented, compile/permission/runtime tests pending.
-- T12 M1 gate: READY, not started.
+- T12 M1 gate: IN_PROGRESS on `agent/t12-m1-gate`; fast MySQL 8 schema/idempotency gate added, full build/worldserver acceptance still required.
 - M1 overall: IN_PROGRESS.
 - M2/M3: READY, blocked by prior milestone gates.
 
