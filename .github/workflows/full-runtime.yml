@@ -4,18 +4,15 @@ on:
   pull_request:
     branches: [main]
     paths:
+      # Auto-run only when the AzerothCore/module/runtime integration surface
+      # itself changes. Domain SQL/services remain covered by fast MySQL
+      # golden gates + mod-fury translation-unit compilation.
       - "vendor/lock/fury.lock.yaml"
       - "modules/mod-fury/mod-fury.cmake"
       - "modules/mod-fury/conf/**"
-      - "modules/mod-fury/data/sql/**"
       - "modules/mod-fury/src/FuryModule.cpp"
       - "modules/mod-fury/src/mod_fury_loader.cpp"
-      - "modules/mod-fury/src/core/**"
-      - "modules/mod-fury/src/database/**"
-      - "modules/mod-fury/src/diagnostics/**"
-      - "modules/mod-fury/src/events/**"
-      - "modules/mod-fury/src/household/**"
-      - "modules/mod-fury/src/scripts/**"
+      - "modules/mod-fury/src/database/FuryDatabaseScript.cpp"
       - "scripts/build.sh"
       - "scripts/sync-upstreams.sh"
       - "scripts/smoke-fury-db-lifecycle.sh"
