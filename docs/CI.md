@@ -25,16 +25,21 @@ and two worldserver startup/runtime smokes.
 
 It is intentionally **not** run for every pull request.
 
-It runs automatically only when a pull request touches integration-sensitive
-paths such as:
+It runs automatically only when a pull request changes the integration
+surface itself:
 
 - the pinned upstream lock;
-- module build/configuration;
-- SQL/database integration;
-- FuryApp/module-loader composition;
-- event/household/diagnostics infrastructure used by startup/runtime smoke;
-- AzerothCore player/command scripts;
+- module CMake/configuration;
+- module loader/lifecycle entrypoints;
+- the module-database lifecycle glue (`FuryDatabaseScript.cpp`);
 - build, upstream-sync, DB lifecycle, runtime-data, or worldserver smoke scripts.
+
+Ordinary domain changes do **not** auto-run Full Runtime. This includes domain
+SQL/migrations, prepared statements, FuryApp composition, Campaign, Proofs,
+Contracts, Director, Profession Orders, Bestiary, policies, projections, and
+gameplay event handlers. Those changes are accepted through MySQL golden gates
+and the fast `mod-fury` translation-unit compile unless a developer explicitly
+starts Full Runtime.
 
 It can also be started manually with **Run workflow** / `workflow_dispatch`.
 
