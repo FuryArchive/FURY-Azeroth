@@ -93,7 +93,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/server-data
-          key: fury-server-data-v20-a3d4df635ae6c2c8
+          key: fury-server-data-v20-a3d4df635ae6c2c8f08052c32a79e0f806955150ad36b014a823dd08a32a4610
 
       - name: Fetch pinned startup server data
         run: bash scripts/fetch-ci-server-data.sh
