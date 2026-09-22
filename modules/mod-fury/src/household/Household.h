@@ -15,7 +15,8 @@ enum class HouseholdMemberResult : uint8
     AccountInOtherHousehold = 3,
     HouseholdFull = 4,
     HouseholdNotFound = 5,
-    PersistenceFailed = 6
+    PersistenceFailed = 6,
+    ActorNotEligible = 7
 };
 
 struct HouseholdCreateResult
