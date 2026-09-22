@@ -1,5 +1,7 @@
 #include "ProofService.h"
 
+#include "core/FuryKey.h"
+
 #include "events/EventStore.h"
 #include "StringFormat.h"
 
@@ -32,7 +34,7 @@ ProofGrantResult ProofService::Grant(
         return {ProofGrantOutcome::InvalidSource, 0};
     }
 
-    if (proofKey.empty() || proofKey.size() > 128)
+    if (!IsCanonicalKey(proofKey))
         return {ProofGrantOutcome::InvalidProofKey, 0};
 
     HouseholdId const householdId = *source.actor.householdId;
