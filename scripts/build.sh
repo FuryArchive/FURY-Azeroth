@@ -66,6 +66,9 @@ else
 
   echo "[FURY] install build artifacts"
   cmake --install "${BUILD_DIR}"
+
+  echo "[FURY] worldserver binary smoke"
+  "${INSTALL_DIR}/bin/worldserver" --version
 fi
 
 if command -v ccache >/dev/null 2>&1; then
