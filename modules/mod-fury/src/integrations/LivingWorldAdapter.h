@@ -65,7 +65,8 @@ enum class LivingWorldStartOutcome : uint8
     DefinitionMissing = 4,
     InvalidSource = 5,
     Rejected = 6,
-    RuntimeMissing = 7
+    RuntimeMissing = 7,
+    PersistenceFailed = 8
 };
 
 struct LivingWorldStartResult
@@ -88,7 +89,8 @@ enum class LivingWorldSignalOutcome : uint8
     InvalidSource = 4,
     RuntimeMissing = 5,
     SignalMissing = 6,
-    Rejected = 7
+    Rejected = 7,
+    PersistenceFailed = 8
 };
 
 class LivingWorldAdapter final : public DirectorRuntimeProbe
@@ -156,7 +158,7 @@ public:
     }
 
 private:
-    void ObserveRuntime(
+    [[nodiscard]] bool ObserveRuntime(
         FuryEvent const* source,
         LivingWorldRuntimeSnapshot const& runtime,
         std::string_view eventType) const;
