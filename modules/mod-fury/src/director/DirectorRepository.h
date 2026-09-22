@@ -48,6 +48,9 @@ public:
         DirectorRunId runId,
         std::string_view contributionKey) const;
 
+    [[nodiscard]] std::optional<uint32> ParticipationTotal(
+        DirectorRunId runId) const;
+
     void InsertParticipation(
         DirectorRunId runId,
         HouseholdId householdId,
