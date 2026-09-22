@@ -61,3 +61,22 @@ CREATE TABLE IF NOT EXISTS `fury_director_run` (
     REFERENCES `fury_event` (`id`)
     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS `fury_director_participation` (
+  `run_id` bigint unsigned NOT NULL,
+  `contribution_key` varchar(128) NOT NULL,
+  `points` int unsigned NOT NULL,
+  `source_event_id` bigint unsigned NOT NULL,
+  `granted_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`run_id`, `contribution_key`),
+  KEY `ix_fury_director_participation_event` (`source_event_id`),
+  CONSTRAINT `fk_fury_director_participation_run`
+    FOREIGN KEY (`run_id`)
+    REFERENCES `fury_director_run` (`id`)
+    ON DELETE CASCADE,
+  CONSTRAINT `fk_fury_director_participation_event`
+    FOREIGN KEY (`source_event_id`)
+    REFERENCES `fury_event` (`id`)
+    ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
