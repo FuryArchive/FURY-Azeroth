@@ -26,7 +26,8 @@ Date: 2026-09-23
 - **M2 Campaign Platform: GREEN.**
 - T21 Living World source audit: GREEN.
 - T22 Living World external bridge patch: GREEN.
-- M3 Defias Resurgence vertical slice: IN_PROGRESS — T23 FURY LivingWorldAdapter is next.
+- T23 FURY LivingWorldAdapter: GREEN.
+- M3 Defias Resurgence vertical slice: IN_PROGRESS — T24 Defias content validation/random-start overlay is next.
 
 ## Repository baseline
 
@@ -140,4 +141,6 @@ T21 is GREEN. See `docs/T21_LIVING_WORLD_AUDIT.md`.
 
 T22 is GREEN through PR #23 / commit `4697a9dc58c78a0a1b44187cb416c490ccf13667`. Fast CI run #122 passed the strict pinned patch-application guard, standalone patched Living World translation-unit compile with `mod-fury` removed, Fast mod-fury compile, and M2 regressions.
 
-Begin **T23 FURY LivingWorldAdapter** next. All Living World calls from first-party FURY code must terminate at this adapter boundary.
+T23 is GREEN through PR #24 / commit `41de42d2b7410fc2b3dfe449e2b42c1238db1d88`. Fast CI run #124 passed the adapter boundary gate, patched Living World regression and Fast mod-fury compile.
+
+Begin **T24 Defias content validation + disable random start** next.
