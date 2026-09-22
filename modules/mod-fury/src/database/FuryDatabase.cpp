@@ -173,5 +173,15 @@ void DatabaseConnection::DoPrepareStatements()
         "SET h.current_power_band = d.derived_band, h.revision = h.revision + 1 "
         "WHERE h.current_power_band <> d.derived_band",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_PROOF,
+        "SELECT source_event_id, COALESCE(CAST(metadata AS CHAR), '{}') "
+        "FROM fury_proof WHERE household_id = ? AND proof_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_PROOF,
+        "INSERT IGNORE INTO fury_proof "
+        "(household_id, proof_key, source_event_id, metadata) "
+        "VALUES (?, ?, ?, ?)",
+        CONNECTION_SYNCH);
 }
 }
