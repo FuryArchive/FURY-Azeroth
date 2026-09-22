@@ -60,4 +60,38 @@ void RewardRepository::InsertClaim(RewardRequest const& request) const
     stmt->SetData(4, RewardClaimStatus::Pending);
     FuryDatabase.Execute(stmt);
 }
+
+std::vector<RewardClaimView> RewardRepository::TailClaims(uint32 limit) const
+{
+    std::vector<RewardClaimView> claims;
+    if (!limit)
+        return claims;
+
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_REWARD_CLAIM_TAIL);
+    stmt->SetData(0, limit);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return claims;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        RewardClaimView claim;
+        claim.id = fields[0].Get<uint64>();
+        claim.sourceEventId = fields[1].Get<EventId>();
+        claim.rewardKey = fields[2].Get<std::string>();
+        claim.beneficiaryKind =
+            static_cast<BeneficiaryKind>(fields[3].Get<uint8>());
+        claim.beneficiaryId = fields[4].Get<uint64>();
+        claim.status =
+            static_cast<RewardClaimStatus>(fields[5].Get<uint8>());
+
+        claims.push_back(std::move(claim));
+    } while (result->NextRow());
+
+    return claims;
+}
 }
