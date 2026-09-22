@@ -40,6 +40,9 @@ private:
 
     HouseholdRepository const& _repository;
 
+    // Serialize membership mutations so the two-member invariant is not
+    // vulnerable to COUNT -> INSERT races inside one worldserver process.
+    mutable std::mutex _mutationMutex;
     mutable std::shared_mutex _membershipMutex;
     mutable std::unordered_map<uint32, HouseholdId> _membershipByAccount;
 };

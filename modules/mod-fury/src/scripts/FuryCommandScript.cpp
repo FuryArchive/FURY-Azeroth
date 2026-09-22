@@ -86,6 +86,8 @@ char const* HouseholdResultName(Fury::HouseholdMemberResult result)
             return "household-full";
         case Fury::HouseholdMemberResult::HouseholdNotFound:
             return "household-not-found";
+        case Fury::HouseholdMemberResult::PersistenceFailed:
+            return "persistence-failed";
     }
 
     return "unknown";

@@ -45,6 +45,8 @@ HouseholdMemberResult HouseholdService::AddMember(
     uint32 accountId,
     uint8 role) const
 {
+    std::lock_guard<std::mutex> mutationLock(_mutationMutex);
+
     if (!_repository.Exists(householdId))
         return HouseholdMemberResult::HouseholdNotFound;
 
@@ -61,6 +63,18 @@ HouseholdMemberResult HouseholdService::AddMember(
 
     _repository.AddMember(householdId, accountId, role);
 
+    // INSERT IGNORE protects database uniqueness, but it also means callers
+    // must verify what actually persisted before mutating the in-memory cache.
+    // This prevents cache/database divergence if another writer won the
+    // account uniqueness race or the insert failed.
+    std::optional<HouseholdId> persisted =
+        _repository.FindByAccount(accountId);
+    if (!persisted)
+        return HouseholdMemberResult::PersistenceFailed;
+
+    if (*persisted != householdId)
+        return HouseholdMemberResult::AccountInOtherHousehold;
+
     {
         std::unique_lock lock(_membershipMutex);
         _membershipByAccount[accountId] = householdId;
@@ -71,6 +85,7 @@ HouseholdMemberResult HouseholdService::AddMember(
 
 void HouseholdService::RemoveMember(HouseholdId householdId, uint32 accountId) const
 {
+    std::lock_guard<std::mutex> mutationLock(_mutationMutex);
     _repository.RemoveMember(householdId, accountId);
 
     std::unique_lock lock(_membershipMutex);
