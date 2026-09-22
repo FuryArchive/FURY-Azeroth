@@ -25,7 +25,9 @@ App::App()
       _rewardPolicy(_rewardRepository),
       _rewards(_rewardRepository, _rewardPolicy),
       _chronicle(_chronicleRepository),
-      _diagnostics(*this, _diagnosticsRepository)
+      _diagnostics(*this, _diagnosticsRepository),
+      _campaign(_campaignRepository, _events),
+      _proofs(_proofRepository, _events)
 {
     _eventBus.RegisterConsumer(_chronicle);
 }
