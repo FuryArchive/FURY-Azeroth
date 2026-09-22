@@ -96,7 +96,7 @@ sql "INSERT IGNORE INTO fury_director_participation (run_id, contribution_key, p
 sql "INSERT IGNORE INTO fury_director_participation (run_id, contribution_key, points, source_event_id) SELECT id, 'golden.scouts', 10, ${participation_event_id} FROM fury_director_run WHERE id=${run_id} AND household_id=1 AND revision=2 AND status IN (1,2);"
 assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_director_participation WHERE run_id=${run_id} AND contribution_key='golden.scouts';")" "duplicate participation contribution is stored once"
 
-sql "UPDATE fury_director_run SET participation_score=LEAST(100,COALESCE((SELECT SUM(points) FROM fury_director_participation WHERE run_id=${run_id}),0)), last_event_id=GREATEST(last_event_id,${participation_event_id}), revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=5 AND status IN (1,2,3);"
+sql "UPDATE fury_director_run SET participation_score=LEAST(100,COALESCE((SELECT SUM(points) FROM fury_director_participation WHERE run_id=${run_id}),0)), last_event_id=GREATEST(last_event_id,${participation_event_id}), revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=2 AND status IN (1,2,3);"
 assert_eq "10" "$(sql "SELECT participation_score FROM fury_director_run WHERE id=${run_id};")" "participation score derives from contribution rows"
 assert_eq "3" "$(sql "SELECT revision FROM fury_director_run WHERE id=${run_id};")" "participation recompute advances revision"
 
@@ -118,7 +118,7 @@ echo "[FURY] terminal run frees exclusive scope"
 resolve_event_hash="UNHEX(SHA2('golden:director:resolve', 256))"
 sql "INSERT INTO fury_event (event_type, actor_kind, actor_guid, account_id, household_id, source_system, dedupe_key, payload) VALUES ('golden.director.resolve', 5, NULL, NULL, 1, 'golden.system', ${resolve_event_hash}, JSON_OBJECT());"
 resolve_event_id="$(sql "SELECT id FROM fury_event WHERE dedupe_key=${resolve_event_hash};")"
-sql "UPDATE fury_director_run SET status=4, outcome_key='success', resolved_event_id=${resolve_event_id}, last_event_id=${resolve_event_id}, completed_at=CURRENT_TIMESTAMP(6), revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=2 AND status IN (1,2,3);"
+sql "UPDATE fury_director_run SET status=4, outcome_key='success', resolved_event_id=${resolve_event_id}, last_event_id=${resolve_event_id}, completed_at=CURRENT_TIMESTAMP(6), revision=revision+1 WHERE id=${run_id} AND household_id=1 AND revision=5 AND status IN (1,2,3);"
 assert_eq "4" "$(sql "SELECT status FROM fury_director_run WHERE id=${run_id};")" "run resolves"
 assert_eq "success" "$(sql "SELECT outcome_key FROM fury_director_run WHERE id=${run_id};")" "outcome persists"
 
