@@ -56,7 +56,8 @@ public:
         HouseholdId householdId,
         std::string_view contributionKey,
         uint32 points,
-        EventId sourceEventId) const;
+        EventId sourceEventId,
+        uint64 expectedRevision) const;
 
     void RecalculateParticipation(
         DirectorRunId runId,
