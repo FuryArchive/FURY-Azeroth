@@ -31,6 +31,13 @@ public:
         uint64 expectedRevision,
         uint64 externalRuntimeId) const;
 
+    [[nodiscard]] DirectorResult GrantParticipation(
+        FuryEvent const& source,
+        DirectorRunId runId,
+        uint64 expectedRevision,
+        std::string_view contributionKey,
+        uint32 points) const;
+
     [[nodiscard]] DirectorResult Resolve(
         FuryEvent const& source,
         DirectorRunId runId,
@@ -66,6 +73,11 @@ private:
     [[nodiscard]] std::optional<EventId> EmitRuntimeEvent(
         FuryEvent const& source,
         DirectorRun const& run) const;
+
+    [[nodiscard]] std::optional<EventId> EmitParticipationEvent(
+        FuryEvent const& source,
+        DirectorRun const& run,
+        DirectorParticipation const& participation) const;
 
     [[nodiscard]] std::optional<EventId> EmitTerminalEvent(
         FuryEvent const& source,
