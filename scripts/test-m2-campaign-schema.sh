@@ -129,10 +129,19 @@ derived="$(sql "SELECT COALESCE(MAX(n.grants_power_band),0)
   WHERE s.household_id=${household_id} AND s.status=4;")"
 assert_eq "120" "${derived}" "completed higher node raises power band"
 
-sql "UPDATE fury_household
-  SET current_power_band=${derived}, revision=revision+1
-  WHERE id=${household_id} AND current_power_band<>${derived};"
-assert_eq "120" "$(sql "SELECT current_power_band FROM fury_household WHERE id=${household_id};")" "household cache follows canonical completion"
+# Atomic repository-equivalent recalculation: the SQL derives the current
+# canonical value inside the UPDATE, so a stale caller cannot write 110 after
+# the higher node has already completed.
+sql "UPDATE fury_household h
+  JOIN (
+    SELECT ${household_id} AS household_id, COALESCE(MAX(n.grants_power_band),0) AS derived_band
+    FROM fury_campaign_state s
+    JOIN fury_campaign_node n ON n.node_key=s.node_key
+    WHERE s.household_id=${household_id} AND s.status=4
+  ) d ON d.household_id=h.id
+  SET h.current_power_band=d.derived_band, h.revision=h.revision+1
+  WHERE h.current_power_band<>d.derived_band;"
+assert_eq "120" "$(sql "SELECT current_power_band FROM fury_household WHERE id=${household_id};")" "atomic cache repair follows latest canonical completion"
 
 echo "[FURY] schema re-apply preserves state"
 "${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/base/50_campaign.sql"
