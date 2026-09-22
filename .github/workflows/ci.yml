@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: fury-ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: fury-ci-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
 
 jobs:
   actor-policy-golden:
