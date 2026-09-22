@@ -29,6 +29,8 @@ int main()
         "HouseholdAltBot may not grant persistent household proofs");
     Require(!CanGrantHouseholdProof(ActorKind::RandomPlayerBot),
         "RandomPlayerBot may not grant persistent household proofs");
+    Require(!CanGrantHouseholdProof(ActorKind::NpcAssistant),
+        "NpcAssistant may not grant persistent household proofs");
 
     std::cout << "[FURY][PASS] T14 Proof authority policy golden gate passed\n";
     return 0;
