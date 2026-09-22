@@ -6,25 +6,23 @@ Date: 2026-09-22
 
 - Product/content architecture: defined through v0.2/v0.3 design passes.
 - Implementation contract: GREEN as repository policy/documentation.
-- M1–M3 executable backlog: READY.
 - GitHub repository access: GREEN.
-- T00.1 repository intake: GREEN.
-- T00.2 pinned upstream API verification: GREEN.
-- T00.3 reproducible lock/resolver: GREEN; multiple clean CI runners resolved the exact pinned upstream revisions successfully.
-- T01 mod-fury skeleton: IN_PROGRESS; fast module compile is GREEN, full locked build and worldserver start acceptance remain.
-- T02 module-owned database: IN_PROGRESS on `agent/t02-fury-db`; source/schema present, compile/start acceptance pending.
-- T03 FuryApp composition root: IN_PROGRESS on `agent/t03-fury-app`; throttled lifecycle implemented, compile/regression proof pending.
-- T04 actor classification: IN_PROGRESS on `agent/t04-actor-resolver`; Human/HouseholdAltBot/RandomPlayerBot/System resolution implemented, compile/tests pending.
-- T05 Household: IN_PROGRESS on `agent/t05-household`; schema/repository/service and alt-bot lookup wired into the composition root, compile/tests pending.
-- T06 durable Event Store: IN_PROGRESS on `agent/t06-event-store`; schema, SHA-256 dedupe and append/query path implemented, compile/DB tests pending.
-- T07 consumer replay: IN_PROGRESS on `agent/t07-event-replay`; checkpoints, ordered replay and at-least-once bus implemented, compile/replay tests pending.
-- T08 AzerothCore event collector: IN_PROGRESS on `agent/t08-event-collector`; login/level/zone/quest/kill/loot/craft normalization is implemented with random population bot filtering, compile/hook tests pending.
-- T09 Reward Registry: IN_PROGRESS on `agent/t09-reward-claims`; power-band policy and idempotent claim uniqueness implemented, delivery intentionally deferred, compile/DB tests pending.
-- T10 Chronicle: IN_PROGRESS on `agent/t10-chronicle`; sparse household history projection is registered as a durable replay consumer, compile/replay tests pending.
-- T11 diagnostics: IN_PROGRESS on `agent/t11-diagnostics`; `.fury status/actor/household/event/reward/validate` implemented, compile/permission/runtime tests pending.
-- T12 M1 gate: IN_PROGRESS on `agent/m1-replay-batching`; fast module compile and MySQL 8 schema/idempotency gate are GREEN, full locked build/worldserver acceptance still required.
-- M1 overall: IN_PROGRESS.
-- M2/M3: READY, blocked by prior milestone gates.
+- Gate 0 repository/API/pinning work: GREEN.
+- T01 mod-fury skeleton: GREEN.
+- T02 module-owned `acore_fury` database: GREEN.
+- T03 FuryApp composition root: GREEN.
+- T04 actor classification: GREEN.
+- T05 Household: GREEN.
+- T06 durable Event Store: GREEN.
+- T07 consumer checkpoint/replay: GREEN.
+- T08 AzerothCore event collector: GREEN.
+- T09 Reward Registry kernel: GREEN.
+- T10 Chronicle projection: GREEN.
+- T11 diagnostics/validation shell: GREEN.
+- T12 M1 automated gate: GREEN.
+- **M1 FURY Kernel: GREEN.**
+- M2 Campaign Platform: READY and now unblocked.
+- M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
 
@@ -40,7 +38,9 @@ Bootstrap commit inspected:
 
 `8fd91a9a6a9af3de2ad441117a8ee29e8f295a0c`
 
-The repository initially contained only bootstrap documentation. No AzerothCore checkout, external modules, first-party implementation, CI, or lockfile existed, so there was no pre-existing source to overwrite.
+M1 implementation was merged through PR #7 into:
+
+`9f5a9f55d0a2345f44dfa2ae5574e5f1a54dd21a`
 
 ## Gate 0 work completed
 
@@ -50,11 +50,8 @@ Created and verified:
 - `docs/REPOSITORY_INTAKE.md`;
 - `docs/UPSTREAM_API_NOTES.md`;
 - `scripts/sync-upstreams.sh`;
-- ignored generated `upstream/` workspace;
-- reproducible build wrapper `scripts/build.sh`;
-- GitHub Actions workflow `.github/workflows/ci.yml`.
-
-Exact pins are source-verified but the combined build is not yet declared compatible until CI proves it.
+- reproducible `worldserver` build wrapper;
+- GitHub Actions M1 regression workflow.
 
 ## Verified pinned APIs
 
@@ -62,41 +59,55 @@ Against the exact locked revisions:
 
 - Playerbots exports `IsRealPlayer(Player*)`;
 - AzerothCore exposes the required `DatabaseScript` module-database lifecycle;
-- PlayerScript exposes the M1/M2 event-collector hooks;
+- PlayerScript exposes the event-collector hooks used by FURY;
 - WorldScript provides startup/update/shutdown lifecycle;
-- Living World already publicly exposes controlled invasion start, runtime lookup, runtime signals, and authored-data queries;
-- Defias invasion/stage/spawn-group/signal IDs were captured from the locked SQL, not from the design document;
-- Living World objective/manual stage completion remains reserved/unimplemented, so FURY owns objectives and uses deterministic runtime signals for stage transitions.
+- Living World publicly exposes controlled invasion start, runtime lookup, runtime signals, and authored-data queries;
+- Defias invasion/stage/spawn-group/signal IDs were captured from the locked SQL;
+- Living World objective/manual stage completion remains outside its public API, so FURY owns objectives and uses deterministic runtime signals for stage transitions.
 
 See `docs/UPSTREAM_API_NOTES.md`.
 
-## T01 implementation present
+## M1 accepted kernel
 
-A first `modules/mod-fury` shell now exists with:
+M1 now includes:
 
-- module loader;
-- `FuryWorldScript`;
-- `Fury::App` lifecycle shell;
-- `mod_fury.conf.dist`;
-- module README.
+- first-party `mod-fury` module loader and lifecycle;
+- module-owned `acore_fury` MySQL database with create/populate/update/restart lifecycle;
+- Human / HouseholdAltBot / RandomPlayerBot / System actor classification;
+- two-account Household kernel with persistence-aware cache reconciliation;
+- durable normalized Fury Event Store with SHA-256 dedupe identity;
+- monotonic consumer checkpoints and at-least-once replay batches;
+- AzerothCore player event normalization with random population bot filtering;
+- Reward Registry kernel with power-band policy, idempotent claims and terminal reconciliation;
+- sparse replay-safe Chronicle projection;
+- `.fury status/actor/household/event/reward/validate` diagnostics;
+- disabled-mode guards so FURY does not touch its database when `Fury.Enable=0`.
 
-This is intentionally still `IN_PROGRESS`, not `GREEN`, until the locked workspace compiles and startup acceptance is exercised.
+## M1 acceptance evidence
 
-## Immediate next gate
-
-1. Finish the currently running full locked AzerothCore build gate.
-2. If it fails, fix only the verified configure/link/build error and rerun.
-3. Keep the existing fast module compile and MySQL schema/idempotency gates mandatory; both are currently GREEN.
-4. Wire the existing `scripts/smoke-worldserver.sh` into a real runtime environment with MySQL plus valid AzerothCore client server-data (DBC/maps/vmaps/mmaps). Those data files are intentionally not stored in this repository, so CI cannot truthfully claim a full `worldserver ready` smoke until an external runtime-data source is provided.
-5. Exercise two consecutive worldserver starts to prove module-owned `acore_fury` create/update/restart behavior, then run `.fury validate` and shutdown cleanly.
-6. Mark M1 GREEN only after that runtime acceptance passes; do not weaken the gate to compensate for missing client data.
-
-
-## Current CI evidence
-
-For PR #7 (`agent/m1-replay-batching`):
+Final PR #7 CI run **#91** passed every mandatory gate:
 
 - `Fast mod-fury compile`: GREEN.
 - `M1 schema golden gate`: GREEN against MySQL 8.
-- `Locked upstream build`: running at the time of this status update.
-- Full worldserver runtime smoke: not yet executed; requires valid AzerothCore client server-data outside this repository.
+- `M1 actor-policy golden gate`: GREEN.
+- `Locked worldserver + M1 runtime`: GREEN.
+- production pinned `worldserver` build: GREEN.
+- real FURY database lifecycle smoke: GREEN.
+- pinned AzerothCore runtime-data install with fixed SHA-256: GREEN.
+- full `worldserver` startup smoke: GREEN twice consecutively.
+- each runtime smoke reached `worldserver ready`, executed `.fury validate`, returned `HEALTHY`, and shut down cleanly.
+
+The M1 gate therefore satisfies the repository rule that source presence alone is insufficient: compile, persistence, restart, replay, and runtime acceptance have all passed.
+
+## Immediate next gate
+
+Begin **M2 — Campaign Platform**:
+
+1. T13 Campaign schema/service.
+2. T14 durable Proof service.
+3. T15 Contracts core.
+4. T16 persistent Director runtime.
+5. T17 profession-order subsystem.
+6. T18 minimal Bestiary projection.
+7. T19 read-only Individual Progression adapter.
+8. T20 M2 regression/golden gate, with M1 remaining mandatory.

@@ -50,7 +50,7 @@ Acceptance:
 # M1 — FURY Kernel
 
 ## T01 Module skeleton
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T00.2
 Commit target: `chore: add mod-fury skeleton`
 
@@ -69,7 +69,7 @@ Acceptance:
 - no gameplay behavior yet.
 
 ## T02 Module-owned database
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T01
 Commit target: `feat(db): add module-owned acore_fury database`
 
@@ -90,7 +90,7 @@ Acceptance:
 - module revision is visible in diagnostics/logs.
 
 ## T03 FuryApp composition root
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T01, T02
 Commit target: `feat(core): add FuryApp composition root`
 
@@ -105,7 +105,7 @@ Acceptance:
 - startup failure leaves a clear error.
 
 ## T04 ActorContext + actor resolver
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T00.2, T03
 Commit target: `feat(actor): add actor classification`
 
@@ -124,7 +124,7 @@ Acceptance:
 - tests do not depend on account-name heuristics.
 
 ## T05 Household schema/repository/service
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T02, T04
 Commit target: `feat(household): add household repository and service`
 
@@ -143,7 +143,7 @@ Acceptance:
 - random bots remain RandomPlayerBot.
 
 ## T06 Durable Event Store
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T02, T04, T05
 Commit target: `feat(events): add durable Fury event store`
 
@@ -167,7 +167,7 @@ Acceptance:
 - dedupe key is based on authoritative identity, never wall-clock time alone.
 
 ## T07 Consumer checkpoint/replay
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T06
 Commit target: `feat(events): add consumer checkpoints and replay`
 
@@ -180,7 +180,7 @@ Acceptance:
 - batch size configurable.
 
 ## T08 AzerothCore event collector
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T00.2, T06
 Commit target: `feat(events): add PlayerScript event collector`
 
@@ -199,7 +199,7 @@ Acceptance:
 - duplicate authoritative callbacks dedupe correctly where a stable identity exists.
 
 ## T09 Reward claim kernel
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T02, T06
 Commit target: `feat(rewards): add reward claim registry`
 
@@ -218,7 +218,7 @@ Acceptance:
 - pending claims can be reconciled.
 
 ## T10 Chronicle projection
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T06, T07
 Commit target: `feat(chronicle): add Chronicle projection`
 
@@ -230,7 +230,7 @@ Acceptance:
 - household timeline query works in deterministic order.
 
 ## T11 Diagnostics and validation shell
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T03–T10
 Commit target: `feat(commands): add .fury diagnostics`
 
@@ -248,7 +248,7 @@ Acceptance:
 - validation prints actionable subsystem/key/error information.
 
 ## T12 M1 automated gate
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T01–T11
 Commit target: `test: add M1 kernel golden scenarios`
 
@@ -626,4 +626,6 @@ Do not silently pull these into current scope:
 
 # Immediate execution state
 
-Gate 0 source/API intake is complete. The consolidated M1 implementation lives on `agent/m1-replay-batching` / PR #7. Fast `mod-fury` compilation and the MySQL 8 schema/idempotency golden gate are GREEN. The full locked AzerothCore build remains the active compile gate, and M1 must stay IN_PROGRESS until a real worldserver startup/validation/shutdown plus second-start database restart acceptance passes with valid external AzerothCore client server-data.
+Gate 0 and **M1 FURY Kernel are GREEN**. PR #7 passed fast module compilation, MySQL 8 schema/idempotency, actor-policy golden scenarios, the pinned production worldserver build, real module database create/populate/update/restart, and two consecutive full worldserver startup/validation/shutdown smokes with pinned runtime data.
+
+M2 is now unblocked. Execute T13–T20 in dependency order and keep the full M1 regression gate mandatory for M2 acceptance.
