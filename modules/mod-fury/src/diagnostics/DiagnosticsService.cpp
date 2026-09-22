@@ -55,7 +55,7 @@ ValidationReport DiagnosticsService::Validate() const
         return report;
     }
 
-    if (snapshot->householdMembers > snapshot->households * 2)
+    if (snapshot->overfullHouseholds != 0)
     {
         report.issues.push_back({
             ValidationSeverity::Error,
