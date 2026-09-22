@@ -24,10 +24,74 @@ jobs:
       - name: Run actor classification golden scenarios
         run: bash scripts/test-m1-actor-policy.sh
 
+  warm-worldserver-cache:
+    name: Worldserver cache shard ${{ matrix.shard }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+    env:
+      CCACHE_DIR: ${{ runner.temp }}/fury-ccache
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install AzerothCore build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake make ninja-build gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Resolve locked upstream source
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Configure exact production compile database
+        env:
+          FURY_BUILD_TARGET: configure-only
+          FURY_BUILD_TYPE: Release
+          FURY_DISABLE_PCH: "1"
+        run: bash scripts/build.sh
+
+      - name: Generate revision header
+        run: cmake --build build/azerothcore --target revision.h --parallel 2
+
+      - name: Warm compile cache shard
+        env:
+          FURY_BUILD_JOBS: "4"
+        run: |
+          mkdir -p "${CCACHE_DIR}"
+          ccache --set-config=max_size=2G
+          ccache --set-config=compression=true
+          ccache --zero-stats
+          python3 scripts/warm-compile-cache.py \
+            build/azerothcore/compile_commands.json \
+            "${{ matrix.shard }}" \
+            16
+          ccache --show-stats
+
+      - name: Upload compile cache shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: fury-ccache-shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/fury-ccache
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
   build:
     name: Locked upstream build + DB lifecycle
+    needs: warm-worldserver-cache
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 30
+
+    env:
+      CCACHE_DIR: ${{ runner.temp }}/fury-ccache
 
     services:
       mysql:
@@ -55,18 +119,26 @@ jobs:
             libssl-dev libbz2-dev libreadline-dev libncurses-dev \
             libboost-all-dev libmysqlclient-dev default-mysql-client
 
-      - name: Restore compiler cache
+      - name: Restore persistent compiler cache
         uses: actions/cache@v4
         with:
-          path: ~/.cache/ccache
+          path: ${{ runner.temp }}/fury-ccache
           key: fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-${{ github.sha }}
           restore-keys: |
             fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
             fury-ccache-${{ runner.os }}-
 
+      - name: Merge current-run compile cache shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fury-ccache-shard-*
+          path: ${{ runner.temp }}/fury-ccache
+          merge-multiple: true
+
       - name: Configure compiler cache
         run: |
-          ccache --set-config=max_size=2G
+          mkdir -p "${CCACHE_DIR}"
+          ccache --set-config=max_size=8G
           ccache --set-config=compression=true
           ccache --zero-stats
 
@@ -76,6 +148,8 @@ jobs:
       - name: Build
         env:
           FURY_BUILD_JOBS: "4"
+          FURY_BUILD_TYPE: Release
+          FURY_DISABLE_PCH: "1"
         run: bash scripts/build.sh
 
       - name: Run real FURY database lifecycle smoke
