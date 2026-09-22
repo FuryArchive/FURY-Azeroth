@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS `fury_campaign_node` (
   `display_name` varchar(160) NOT NULL,
   `required_power_band` smallint unsigned NOT NULL DEFAULT 0,
   `grants_power_band` smallint unsigned NOT NULL DEFAULT 0,
+  `ip_required_state` tinyint unsigned NOT NULL DEFAULT 0,
   `enabled` tinyint unsigned NOT NULL DEFAULT 1,
   PRIMARY KEY (`node_key`),
   KEY `ix_fury_campaign_node_order` (`era`, `ordinal`)
