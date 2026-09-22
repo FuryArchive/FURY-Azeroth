@@ -122,6 +122,9 @@ void DatabaseConnection::DoPrepareStatements()
         "SELECT status, source_event_id, revision "
         "FROM fury_campaign_state WHERE household_id = ? AND node_key = ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_HOUSEHOLD_POWER_BAND,
+        "SELECT current_power_band FROM fury_household WHERE id = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_INS_CAMPAIGN_STATE,
         "INSERT IGNORE INTO fury_campaign_state "
         "(household_id, node_key, status, source_event_id, revision) "
