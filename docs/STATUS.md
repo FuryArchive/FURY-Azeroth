@@ -123,6 +123,6 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Before T16, reduce CI latency by separating fast PR gates from conditional full-runtime verification. Then begin **T16 Director runtime**.
+CI latency reduction is complete. Begin **T16 Director runtime** next.
 
 T16+ remain READY and are intentionally outside the Contracts pass.
