@@ -2,6 +2,7 @@
 #define MOD_FURY_CAMPAIGN_POLICY_H
 
 #include "CampaignTypes.h"
+#include "actors/ActorPolicy.h"
 
 namespace Fury
 {
@@ -33,7 +34,7 @@ enum class CampaignTransitionDisposition : uint8
 
 [[nodiscard]] constexpr bool CanAuthorCampaignTransition(ActorKind kind)
 {
-    return kind == ActorKind::Human || kind == ActorKind::System;
+    return IsPersistentProgressionAuthority(kind);
 }
 
 static_assert(EvaluateCampaignTransition(CampaignStatus::Locked, CampaignStatus::Available) == CampaignTransitionDisposition::Apply);
@@ -43,8 +44,9 @@ static_assert(EvaluateCampaignTransition(CampaignStatus::Complete, CampaignStatu
 static_assert(EvaluateCampaignTransition(CampaignStatus::Complete, CampaignStatus::Available) == CampaignTransitionDisposition::Reject);
 static_assert(EvaluateCampaignTransition(CampaignStatus::Active, CampaignStatus::Available) == CampaignTransitionDisposition::Reject);
 static_assert(EvaluateCampaignTransition(CampaignStatus::Locked, CampaignStatus::Complete) == CampaignTransitionDisposition::Reject);
+
 static_assert(CanAuthorCampaignTransition(ActorKind::Human));
-static_assert(CanAuthorCampaignTransition(ActorKind::System));
+static_assert(!CanAuthorCampaignTransition(ActorKind::System));
 static_assert(!CanAuthorCampaignTransition(ActorKind::HouseholdAltBot));
 static_assert(!CanAuthorCampaignTransition(ActorKind::RandomPlayerBot));
 }
