@@ -4,6 +4,7 @@
 #include "DatabaseEnv.h"
 
 #include <string>
+#include <utility>
 
 namespace Fury
 {
@@ -67,6 +68,33 @@ std::optional<ContractInstance> ContractRepository::FindActiveInstance(
         instance.completedEventId = fields[3].Get<EventId>();
 
     instance.revision = fields[4].Get<uint64>();
+    return instance;
+}
+
+std::optional<ContractInstance> ContractRepository::FindInstance(
+    ContractInstanceId instanceId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_CONTRACT_INSTANCE_BY_ID);
+    stmt->SetData(0, instanceId);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return std::nullopt;
+
+    Field* fields = result->Fetch();
+
+    ContractInstance instance;
+    instance.id = instanceId;
+    instance.householdId = fields[0].Get<HouseholdId>();
+    instance.contractKey = fields[1].Get<std::string>();
+    instance.status = static_cast<ContractStatus>(fields[2].Get<uint8>());
+    instance.acceptedEventId = fields[3].Get<EventId>();
+
+    if (!fields[4].IsNull())
+        instance.completedEventId = fields[4].Get<EventId>();
+
+    instance.revision = fields[5].Get<uint64>();
     return instance;
 }
 
@@ -188,7 +216,7 @@ void ContractRepository::AdvanceObjective(
     FuryDatabase.Execute(stmt);
 }
 
-uint32 ContractRepository::CountIncompleteObjectives(
+std::optional<uint32> ContractRepository::CountIncompleteObjectives(
     ContractInstanceId instanceId) const
 {
     DatabasePreparedStatement* stmt =
@@ -197,7 +225,7 @@ uint32 ContractRepository::CountIncompleteObjectives(
 
     PreparedQueryResult result = FuryDatabase.Query(stmt);
     if (!result)
-        return 0;
+        return std::nullopt;
 
     return result->Fetch()[0].Get<uint32>();
 }
