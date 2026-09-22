@@ -115,7 +115,8 @@ void DatabaseConnection::DoPrepareStatements()
         CONNECTION_SYNCH);
 
     PrepareStatement(FURY_SEL_CAMPAIGN_NODE,
-        "SELECT era, ordinal, display_name, required_power_band, grants_power_band, enabled "
+        "SELECT era, ordinal, display_name, required_power_band, grants_power_band, "
+        "ip_required_state, enabled "
         "FROM fury_campaign_node WHERE node_key = ?",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_CAMPAIGN_STATE,
