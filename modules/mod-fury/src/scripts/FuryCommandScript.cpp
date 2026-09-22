@@ -110,6 +110,17 @@ char const* SeverityName(Fury::ValidationSeverity severity)
     return "UNKNOWN";
 }
 
+bool RequireFuryEnabled(ChatHandler* handler)
+{
+    Fury::App& app = Fury::App::Instance();
+    if (app.IsInitialized() && app.IsEnabled())
+        return true;
+
+    handler->SendErrorMessage(
+        "FURY is disabled or not initialized; this command cannot access FURY state.");
+    return false;
+}
+
 class FuryCommandScript final : public CommandScript
 {
 public:
@@ -189,6 +200,9 @@ private:
 
     static bool HandleActor(ChatHandler* handler, char const* /*args*/)
     {
+        if (!RequireFuryEnabled(handler))
+            return false;
+
         Player* player = handler->GetPlayer();
         if (!player)
         {
@@ -212,6 +226,9 @@ private:
 
     static bool HandleHouseholdCreate(ChatHandler* handler, char const* args)
     {
+        if (!RequireFuryEnabled(handler))
+            return false;
+
         Player* player = handler->GetPlayer();
         if (!player)
         {
@@ -274,6 +291,9 @@ private:
 
     static bool HandleHouseholdAdd(ChatHandler* handler, char const* /*args*/)
     {
+        if (!RequireFuryEnabled(handler))
+            return false;
+
         Player* owner = handler->GetPlayer();
         if (!owner)
         {
@@ -321,6 +341,9 @@ private:
 
     static bool HandleHouseholdStatus(ChatHandler* handler, char const* /*args*/)
     {
+        if (!RequireFuryEnabled(handler))
+            return false;
+
         Player* player = handler->GetPlayer();
         if (!player)
         {
@@ -350,6 +373,9 @@ private:
 
     static bool HandleEventTail(ChatHandler* handler, char const* args)
     {
+        if (!RequireFuryEnabled(handler))
+            return false;
+
         uint32 const limit = ParseLimit(args, 10, 50);
         std::vector<Fury::FuryEvent> events =
             Fury::App::Instance().Events().Tail(limit);
@@ -379,6 +405,9 @@ private:
 
     static bool HandleRewardClaims(ChatHandler* handler, char const* args)
     {
+        if (!RequireFuryEnabled(handler))
+            return false;
+
         uint32 const limit = ParseLimit(args, 10, 50);
         std::vector<Fury::RewardClaimView> claims =
             Fury::App::Instance().Rewards().TailClaims(limit);
