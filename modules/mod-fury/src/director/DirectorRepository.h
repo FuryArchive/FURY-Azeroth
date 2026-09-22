@@ -44,6 +44,23 @@ public:
         uint64 externalRuntimeId,
         EventId sourceEventId) const;
 
+    [[nodiscard]] std::optional<DirectorParticipation> FindParticipation(
+        DirectorRunId runId,
+        std::string_view contributionKey) const;
+
+    void InsertParticipation(
+        DirectorRunId runId,
+        HouseholdId householdId,
+        std::string_view contributionKey,
+        uint32 points,
+        EventId sourceEventId) const;
+
+    void RecalculateParticipation(
+        DirectorRunId runId,
+        HouseholdId householdId,
+        uint64 expectedRevision,
+        EventId sourceEventId) const;
+
     void Resolve(
         DirectorRunId runId,
         HouseholdId householdId,
