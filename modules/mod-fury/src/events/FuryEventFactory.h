@@ -26,6 +26,12 @@ public:
         uint32 count,
         ObjectGuid lootGuid);
     static FuryEvent ItemCreated(Player* player, Item* item, uint32 count);
+    static FuryEvent ProfessionCrafted(
+        Player* player,
+        uint32 skillId,
+        uint32 recipeSpellId,
+        uint32 itemId,
+        uint32 count);
 
 private:
     static FuryEvent Base(Player* player, std::string type);
