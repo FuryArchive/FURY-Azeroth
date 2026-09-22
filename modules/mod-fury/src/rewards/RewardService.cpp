@@ -43,4 +43,9 @@ RewardClaimResult RewardService::Claim(
         std::nullopt
     };
 }
+
+std::vector<RewardClaimView> RewardService::TailClaims(uint32 limit) const
+{
+    return _repository.TailClaims(limit);
+}
 }
