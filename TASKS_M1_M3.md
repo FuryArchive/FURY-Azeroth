@@ -395,7 +395,7 @@ Acceptance:
 - any mismatch updates the FURY content mapping before code changes.
 
 ## T22 Living World external bridge patch
-Status: READY
+Status: GREEN
 Depends on: T21
 Patch queue target: `vendor/patches/mod-living-world/0001-fury-bridge.patch`
 
