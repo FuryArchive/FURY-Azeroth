@@ -126,10 +126,14 @@ public:
 
         std::string revision;
         if (QueryResult result = Fury::FuryDatabase.Query(
-                "SELECT date FROM version_db_fury ORDER BY date DESC, sql_rev DESC LIMIT 1"))
+                "SELECT sql_rev, date FROM version_db_fury "
+                "ORDER BY date DESC, sql_rev DESC LIMIT 1"))
         {
             Field* fields = result->Fetch();
             revision = fields[0].Get<std::string>();
+
+            if (!fields[1].IsNull())
+                revision += " (" + fields[1].Get<std::string>() + ")";
         }
 
         if (revision.empty())
