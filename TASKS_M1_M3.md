@@ -230,7 +230,7 @@ Acceptance:
 - household timeline query works in deterministic order.
 
 ## T11 Diagnostics and validation shell
-Status: READY
+Status: IN_PROGRESS
 Depends on: T03–T10
 Commit target: `feat(commands): add .fury diagnostics`
 
