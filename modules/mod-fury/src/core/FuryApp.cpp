@@ -41,7 +41,8 @@ void App::Initialize()
     if (_initialized)
         return;
 
-    _enabled = sConfigMgr->GetOption<bool>("Fury.Enable", true);
+    _configuredEnabled = sConfigMgr->GetOption<bool>("Fury.Enable", true);
+    _enabled = _configuredEnabled;
 
     _ticks.fastMs = ReadTickInterval("Fury.Tick.FastMs", 250);
     _ticks.serviceMs = ReadTickInterval("Fury.Tick.ServiceMs", 1000);
@@ -97,6 +98,7 @@ void App::Shutdown()
 
     _households.Shutdown();
     ResetTimers();
+    _configuredEnabled = false;
     _enabled = false;
     _initialized = false;
 }
