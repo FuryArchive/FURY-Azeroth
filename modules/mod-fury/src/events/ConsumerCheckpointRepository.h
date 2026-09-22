@@ -11,7 +11,7 @@ class ConsumerCheckpointRepository final
 {
 public:
     [[nodiscard]] EventId Load(std::string_view consumerKey) const;
-    void Advance(std::string_view consumerKey, EventId eventId) const;
+    [[nodiscard]] bool Advance(std::string_view consumerKey, EventId eventId) const;
 };
 }
 
