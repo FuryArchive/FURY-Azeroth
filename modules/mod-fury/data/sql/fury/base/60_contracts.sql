@@ -23,11 +23,12 @@ CREATE TABLE IF NOT EXISTS `fury_contract_objective` (
   `event_type` varchar(96) NOT NULL,
   `subject_type` varchar(64) DEFAULT NULL,
   `subject_id` bigint unsigned DEFAULT NULL,
+  `correlation_key` varchar(128) DEFAULT NULL,
   `required_count` int unsigned NOT NULL DEFAULT 1,
   `criteria` json DEFAULT NULL,
   PRIMARY KEY (`contract_key`, `ordinal`),
   KEY `ix_fury_contract_objective_match`
-    (`event_type`, `subject_type`, `subject_id`),
+    (`event_type`, `subject_type`, `subject_id`, `correlation_key`),
   CONSTRAINT `fk_fury_contract_objective_contract`
     FOREIGN KEY (`contract_key`)
     REFERENCES `fury_contract` (`contract_key`)
