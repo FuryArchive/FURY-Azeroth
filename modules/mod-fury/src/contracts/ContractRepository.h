@@ -26,7 +26,7 @@ public:
         HouseholdId householdId,
         std::string_view contractKey) const;
 
-    [[nodiscard]] uint32 CountObjectives(
+    [[nodiscard]] std::optional<uint32> CountObjectives(
         std::string_view contractKey) const;
 
     void InsertActiveInstance(
