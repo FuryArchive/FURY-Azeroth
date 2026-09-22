@@ -88,4 +88,9 @@ std::optional<HouseholdId> HouseholdService::FindByAccount(uint32 accountId) con
 
     return itr->second;
 }
+
+uint32 HouseholdService::CountMembers(HouseholdId householdId) const
+{
+    return _repository.CountMembers(householdId);
+}
 }
