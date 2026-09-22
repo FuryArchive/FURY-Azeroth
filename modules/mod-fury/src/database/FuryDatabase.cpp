@@ -300,5 +300,70 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE id = ? AND household_id = ? AND revision = ? "
         "AND status IN (1, 2, 3)",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_PROFESSION_ORDER,
+        "SELECT title, repeat_policy, enabled "
+        "FROM fury_profession_order WHERE order_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_PROFESSION_ORDER_OPTION,
+        "SELECT skill_id, item_id, required_count "
+        "FROM fury_profession_order_option "
+        "WHERE order_key = ? AND ordinal = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_PROFESSION_ORDER_ACTIVE,
+        "SELECT i.id, i.household_id, i.order_key, i.option_ordinal, i.status, "
+        "i.progress_count, i.accepted_event_id, i.last_event_id, "
+        "i.completed_event_id, i.revision, o.skill_id, o.item_id, o.required_count "
+        "FROM fury_profession_order_instance i "
+        "JOIN fury_profession_order_option o "
+        "ON o.order_key = i.order_key AND o.ordinal = i.option_ordinal "
+        "WHERE i.household_id = ? AND i.order_key = ? AND i.status = 2 "
+        "ORDER BY i.id DESC LIMIT 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_PROFESSION_ORDER_INSTANCE,
+        "SELECT i.id, i.household_id, i.order_key, i.option_ordinal, i.status, "
+        "i.progress_count, i.accepted_event_id, i.last_event_id, "
+        "i.completed_event_id, i.revision, o.skill_id, o.item_id, o.required_count "
+        "FROM fury_profession_order_instance i "
+        "JOIN fury_profession_order_option o "
+        "ON o.order_key = i.order_key AND o.ordinal = i.option_ordinal "
+        "WHERE i.id = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_PROFESSION_ORDER_COMPLETED,
+        "SELECT id FROM fury_profession_order_instance "
+        "WHERE household_id = ? AND order_key = ? AND status = 3 "
+        "ORDER BY id DESC LIMIT 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_PROFESSION_ORDER_INSTANCE,
+        "INSERT IGNORE INTO fury_profession_order_instance "
+        "(household_id, order_key, option_ordinal, status, "
+        "accepted_event_id, last_event_id) "
+        "VALUES (?, ?, ?, 2, ?, ?)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_PROFESSION_ORDER_MATCHES,
+        "SELECT i.id, i.household_id, i.order_key, i.option_ordinal, i.status, "
+        "i.progress_count, i.accepted_event_id, i.last_event_id, "
+        "i.completed_event_id, i.revision, o.skill_id, o.item_id, o.required_count "
+        "FROM fury_profession_order_instance i "
+        "JOIN fury_profession_order_option o "
+        "ON o.order_key = i.order_key AND o.ordinal = i.option_ordinal "
+        "WHERE i.household_id = ? AND i.status = 2 "
+        "AND o.skill_id = ? AND o.item_id = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_PROFESSION_ORDER_PROGRESS,
+        "UPDATE fury_profession_order_instance i "
+        "JOIN fury_profession_order_option o "
+        "ON o.order_key = i.order_key AND o.ordinal = i.option_ordinal "
+        "SET i.progress_count = LEAST(o.required_count, i.progress_count + 1), "
+        "i.last_event_id = ?, i.revision = i.revision + 1 "
+        "WHERE i.id = ? AND i.household_id = ? AND i.status = 2 "
+        "AND i.last_event_id < ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_PROFESSION_ORDER_COMPLETE,
+        "UPDATE fury_profession_order_instance SET "
+        "status = 3, completed_event_id = ?, last_event_id = ?, "
+        "completed_at = CURRENT_TIMESTAMP(6), revision = revision + 1 "
+        "WHERE id = ? AND household_id = ? AND status = 2",
+        CONNECTION_SYNCH);
 }
 }
