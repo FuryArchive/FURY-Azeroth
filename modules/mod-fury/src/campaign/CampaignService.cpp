@@ -2,6 +2,7 @@
 #include "CampaignPolicy.h"
 
 #include "core/FuryKey.h"
+#include "integrations/IndividualProgressionAdapter.h"
 
 #include "events/EventStore.h"
 #include "StringFormat.h"
@@ -47,9 +48,11 @@ char const* TransitionKey(CampaignStatus status)
 
 CampaignService::CampaignService(
     CampaignRepository const& repository,
-    EventStore const& events)
+    EventStore const& events,
+    IndividualProgressionAdapter const& individualProgression)
     : _repository(repository),
-      _events(events)
+      _events(events),
+      _individualProgression(individualProgression)
 {
 }
 
@@ -67,6 +70,95 @@ std::optional<PowerBand> CampaignService::CurrentPowerBand(
     HouseholdId householdId) const
 {
     return _repository.FindHouseholdPowerBand(householdId);
+}
+
+CampaignCharacterAccessResult CampaignService::CheckCharacterAccess(
+    Player* player,
+    HouseholdId householdId,
+    std::string_view nodeKey) const
+{
+    if (!IsCanonicalKey(nodeKey))
+    {
+        return {
+            CampaignCharacterAccessOutcome::NodeNotFound,
+            CampaignStatus::Locked,
+            0,
+            0
+        };
+    }
+
+    std::optional<CampaignNodeDefinition> node =
+        _repository.FindNode(nodeKey);
+    if (!node)
+    {
+        return {
+            CampaignCharacterAccessOutcome::NodeNotFound,
+            CampaignStatus::Locked,
+            0,
+            0
+        };
+    }
+
+    if (!node->enabled)
+    {
+        return {
+            CampaignCharacterAccessOutcome::NodeDisabled,
+            CampaignStatus::Locked,
+            node->ipRequiredState,
+            0
+        };
+    }
+
+    CampaignStatus const householdStatus =
+        GetStatus(householdId, nodeKey);
+
+    if (householdStatus == CampaignStatus::Locked)
+    {
+        return {
+            CampaignCharacterAccessOutcome::HouseholdLocked,
+            householdStatus,
+            node->ipRequiredState,
+            0
+        };
+    }
+
+    IndividualProgressionGateResult const gate =
+        _individualProgression.Check(
+            player,
+            node->ipRequiredState);
+
+    CampaignCharacterAccessOutcome outcome =
+        CampaignCharacterAccessOutcome::Allowed;
+
+    switch (gate.outcome)
+    {
+        case IndividualProgressionGateOutcome::Allowed:
+        case IndividualProgressionGateOutcome::NotRequired:
+            outcome = CampaignCharacterAccessOutcome::Allowed;
+            break;
+        case IndividualProgressionGateOutcome::InvalidRequiredState:
+            outcome = CampaignCharacterAccessOutcome::InvalidIpRequirement;
+            break;
+        case IndividualProgressionGateOutcome::ModuleUnavailable:
+            outcome = CampaignCharacterAccessOutcome::IpUnavailable;
+            break;
+        case IndividualProgressionGateOutcome::ModuleDisabled:
+            outcome = CampaignCharacterAccessOutcome::IpDisabled;
+            break;
+        case IndividualProgressionGateOutcome::PlayerUnavailable:
+            outcome = CampaignCharacterAccessOutcome::PlayerUnavailable;
+            break;
+        case IndividualProgressionGateOutcome::NotPassed:
+            outcome = CampaignCharacterAccessOutcome::CharacterProgressTooLow;
+            break;
+    }
+
+    return {
+        outcome,
+        householdStatus,
+        gate.requiredState,
+        gate.currentState
+    };
 }
 
 CampaignTransitionResult CampaignService::MarkAvailable(
