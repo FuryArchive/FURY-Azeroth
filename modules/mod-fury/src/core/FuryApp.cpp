@@ -24,7 +24,8 @@ App::App()
       _eventBus(_events, _consumerCheckpoints),
       _rewardPolicy(_rewardRepository),
       _rewards(_rewardRepository, _rewardPolicy),
-      _chronicle(_chronicleRepository)
+      _chronicle(_chronicleRepository),
+      _diagnostics(*this, _diagnosticsRepository)
 {
     _eventBus.RegisterConsumer(_chronicle);
 }
