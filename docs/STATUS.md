@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13 Campaign and T14 Proof service are GREEN; T15 Contracts core is the only active scope.
+- M2 Campaign Platform: IN_PROGRESS — T13 Campaign, T14 Proof service, and T15 Contracts core are GREEN; T16 Director runtime is next.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,14 +123,6 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Complete **T15 Contracts core** only:
+Before T16, reduce CI latency by separating fast PR gates from conditional full-runtime verification. Then begin **T16 Director runtime**.
 
-1. durable definitions, objectives, household instances, and progress;
-2. Human-only accept/progress authority through central actor policy;
-3. event/subject indexed objective matching;
-4. replay-safe progress with per-objective last_event_id;
-5. crash recovery between objective completion and contract.completed;
-6. exactly one durable contract.completed event per instance;
-7. keep M1 + T13 + T14 regressions mandatory.
-
-T16+ remain READY and are intentionally outside this pass.
+T16+ remain READY and are intentionally outside the Contracts pass.
