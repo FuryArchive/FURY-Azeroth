@@ -216,6 +216,27 @@ void ContractRepository::AdvanceObjective(
     FuryDatabase.Execute(stmt);
 }
 
+std::optional<ContractObjectiveProgress> ContractRepository::FindProgress(
+    ContractInstanceId instanceId,
+    uint16 objectiveOrdinal) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_CONTRACT_PROGRESS_ROW);
+    stmt->SetData(0, instanceId);
+    stmt->SetData(1, objectiveOrdinal);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return std::nullopt;
+
+    Field* fields = result->Fetch();
+
+    ContractObjectiveProgress progress;
+    progress.progressCount = fields[0].Get<uint32>();
+    progress.lastEventId = fields[1].Get<EventId>();
+    return progress;
+}
+
 std::optional<uint32> ContractRepository::CountIncompleteObjectives(
     ContractInstanceId instanceId) const
 {
