@@ -167,13 +167,21 @@ private:
         Fury::App& app = Fury::App::Instance();
 
         handler->PSendSysMessage(
-            "FURY: initialized={} enabled={}",
+            "FURY: initialized={} configured={} operational={}",
             app.IsInitialized() ? "yes" : "no",
+            app.IsConfiguredEnabled() ? "enabled" : "disabled",
             app.IsEnabled() ? "yes" : "no");
 
         if (!app.IsEnabled())
         {
-            handler->PSendSysMessage("FURY database is not opened while the module is disabled.");
+            if (app.IsConfiguredEnabled())
+            {
+                handler->SendErrorMessage(
+                    "FURY is configured on but failed to become operational. Run .fury validate and inspect startup logs.");
+                return false;
+            }
+
+            handler->PSendSysMessage("FURY is disabled by configuration; module database is not opened.");
             return true;
         }
 
