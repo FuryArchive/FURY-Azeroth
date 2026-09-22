@@ -281,7 +281,7 @@ Acceptance:
 - household current power band derives from canonical campaign progression, not arbitrary module state.
 
 ## T14 Proof service
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T13
 Commit target: `feat(proofs): add durable household proofs`
 
