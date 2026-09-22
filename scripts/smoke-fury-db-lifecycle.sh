@@ -80,7 +80,7 @@ export AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES=1
 export AC_FURY_ENABLE=1
 export AC_FURY_DATABASE_INFO="$(db_info acore_fury)"
 export AC_FURY_UPDATES_ENABLE_DATABASES=1
-export AC_FURY_DATABASE_SOURCE_DIRECTORY="${ROOT}/modules/mod-fury"
+unset AC_FURY_DATABASE_SOURCE_DIRECTORY || true
 export AC_CONSOLE_ENABLE=0
 export AC_BEEP_AT_START=0
 export AC_LOG_ASYNC_ENABLE=0
@@ -166,7 +166,14 @@ run_until_fury_db_ready() (
   local deadline=$((SECONDS + STARTUP_TIMEOUT))
   while (( SECONDS < deadline )); do
     if grep -Fq "[FURY] FURY database ready." "${log}"; then
-      echo "[FURY][PASS] run ${run_number}: real FuryDatabaseScript reached ready state"
+      local expected_root="${ROOT}/build/dist/share/fury"
+      if ! grep -Fq "[FURY] FURY database SQL root: ${expected_root}" "${log}"; then
+        echo "[FURY][FAIL] run ${run_number}: FURY did not use installed SQL root ${expected_root}" >&2
+        tail -n 250 "${log}" >&2 || true
+        return 1
+      fi
+
+      echo "[FURY][PASS] run ${run_number}: real FuryDatabaseScript reached ready state using installed SQL"
       return 0
     fi
 
