@@ -171,6 +171,10 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE household_id = ? AND contract_key = ? AND status = 2 "
         "ORDER BY id DESC LIMIT 1",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_INSTANCE_BY_ID,
+        "SELECT household_id, contract_key, status, accepted_event_id, completed_event_id, revision "
+        "FROM fury_contract_instance WHERE id = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_CONTRACT_COMPLETED_INSTANCE,
         "SELECT id FROM fury_contract_instance "
         "WHERE household_id = ? AND contract_key = ? AND status = 3 "
