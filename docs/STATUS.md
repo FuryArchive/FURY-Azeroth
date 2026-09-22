@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13–T16 are GREEN; T17 Profession Orders is the only active scope.
+- M2 Campaign Platform: IN_PROGRESS — T13–T17 are GREEN; T18 Minimal Bestiary projection is next.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,13 +123,8 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Complete **T17 Minimal profession-order subsystem** only:
+Begin **T18 Minimal Bestiary projection** next.
 
-1. durable household order definitions/options/instances;
-2. exact profession-skill + crafted-item matching;
-3. Human-only acceptance/progress through central actor policy;
-4. replay-safe progress and crash-recovery completion;
-5. no profession XP or richer crafting progression;
-6. keep M1 + T13–T16 fast regressions mandatory.
+T17 is GREEN through fast policy/schema/replay gates plus Fast mod-fury compile. Full Runtime was intentionally not required because the narrowed integration trigger surface was not changed.
 
-T18+ remain READY and are intentionally outside this pass.
+T19+ remain READY and are intentionally outside this pass.
