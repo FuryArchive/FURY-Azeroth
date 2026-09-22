@@ -2,10 +2,45 @@
 #include "actors/ActorPolicy.h"
 #include "events/FuryEventFactory.h"
 
+#include "DBCStructure.h"
+#include "Player.h"
 #include "PlayerScript.h"
+#include "Spell.h"
+#include "SpellMgr.h"
 
 namespace
 {
+uint32 ResolveProfessionSkill(uint32 spellId)
+{
+    SkillLineAbilityMapBounds const bounds =
+        sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
+
+    uint32 resolvedSkill = 0;
+
+    for (auto itr = bounds.first; itr != bounds.second; ++itr)
+    {
+        SkillLineAbilityEntry const* ability = itr->second;
+        if (!ability ||
+            !ability->SkillLine ||
+            !IsProfessionSkill(ability->SkillLine))
+        {
+            continue;
+        }
+
+        if (resolvedSkill != 0 &&
+            resolvedSkill != ability->SkillLine)
+        {
+            // Ambiguous DBC mapping: do not guess which profession owns the
+            // recipe. A future content validator can surface the bad mapping.
+            return 0;
+        }
+
+        resolvedSkill = ability->SkillLine;
+    }
+
+    return resolvedSkill;
+}
+
 void Publish(Fury::FuryEvent event)
 {
     Fury::App& app = Fury::App::Instance();
@@ -93,6 +128,31 @@ public:
     void OnPlayerCreateItem(Player* player, Item* item, uint32 count) override
     {
         Publish(Fury::FuryEventFactory::ItemCreated(player, item, count));
+
+        if (!player || !item || count == 0)
+            return;
+
+        Spell* spell = player->GetCurrentSpell(CURRENT_GENERIC_SPELL);
+        if (!spell || !spell->GetSpellInfo())
+            return;
+
+        uint32 const spellId = spell->GetSpellInfo()->Id;
+        uint32 const skillId = ResolveProfessionSkill(spellId);
+        if (!skillId)
+            return;
+
+        // Profession Orders count physical crafted output. Multi-output recipes
+        // therefore produce one durable craft event per item unit.
+        for (uint32 unit = 0; unit < count; ++unit)
+        {
+            Publish(Fury::FuryEventFactory::ProfessionCrafted(
+                player,
+                skillId,
+                spellId,
+                item->GetEntry(),
+                unit + 1,
+                count));
+        }
     }
 };
 }
