@@ -206,7 +206,8 @@ void DirectorRepository::InsertParticipation(
     HouseholdId householdId,
     std::string_view contributionKey,
     uint32 points,
-    EventId sourceEventId) const
+    EventId sourceEventId,
+    uint64 expectedRevision) const
 {
     DatabasePreparedStatement* stmt =
         FuryDatabase.GetPreparedStatement(FURY_INS_DIRECTOR_PARTICIPATION);
@@ -215,6 +216,7 @@ void DirectorRepository::InsertParticipation(
     stmt->SetData(2, sourceEventId);
     stmt->SetData(3, runId);
     stmt->SetData(4, householdId);
+    stmt->SetData(5, expectedRevision);
     FuryDatabase.Execute(stmt);
 }
 
