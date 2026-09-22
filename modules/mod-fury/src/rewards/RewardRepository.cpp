@@ -134,8 +134,12 @@ bool RewardRepository::ResolvePendingClaim(
     uint64 claimId,
     RewardClaimStatus terminalStatus) const
 {
-    if (!claimId || terminalStatus == RewardClaimStatus::Pending)
+    if (!claimId ||
+        (terminalStatus != RewardClaimStatus::Delivered &&
+         terminalStatus != RewardClaimStatus::Failed))
+    {
         return false;
+    }
 
     DatabasePreparedStatement* stmt =
         FuryDatabase.GetPreparedStatement(FURY_UPD_REWARD_CLAIM_STATUS);
