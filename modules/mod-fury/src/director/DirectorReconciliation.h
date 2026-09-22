@@ -66,6 +66,53 @@ public:
         DirectorRun const& run,
         ExternalRuntimeSnapshot const& external);
 
+    [[nodiscard]] static constexpr DirectorReconcileAction EvaluateRuntime(
+        uint64 expectedRuntimeId,
+        ExternalRuntimeState state,
+        uint64 actualRuntimeId)
+    {
+        if (state == ExternalRuntimeState::NotManaged)
+            return DirectorReconcileAction::None;
+
+        if (expectedRuntimeId == 0)
+        {
+            if (state == ExternalRuntimeState::Active &&
+                actualRuntimeId != 0)
+            {
+                return DirectorReconcileAction::AttachExternalRuntime;
+            }
+
+            if (state == ExternalRuntimeState::Missing)
+                return DirectorReconcileAction::None;
+
+            return DirectorReconcileAction::RuntimeConflict;
+        }
+
+        if (state == ExternalRuntimeState::Missing)
+            return DirectorReconcileAction::RestartMissingRuntime;
+
+        if (actualRuntimeId == 0 ||
+            actualRuntimeId != expectedRuntimeId)
+        {
+            return DirectorReconcileAction::RuntimeConflict;
+        }
+
+        switch (state)
+        {
+            case ExternalRuntimeState::Active:
+                return DirectorReconcileAction::ReattachExistingRuntime;
+            case ExternalRuntimeState::Complete:
+                return DirectorReconcileAction::ResolveFromExternal;
+            case ExternalRuntimeState::Failed:
+                return DirectorReconcileAction::FailFromExternal;
+            case ExternalRuntimeState::NotManaged:
+            case ExternalRuntimeState::Missing:
+                break;
+        }
+
+        return DirectorReconcileAction::RuntimeConflict;
+    }
+
 private:
     DirectorRepository const& _repository;
 };
