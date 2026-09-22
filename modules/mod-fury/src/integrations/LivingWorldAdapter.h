@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace Fury
 {
@@ -57,6 +58,38 @@ struct LivingWorldEntityMetadata
     uint8 tacticalRole = 0;
 };
 
+struct LivingWorldInvasionMetadata
+{
+    uint32 id = 0;
+    uint16 mapId = 0;
+    uint32 zoneId = 0;
+    bool allowRandomStart = false;
+    bool enabled = false;
+};
+
+struct LivingWorldStageMetadata
+{
+    uint32 id = 0;
+    uint16 order = 0;
+    uint8 completionType = 0;
+    uint32 completionTargetId = 0;
+    bool enabled = false;
+};
+
+class LivingWorldContentReader
+{
+public:
+    virtual ~LivingWorldContentReader() = default;
+
+    [[nodiscard]] virtual bool ContentAvailable() const = 0;
+    [[nodiscard]] virtual std::optional<LivingWorldInvasionMetadata>
+    Invasion(uint32 invasionId) const = 0;
+    [[nodiscard]] virtual std::vector<LivingWorldStageMetadata>
+    Stages(uint32 invasionId) const = 0;
+    [[nodiscard]] virtual bool HasRuntimeSignal(uint32 signalId) const = 0;
+    [[nodiscard]] virtual bool HasSpawnGroup(uint32 spawnGroupId) const = 0;
+};
+
 enum class LivingWorldStartOutcome : uint8
 {
     Started = 1,
@@ -93,7 +126,9 @@ enum class LivingWorldSignalOutcome : uint8
     PersistenceFailed = 8
 };
 
-class LivingWorldAdapter final : public DirectorRuntimeProbe
+class LivingWorldAdapter final
+    : public DirectorRuntimeProbe,
+      public LivingWorldContentReader
 {
 public:
     explicit LivingWorldAdapter(EventStore const& events)
@@ -102,6 +137,19 @@ public:
     }
 
     [[nodiscard]] LivingWorldAvailability Availability() const;
+    [[nodiscard]] bool ContentAvailable() const override
+    {
+        return Availability() == LivingWorldAvailability::Available;
+    }
+
+    [[nodiscard]] std::optional<LivingWorldInvasionMetadata>
+    Invasion(uint32 invasionId) const override;
+
+    [[nodiscard]] std::vector<LivingWorldStageMetadata>
+    Stages(uint32 invasionId) const override;
+
+    [[nodiscard]] bool HasRuntimeSignal(uint32 signalId) const override;
+    [[nodiscard]] bool HasSpawnGroup(uint32 spawnGroupId) const override;
 
     // Content layers register the stable relationship. Re-registering the
     // same mapping is idempotent; changing an existing graph mapping is
