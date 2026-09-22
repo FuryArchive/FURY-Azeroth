@@ -48,10 +48,11 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -hfury --silent"
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
