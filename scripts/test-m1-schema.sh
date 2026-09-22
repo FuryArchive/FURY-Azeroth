@@ -106,6 +106,28 @@ sql "INSERT INTO fury_event_consumer (consumer_key, last_event_id) VALUES ('gold
 sql "INSERT INTO fury_event_consumer (consumer_key, last_event_id) VALUES ('golden', 5) ON DUPLICATE KEY UPDATE last_event_id=GREATEST(last_event_id, VALUES(last_event_id));"
 assert_eq "10" "$(sql "SELECT last_event_id FROM fury_event_consumer WHERE consumer_key='golden';")" "consumer checkpoint never moves backwards"
 
+echo "[FURY] GS replay after simulated consumer interruption"
+replay_checkpoint="$(sql "SELECT COALESCE(MAX(id), 0) FROM fury_event;")"
+sql "INSERT INTO fury_event_consumer (consumer_key, last_event_id) VALUES ('golden-replay', ${replay_checkpoint}) ON DUPLICATE KEY UPDATE last_event_id=VALUES(last_event_id);"
+
+for occurrence in 1 2 3; do
+  replay_hash="UNHEX(SHA2('golden:replay:${occurrence}', 256))"
+  sql "INSERT INTO fury_event (event_type, actor_kind, actor_guid, account_id, household_id, source_system, dedupe_key, payload) VALUES ('golden.replay', 1, 1, 1001, 1, 'golden', ${replay_hash}, JSON_OBJECT('occurrence', ${occurrence}));"
+done
+
+pending_before_interrupt="$(sql "SELECT COUNT(*) FROM fury_event WHERE id > (SELECT last_event_id FROM fury_event_consumer WHERE consumer_key='golden-replay');")"
+assert_eq "3" "${pending_before_interrupt}" "replay consumer sees all events after checkpoint"
+
+# Simulate a consumer that handled work but crashed before persisting its
+# checkpoint: no checkpoint update occurs, therefore the same durable events
+# must be visible on restart.
+pending_after_interrupt="$(sql "SELECT COUNT(*) FROM fury_event WHERE id > (SELECT last_event_id FROM fury_event_consumer WHERE consumer_key='golden-replay');")"
+assert_eq "3" "${pending_after_interrupt}" "interrupted consumer replays the same durable events"
+
+replay_last="$(sql "SELECT MAX(id) FROM fury_event WHERE event_type='golden.replay';")"
+sql "INSERT INTO fury_event_consumer (consumer_key, last_event_id) VALUES ('golden-replay', ${replay_last}) ON DUPLICATE KEY UPDATE last_event_id=GREATEST(last_event_id, VALUES(last_event_id));"
+assert_eq "0" "$(sql "SELECT COUNT(*) FROM fury_event WHERE id > (SELECT last_event_id FROM fury_event_consumer WHERE consumer_key='golden-replay');")" "checkpoint commit clears replay backlog"
+
 echo "[FURY] reward claim idempotency"
 sql "INSERT INTO fury_reward_bundle (reward_key, minimum_power_band, maximum_power_band) VALUES ('golden.reward', 0, NULL);"
 sql "INSERT IGNORE INTO fury_reward_claim (source_event_id, reward_key, beneficiary_kind, beneficiary_id, status) VALUES (1, 'golden.reward', 3, 1, 0);"
