@@ -55,6 +55,42 @@ ValidationReport DiagnosticsService::Validate() const
         return report;
     }
 
+    switch (_app.IndividualProgression().Availability())
+    {
+        case IndividualProgressionAvailability::Unavailable:
+            report.issues.push_back({
+                ValidationSeverity::Error,
+                "individual_progression",
+                "module.available",
+                "Individual Progression adapter cannot resolve the pinned module API."
+            });
+            break;
+        case IndividualProgressionAvailability::Disabled:
+            report.issues.push_back({
+                ValidationSeverity::Error,
+                "individual_progression",
+                "module.enabled",
+                "IndividualProgression.Enable must be 1 for FURY character gates."
+            });
+            break;
+        case IndividualProgressionAvailability::PlayerSettingsDisabled:
+            report.issues.push_back({
+                ValidationSeverity::Error,
+                "individual_progression",
+                "player_settings.enabled",
+                "EnablePlayerSettings must be 1 for Individual Progression persistence."
+            });
+            break;
+        case IndividualProgressionAvailability::Available:
+            report.issues.push_back({
+                ValidationSeverity::Info,
+                "individual_progression",
+                "adapter",
+                "Individual Progression read-only adapter is available."
+            });
+            break;
+    }
+
     if (snapshot->overfullHouseholds != 0)
     {
         report.issues.push_back({
