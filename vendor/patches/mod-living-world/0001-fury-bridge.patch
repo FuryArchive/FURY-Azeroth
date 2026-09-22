@@ -1,0 +1,441 @@
+diff --git a/src/core/RuntimeEntityGroup.h b/src/core/RuntimeEntityGroup.h
+--- a/src/core/RuntimeEntityGroup.h
++++ b/src/core/RuntimeEntityGroup.h
+@@ -1,65 +1,74 @@
+-#ifndef MOD_LIVING_WORLD_RUNTIME_ENTITY_GROUP_H
+-#define MOD_LIVING_WORLD_RUNTIME_ENTITY_GROUP_H
+-
+-#include "Define.h"
+-#include "IEntityProvider.h"
+-
+-#include <unordered_map>
+-#include <vector>
+-
+-namespace lw
+-{
+-enum class RuntimeEntityGroupState : uint8
+-{
+-    Active = 0,
+-    CleaningUp = 1,
+-    Completed = 2
+-};
+-
+-enum class RouteFormationProfile : uint8
+-{
+-    DefaultMarch = 0,
+-    TravelingCaravan = 1
+-};
+-
+-struct RuntimeEntityGroup
+-{
+-    uint64 Id = 0;
+-    uint64 RuntimeId = 0;
+-    uint32 SpawnGroupId = 0;
+-    uint32 ActiveBehaviorId = 0;
+-    RuntimeEntityGroupState State = RuntimeEntityGroupState::Active;
+-    RouteFormationProfile RouteFormation = RouteFormationProfile::DefaultMarch;
+-    std::vector<RuntimeEntity> Entities;
+-};
+-
+-class RuntimeEntityGroupManager
+-{
+-public:
+-    static RuntimeEntityGroupManager& Instance();
+-
+-    void Reset();
+-
+-    RuntimeEntityGroup& CreateGroup(uint64 runtimeId, uint32 spawnGroupId);
+-    RuntimeEntityGroup* GetGroup(uint64 runtimeGroupId);
+-    RuntimeEntityGroup const* GetGroup(uint64 runtimeGroupId) const;
+-
+-    std::vector<uint64> GetGroupsForRuntime(uint64 runtimeId) const;
+-    std::vector<uint64> GetAllGroupIds() const;
+-    RuntimeEntityGroup* FindLatestGroup(uint64 runtimeId, uint32 spawnGroupId);
+-
+-    bool RemoveGroup(uint64 runtimeGroupId);
+-    void RemoveRuntime(uint64 runtimeId);
+-
+-private:
+-    uint64 NextGroupId();
+-
+-    uint64 _nextGroupId = 1;
+-    std::unordered_map<uint64, RuntimeEntityGroup> _groups;
+-    std::unordered_map<uint64, std::vector<uint64>> _groupsByRuntime;
+-};
+-}
+-
+-#define sRuntimeEntityGroupMgr lw::RuntimeEntityGroupManager::Instance()
+-
+-#endif
++#ifndef MOD_LIVING_WORLD_RUNTIME_ENTITY_GROUP_H
++#define MOD_LIVING_WORLD_RUNTIME_ENTITY_GROUP_H
++
++#include "Define.h"
++#include "IEntityProvider.h"
++
++#include <unordered_map>
++#include <vector>
++
++namespace lw
++{
++enum class RuntimeEntityGroupState : uint8
++{
++    Active = 0,
++    CleaningUp = 1,
++    Completed = 2
++};
++
++enum class RouteFormationProfile : uint8
++{
++    DefaultMarch = 0,
++    TravelingCaravan = 1
++};
++
++struct RuntimeEntityGroup
++{
++    uint64 Id = 0;
++    uint64 RuntimeId = 0;
++    uint32 SpawnGroupId = 0;
++    uint32 ActiveBehaviorId = 0;
++    RuntimeEntityGroupState State = RuntimeEntityGroupState::Active;
++    RouteFormationProfile RouteFormation = RouteFormationProfile::DefaultMarch;
++    std::vector<RuntimeEntity> Entities;
++};
++
++struct RuntimeEntityMetadata
++{
++    uint64 RuntimeId = 0;
++    uint64 RuntimeGroupId = 0;
++    uint32 SpawnGroupId = 0;
++    RuntimeEntity Entity;
++};
++
++class RuntimeEntityGroupManager
++{
++public:
++    static RuntimeEntityGroupManager& Instance();
++
++    void Reset();
++
++    RuntimeEntityGroup& CreateGroup(uint64 runtimeId, uint32 spawnGroupId);
++    RuntimeEntityGroup* GetGroup(uint64 runtimeGroupId);
++    RuntimeEntityGroup const* GetGroup(uint64 runtimeGroupId) const;
++
++    std::vector<uint64> GetGroupsForRuntime(uint64 runtimeId) const;
++    std::vector<uint64> GetAllGroupIds() const;
++    RuntimeEntityGroup* FindLatestGroup(uint64 runtimeId, uint32 spawnGroupId);
++    bool FindEntityMetadata(ObjectGuid guid, RuntimeEntityMetadata& metadata) const;
++
++    bool RemoveGroup(uint64 runtimeGroupId);
++    void RemoveRuntime(uint64 runtimeId);
++
++private:
++    uint64 NextGroupId();
++
++    uint64 _nextGroupId = 1;
++    std::unordered_map<uint64, RuntimeEntityGroup> _groups;
++    std::unordered_map<uint64, std::vector<uint64>> _groupsByRuntime;
++};
++}
++
++#define sRuntimeEntityGroupMgr lw::RuntimeEntityGroupManager::Instance()
++
++#endif
+diff --git a/src/core/RuntimeEntityGroup.cpp b/src/core/RuntimeEntityGroup.cpp
+--- a/src/core/RuntimeEntityGroup.cpp
++++ b/src/core/RuntimeEntityGroup.cpp
+@@ -1,136 +1,158 @@
+-#include "RuntimeEntityGroup.h"
+-
+-#include <algorithm>
+-
+-namespace lw
+-{
+-RuntimeEntityGroupManager& RuntimeEntityGroupManager::Instance()
+-{
+-    static RuntimeEntityGroupManager instance;
+-    return instance;
+-}
+-
+-void RuntimeEntityGroupManager::Reset()
+-{
+-    _groups.clear();
+-    _groupsByRuntime.clear();
+-    _nextGroupId = 1;
+-}
+-
+-uint64 RuntimeEntityGroupManager::NextGroupId()
+-{
+-    return _nextGroupId++;
+-}
+-
+-RuntimeEntityGroup& RuntimeEntityGroupManager::CreateGroup(uint64 runtimeId, uint32 spawnGroupId)
+-{
+-    RuntimeEntityGroup group;
+-    group.Id = NextGroupId();
+-    group.RuntimeId = runtimeId;
+-    group.SpawnGroupId = spawnGroupId;
+-
+-    uint64 id = group.Id;
+-    auto [itr, inserted] = _groups.emplace(id, std::move(group));
+-    (void)inserted;
+-
+-    _groupsByRuntime[runtimeId].push_back(id);
+-    return itr->second;
+-}
+-
+-RuntimeEntityGroup* RuntimeEntityGroupManager::GetGroup(uint64 runtimeGroupId)
+-{
+-    auto itr = _groups.find(runtimeGroupId);
+-    return itr == _groups.end() ? nullptr : &itr->second;
+-}
+-
+-RuntimeEntityGroup const* RuntimeEntityGroupManager::GetGroup(uint64 runtimeGroupId) const
+-{
+-    auto itr = _groups.find(runtimeGroupId);
+-    return itr == _groups.end() ? nullptr : &itr->second;
+-}
+-
+-std::vector<uint64> RuntimeEntityGroupManager::GetGroupsForRuntime(uint64 runtimeId) const
+-{
+-    auto itr = _groupsByRuntime.find(runtimeId);
+-    if (itr == _groupsByRuntime.end())
+-    {
+-        return {};
+-    }
+-
+-    return itr->second;
+-}
+-
+-std::vector<uint64> RuntimeEntityGroupManager::GetAllGroupIds() const
+-{
+-    std::vector<uint64> ids;
+-    ids.reserve(_groups.size());
+-    for (auto const& [id, group] : _groups)
+-    {
+-        (void)group;
+-        ids.push_back(id);
+-    }
+-    return ids;
+-}
+-
+-RuntimeEntityGroup* RuntimeEntityGroupManager::FindLatestGroup(uint64 runtimeId, uint32 spawnGroupId)
+-{
+-    auto itr = _groupsByRuntime.find(runtimeId);
+-    if (itr == _groupsByRuntime.end())
+-    {
+-        return nullptr;
+-    }
+-
+-    for (auto groupItr = itr->second.rbegin(); groupItr != itr->second.rend(); ++groupItr)
+-    {
+-        RuntimeEntityGroup* group = GetGroup(*groupItr);
+-        if (group && group->SpawnGroupId == spawnGroupId)
+-        {
+-            return group;
+-        }
+-    }
+-
+-    return nullptr;
+-}
+-
+-bool RuntimeEntityGroupManager::RemoveGroup(uint64 runtimeGroupId)
+-{
+-    auto groupItr = _groups.find(runtimeGroupId);
+-    if (groupItr == _groups.end())
+-    {
+-        return false;
+-    }
+-
+-    uint64 runtimeId = groupItr->second.RuntimeId;
+-    _groups.erase(groupItr);
+-
+-    auto runtimeItr = _groupsByRuntime.find(runtimeId);
+-    if (runtimeItr != _groupsByRuntime.end())
+-    {
+-        std::vector<uint64>& ids = runtimeItr->second;
+-        ids.erase(std::remove(ids.begin(), ids.end(), runtimeGroupId), ids.end());
+-
+-        if (ids.empty())
+-        {
+-            _groupsByRuntime.erase(runtimeItr);
+-        }
+-    }
+-
+-    return true;
+-}
+-
+-void RuntimeEntityGroupManager::RemoveRuntime(uint64 runtimeId)
+-{
+-    auto itr = _groupsByRuntime.find(runtimeId);
+-    if (itr == _groupsByRuntime.end())
+-    {
+-        return;
+-    }
+-
+-    for (uint64 groupId : itr->second)
+-    {
+-        _groups.erase(groupId);
+-    }
+-
+-    _groupsByRuntime.erase(itr);
+-}
+-}
++#include "RuntimeEntityGroup.h"
++
++#include <algorithm>
++
++namespace lw
++{
++RuntimeEntityGroupManager& RuntimeEntityGroupManager::Instance()
++{
++    static RuntimeEntityGroupManager instance;
++    return instance;
++}
++
++void RuntimeEntityGroupManager::Reset()
++{
++    _groups.clear();
++    _groupsByRuntime.clear();
++    _nextGroupId = 1;
++}
++
++uint64 RuntimeEntityGroupManager::NextGroupId()
++{
++    return _nextGroupId++;
++}
++
++RuntimeEntityGroup& RuntimeEntityGroupManager::CreateGroup(uint64 runtimeId, uint32 spawnGroupId)
++{
++    RuntimeEntityGroup group;
++    group.Id = NextGroupId();
++    group.RuntimeId = runtimeId;
++    group.SpawnGroupId = spawnGroupId;
++
++    uint64 id = group.Id;
++    auto [itr, inserted] = _groups.emplace(id, std::move(group));
++    (void)inserted;
++
++    _groupsByRuntime[runtimeId].push_back(id);
++    return itr->second;
++}
++
++RuntimeEntityGroup* RuntimeEntityGroupManager::GetGroup(uint64 runtimeGroupId)
++{
++    auto itr = _groups.find(runtimeGroupId);
++    return itr == _groups.end() ? nullptr : &itr->second;
++}
++
++RuntimeEntityGroup const* RuntimeEntityGroupManager::GetGroup(uint64 runtimeGroupId) const
++{
++    auto itr = _groups.find(runtimeGroupId);
++    return itr == _groups.end() ? nullptr : &itr->second;
++}
++
++std::vector<uint64> RuntimeEntityGroupManager::GetGroupsForRuntime(uint64 runtimeId) const
++{
++    auto itr = _groupsByRuntime.find(runtimeId);
++    if (itr == _groupsByRuntime.end())
++    {
++        return {};
++    }
++
++    return itr->second;
++}
++
++std::vector<uint64> RuntimeEntityGroupManager::GetAllGroupIds() const
++{
++    std::vector<uint64> ids;
++    ids.reserve(_groups.size());
++    for (auto const& [id, group] : _groups)
++    {
++        (void)group;
++        ids.push_back(id);
++    }
++    return ids;
++}
++
++RuntimeEntityGroup* RuntimeEntityGroupManager::FindLatestGroup(uint64 runtimeId, uint32 spawnGroupId)
++{
++    auto itr = _groupsByRuntime.find(runtimeId);
++    if (itr == _groupsByRuntime.end())
++    {
++        return nullptr;
++    }
++
++    for (auto groupItr = itr->second.rbegin(); groupItr != itr->second.rend(); ++groupItr)
++    {
++        RuntimeEntityGroup* group = GetGroup(*groupItr);
++        if (group && group->SpawnGroupId == spawnGroupId)
++        {
++            return group;
++        }
++    }
++
++    return nullptr;
++}
++
++bool RuntimeEntityGroupManager::FindEntityMetadata(ObjectGuid guid, RuntimeEntityMetadata& metadata) const
++{
++    for (auto const& [runtimeGroupId, group] : _groups)
++    {
++        for (RuntimeEntity const& entity : group.Entities)
++        {
++            if (entity.Guid != guid)
++            {
++                continue;
++            }
++
++            metadata.RuntimeId = group.RuntimeId;
++            metadata.RuntimeGroupId = runtimeGroupId;
++            metadata.SpawnGroupId = group.SpawnGroupId;
++            metadata.Entity = entity;
++            return true;
++        }
++    }
++
++    return false;
++}
++
++bool RuntimeEntityGroupManager::RemoveGroup(uint64 runtimeGroupId)
++{
++    auto groupItr = _groups.find(runtimeGroupId);
++    if (groupItr == _groups.end())
++    {
++        return false;
++    }
++
++    uint64 runtimeId = groupItr->second.RuntimeId;
++    _groups.erase(groupItr);
++
++    auto runtimeItr = _groupsByRuntime.find(runtimeId);
++    if (runtimeItr != _groupsByRuntime.end())
++    {
++        std::vector<uint64>& ids = runtimeItr->second;
++        ids.erase(std::remove(ids.begin(), ids.end(), runtimeGroupId), ids.end());
++
++        if (ids.empty())
++        {
++            _groupsByRuntime.erase(runtimeItr);
++        }
++    }
++
++    return true;
++}
++
++void RuntimeEntityGroupManager::RemoveRuntime(uint64 runtimeId)
++{
++    auto itr = _groupsByRuntime.find(runtimeId);
++    if (itr == _groupsByRuntime.end())
++    {
++        return;
++    }
++
++    for (uint64 groupId : itr->second)
++    {
++        _groups.erase(groupId);
++    }
++
++    _groupsByRuntime.erase(itr);
++}
++}

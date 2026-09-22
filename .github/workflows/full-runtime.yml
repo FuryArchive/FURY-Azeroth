@@ -13,8 +13,6 @@ on:
       - "modules/mod-fury/src/FuryModule.cpp"
       - "modules/mod-fury/src/mod_fury_loader.cpp"
       - "modules/mod-fury/src/database/FuryDatabaseScript.cpp"
-      - "scripts/build.sh"
-      - "scripts/sync-upstreams.sh"
       - "scripts/smoke-fury-db-lifecycle.sh"
       - "scripts/smoke-worldserver.sh"
       - "scripts/fetch-ac-data.sh"

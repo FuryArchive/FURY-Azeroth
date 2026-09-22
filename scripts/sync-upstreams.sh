@@ -54,6 +54,9 @@ clone_pin() {
   git -C "${dest}" fetch --prune origin "${branch}"
   git -C "${dest}" fetch origin "${commit}"
   git -C "${dest}" checkout --detach "${commit}"
+  # Upstream workspaces are generated from the lock. Remove any previously
+  # applied FURY patch before validating/applying the current patch queue.
+  git -C "${dest}" reset --hard "${commit}"
 
   local actual
   actual="$(git -C "${dest}" rev-parse HEAD)"
@@ -61,6 +64,44 @@ clone_pin() {
     echo "[FURY] pin mismatch for ${repository}: expected ${commit}, got ${actual}" >&2
     exit 1
   fi
+}
+
+apply_patches() {
+  local key="$1"
+  local dest="$2"
+
+  mapfile -t patches < <(python3 - "${LOCK}" "${key}" <<'PY'
+import json
+import sys
+
+lock_path, dotted_path = sys.argv[1:3]
+with open(lock_path, "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+
+node = data
+for part in dotted_path.split("."):
+    node = node[part]
+
+for patch in node.get("patches", []):
+    print(patch)
+PY
+)
+
+  for relative_patch in "${patches[@]}"; do
+    local patch="${ROOT}/${relative_patch}"
+    if [[ ! -f "${patch}" ]]; then
+      echo "[FURY] missing upstream patch: ${relative_patch}" >&2
+      exit 1
+    fi
+
+    echo "[FURY] verify patch ${relative_patch}"
+    if ! git -C "${dest}" apply --check "${patch}"; then
+      echo "[FURY] compatibility guard failed: ${relative_patch} no longer applies cleanly to the pinned upstream." >&2
+      exit 1
+    fi
+
+    git -C "${dest}" apply "${patch}"
+  done
 }
 
 mkdir -p "${UPSTREAM}"
@@ -71,6 +112,7 @@ mkdir -p "${CORE_DIR}/modules"
 clone_pin "modules.playerbots" "${CORE_DIR}/modules/mod-playerbots"
 clone_pin "modules.individual_progression" "${CORE_DIR}/modules/mod-individual-progression"
 clone_pin "modules.living_world" "${CORE_DIR}/modules/mod-living-world"
+apply_patches "modules.living_world" "${CORE_DIR}/modules/mod-living-world"
 
 if [[ -d "${ROOT}/modules/mod-fury" ]]; then
   rm -rf "${CORE_DIR}/modules/mod-fury"

@@ -8,8 +8,12 @@ import subprocess
 import sys
 
 
-def is_fury_source(path: str) -> bool:
-    return "mod-fury" in Path(path).parts
+def selected_module() -> str:
+    return os.environ.get("FURY_SOURCE_MODULE", "mod-fury")
+
+
+def is_selected_source(path: str, module: str) -> bool:
+    return module in Path(path).parts
 
 
 def command_args(entry: dict) -> list[str]:
@@ -51,19 +55,20 @@ def main() -> int:
 
     database_path = Path(sys.argv[1])
     entries = json.loads(database_path.read_text())
-    fury_entries = [entry for entry in entries if is_fury_source(entry["file"])]
+    module = selected_module()
+    selected_entries = [entry for entry in entries if is_selected_source(entry["file"], module)]
 
-    if not fury_entries:
-        print("[FURY][FAIL] compile database contains no mod-fury sources", file=sys.stderr)
+    if not selected_entries:
+        print(f"[FURY][FAIL] compile database contains no {module} sources", file=sys.stderr)
         return 1
 
     jobs = max(1, int(os.environ.get("FURY_BUILD_JOBS", "4")))
-    print(f"[FURY] compiling {len(fury_entries)} mod-fury translation unit(s) with {jobs} worker(s)")
+    print(f"[FURY] compiling {len(selected_entries)} {module} translation unit(s) with {jobs} worker(s)")
 
     failures: list[tuple[str, str]] = []
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as pool:
-        futures = [pool.submit(compile_entry, entry) for entry in fury_entries]
+        futures = [pool.submit(compile_entry, entry) for entry in selected_entries]
         for future in concurrent.futures.as_completed(futures):
             source, returncode, output = future.result()
             short = Path(source).name
@@ -78,7 +83,7 @@ def main() -> int:
             print(f"\n===== {source} =====\n{output}", file=sys.stderr)
         return 1
 
-    print("[FURY] mod-fury compile gate passed")
+    print(f"[FURY] {module} compile gate passed")
     return 0
 
 
