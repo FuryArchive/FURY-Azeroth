@@ -11,7 +11,7 @@ namespace Fury
 class ChronicleRepository final
 {
 public:
-    void Insert(
+    [[nodiscard]] bool Insert(
         HouseholdId householdId,
         EventId sourceEventId,
         std::string_view entryKey,
