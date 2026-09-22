@@ -53,6 +53,48 @@ jobs:
         run: bash scripts/build.sh
 
 
+
+  module-compile:
+    name: Fast module compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install AzerothCore build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-module-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            fury-module-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
+            fury-module-ccache-${{ runner.os }}-
+
+      - name: Configure compiler cache
+        run: |
+          ccache --set-config=max_size=1G
+          ccache --set-config=compression=true
+          ccache --zero-stats
+
+      - name: Resolve locked upstream source
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Compile modules only
+        env:
+          FURY_BUILD_JOBS: "4"
+          FURY_BUILD_TARGET: modules
+        run: bash scripts/build.sh
+
   schema-golden:
     name: M1 schema golden gate
     runs-on: ubuntu-24.04
