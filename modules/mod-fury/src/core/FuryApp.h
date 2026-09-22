@@ -27,6 +27,7 @@ public:
     void Update(uint32 diff);
     void Shutdown();
 
+    [[nodiscard]] bool IsConfiguredEnabled() const { return _configuredEnabled; }
     [[nodiscard]] bool IsEnabled() const { return _enabled; }
     [[nodiscard]] bool IsInitialized() const { return _initialized; }
 
@@ -81,6 +82,7 @@ private:
     uint64 _directorAccumulator = 0;
     uint64 _reconcileAccumulator = 0;
 
+    bool _configuredEnabled = false;
     bool _enabled = false;
     bool _initialized = false;
 };
