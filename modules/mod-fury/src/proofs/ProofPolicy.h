@@ -14,6 +14,7 @@ static_assert(CanGrantHouseholdProof(ActorKind::Human));
 static_assert(!CanGrantHouseholdProof(ActorKind::System));
 static_assert(!CanGrantHouseholdProof(ActorKind::HouseholdAltBot));
 static_assert(!CanGrantHouseholdProof(ActorKind::RandomPlayerBot));
+static_assert(!CanGrantHouseholdProof(ActorKind::NpcAssistant));
 }
 
 #endif
