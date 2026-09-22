@@ -285,6 +285,28 @@ void DatabaseConnection::DoPrepareStatements()
         "AND status IN (1, 2, 3) "
         "AND (external_runtime_id IS NULL OR external_runtime_id = ?)",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_PARTICIPATION,
+        "SELECT points, source_event_id "
+        "FROM fury_director_participation "
+        "WHERE run_id = ? AND contribution_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_DIRECTOR_PARTICIPATION,
+        "INSERT IGNORE INTO fury_director_participation "
+        "(run_id, contribution_key, points, source_event_id) "
+        "SELECT id, ?, ?, ? FROM fury_director_run "
+        "WHERE id = ? AND household_id = ? AND status IN (1, 2, 3)",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_RECALC_DIRECTOR_PARTICIPATION,
+        "UPDATE fury_director_run SET "
+        "participation_score = LEAST(100, COALESCE(("
+        "SELECT SUM(points) FROM fury_director_participation "
+        "WHERE run_id = ?"
+        "), 0)), "
+        "last_event_id = GREATEST(last_event_id, ?), "
+        "revision = revision + 1 "
+        "WHERE id = ? AND household_id = ? AND revision = ? "
+        "AND status IN (1, 2, 3)",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_UPD_DIRECTOR_RESOLVE,
         "UPDATE fury_director_run SET "
         "status = 4, outcome_key = ?, resolved_event_id = ?, last_event_id = ?, "
