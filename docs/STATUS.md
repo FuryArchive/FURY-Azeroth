@@ -22,7 +22,7 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13 Campaign is GREEN; T14 Proof service is the only active scope.
+- M2 Campaign Platform: IN_PROGRESS — T13 Campaign and T14 Proof service are GREEN; T15 Contracts core is next.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -123,13 +123,14 @@ T13 therefore satisfies its acceptance contract: backward transitions are reject
 
 ## Immediate next gate
 
-Complete **T14 Proof service** only:
+Begin **T15 Contracts core** only:
 
-1. immutable durable household proof storage;
-2. Human-only proof authority through the central actor policy;
-3. idempotent duplicate grants that retain the first source event and metadata;
-4. indexed household/key lookup plus source-event reverse index;
-5. durable deduplicated proof.granted event recovery;
-6. keep the full M1 + T13 regression gates mandatory.
+1. durable contract definitions and household instances;
+2. objective progress through the replayable event pipeline;
+3. completion emits one durable event;
+4. replay does not double-count progress;
+5. unrelated events do not scan every objective naively;
+6. bot eligibility remains centralized;
+7. keep M1 + T13 + T14 regressions mandatory.
 
-T15+ remain READY and are intentionally outside this pass.
+T16+ remain READY and are intentionally outside this pass.
