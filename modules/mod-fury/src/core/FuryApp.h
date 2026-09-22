@@ -57,6 +57,10 @@ public:
     {
         return _individualProgression;
     }
+    IndividualProgressionAdapter const& IndividualProgression() const
+    {
+        return _individualProgression;
+    }
     ProofService& Proofs() { return _proofs; }
     ContractService& Contracts() { return _contracts; }
     DirectorService& Director() { return _director; }
