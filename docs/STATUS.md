@@ -10,9 +10,19 @@ Date: 2026-09-22
 - GitHub repository access: GREEN.
 - T00.1 repository intake: GREEN.
 - T00.2 pinned upstream API verification: GREEN.
-- T00.3 reproducible lock/resolver: IN_PROGRESS pending clean CI resolution/build proof.
-- T01 mod-fury skeleton: IN_PROGRESS pending compile/start acceptance.
-- T02+ implementation: READY, not started.
+- T00.3 reproducible lock/resolver: GREEN; multiple clean CI runners resolved the exact pinned upstream revisions successfully.
+- T01 mod-fury skeleton: IN_PROGRESS; fast module compile is GREEN, full locked build and worldserver start acceptance remain.
+- T02 module-owned database: IN_PROGRESS on `agent/t02-fury-db`; source/schema present, compile/start acceptance pending.
+- T03 FuryApp composition root: IN_PROGRESS on `agent/t03-fury-app`; throttled lifecycle implemented, compile/regression proof pending.
+- T04 actor classification: IN_PROGRESS on `agent/t04-actor-resolver`; Human/HouseholdAltBot/RandomPlayerBot/System resolution implemented, compile/tests pending.
+- T05 Household: IN_PROGRESS on `agent/t05-household`; schema/repository/service and alt-bot lookup wired into the composition root, compile/tests pending.
+- T06 durable Event Store: IN_PROGRESS on `agent/t06-event-store`; schema, SHA-256 dedupe and append/query path implemented, compile/DB tests pending.
+- T07 consumer replay: IN_PROGRESS on `agent/t07-event-replay`; checkpoints, ordered replay and at-least-once bus implemented, compile/replay tests pending.
+- T08 AzerothCore event collector: IN_PROGRESS on `agent/t08-event-collector`; login/level/zone/quest/kill/loot/craft normalization is implemented with random population bot filtering, compile/hook tests pending.
+- T09 Reward Registry: IN_PROGRESS on `agent/t09-reward-claims`; power-band policy and idempotent claim uniqueness implemented, delivery intentionally deferred, compile/DB tests pending.
+- T10 Chronicle: IN_PROGRESS on `agent/t10-chronicle`; sparse household history projection is registered as a durable replay consumer, compile/replay tests pending.
+- T11 diagnostics: IN_PROGRESS on `agent/t11-diagnostics`; `.fury status/actor/household/event/reward/validate` implemented, compile/permission/runtime tests pending.
+- T12 M1 gate: IN_PROGRESS on `agent/m1-replay-batching`; fast module compile and MySQL 8 schema/idempotency gate are GREEN, full locked build/worldserver acceptance still required.
 - M1 overall: IN_PROGRESS.
 - M2/M3: READY, blocked by prior milestone gates.
 
@@ -74,8 +84,19 @@ This is intentionally still `IN_PROGRESS`, not `GREEN`, until the locked workspa
 
 ## Immediate next gate
 
-1. Trigger CI against the locked workspace.
-2. Inspect the first real configure/build failure.
-3. Fix only verified failures.
-4. When compile is green, add the startup/database smoke required for M1 rather than weakening the acceptance criteria.
-5. Begin T02 module-owned `acore_fury` database using the exact Playerbots `DatabaseScript` pattern already verified at the pin.
+1. Finish the currently running full locked AzerothCore build gate.
+2. If it fails, fix only the verified configure/link/build error and rerun.
+3. Keep the existing fast module compile and MySQL schema/idempotency gates mandatory; both are currently GREEN.
+4. Wire the existing `scripts/smoke-worldserver.sh` into a real runtime environment with MySQL plus valid AzerothCore client server-data (DBC/maps/vmaps/mmaps). Those data files are intentionally not stored in this repository, so CI cannot truthfully claim a full `worldserver ready` smoke until an external runtime-data source is provided.
+5. Exercise two consecutive worldserver starts to prove module-owned `acore_fury` create/update/restart behavior, then run `.fury validate` and shutdown cleanly.
+6. Mark M1 GREEN only after that runtime acceptance passes; do not weaken the gate to compensate for missing client data.
+
+
+## Current CI evidence
+
+For PR #7 (`agent/m1-replay-batching`):
+
+- `Fast mod-fury compile`: GREEN.
+- `M1 schema golden gate`: GREEN against MySQL 8.
+- `Locked upstream build`: running at the time of this status update.
+- Full worldserver runtime smoke: not yet executed; requires valid AzerothCore client server-data outside this repository.
