@@ -1,6 +1,7 @@
 #include "FuryEventFactory.h"
 
 #include "core/FuryApp.h"
+#include "core/FuryTargetId.h"
 #include "Creature.h"
 #include "Item.h"
 #include "Player.h"
@@ -200,6 +201,27 @@ FuryEvent FuryEventFactory::ItemLooted(
     {
         event.dedupeIdentity = OccurrenceIdentity("item-loot", player);
     }
+
+    return event;
+}
+
+FuryEvent FuryEventFactory::ProfessionCrafted(
+    Player* player,
+    uint32 skillId,
+    uint32 recipeSpellId,
+    uint32 itemId)
+{
+    FuryEvent event = Base(player, "profession.crafted");
+
+    event.subjectType = "profession_craft";
+    event.subjectId = MakeProfessionCraftTarget(skillId, itemId);
+    event.payloadJson = Acore::StringFormat(
+        "{{\"skill_id\":{},\"recipe_spell_id\":{},\"item_id\":{}}}",
+        skillId,
+        recipeSpellId,
+        itemId);
+    event.dedupeIdentity =
+        OccurrenceIdentity("profession-craft", player);
 
     return event;
 }
