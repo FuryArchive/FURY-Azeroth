@@ -482,3 +482,35 @@ jobs:
           MYSQL_PASSWORD: fury
           MYSQL_DATABASE: acore_fury
         run: bash scripts/test-m2-golden-suite.sh
+
+
+  living-world-bridge:
+    name: T22 Living World bridge compatibility gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install AzerothCore build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-lw-bridge-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml', 'vendor/patches/mod-living-world/*.patch') }}-${{ github.sha }}
+          restore-keys: |
+            fury-lw-bridge-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml', 'vendor/patches/mod-living-world/*.patch') }}-
+            fury-lw-bridge-ccache-${{ runner.os }}-
+
+      - name: Run T22 bridge compatibility and standalone compile
+        env:
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/test-t22-living-world-bridge.sh
