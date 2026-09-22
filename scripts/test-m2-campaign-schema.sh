@@ -46,7 +46,14 @@ echo "[FURY] fresh-install Campaign schema"
 assert_campaign_tables
 
 echo "[FURY] M1 -> T13 migration path"
-sql "DROP TABLE fury_campaign_state; DROP TABLE fury_campaign_node;"
+# Downstream schemas may reference Campaign once later M2 tasks exist. Remove
+# those consumers before simulating the historical M1 -> T13 upgrade.
+sql "DROP TABLE IF EXISTS fury_contract_progress;
+     DROP TABLE IF EXISTS fury_contract_instance;
+     DROP TABLE IF EXISTS fury_contract_objective;
+     DROP TABLE IF EXISTS fury_contract;
+     DROP TABLE fury_campaign_state;
+     DROP TABLE fury_campaign_node;"
 "${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/updates/2026_09_22_01_campaign.sql"
 assert_campaign_tables
 
