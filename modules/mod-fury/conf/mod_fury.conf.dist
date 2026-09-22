@@ -10,6 +10,10 @@ FuryDatabaseInfo = "127.0.0.1;3306;acore;acore;acore_fury"
 FuryDatabase.SynchThreads = 1
 Fury.Updates.EnableDatabases = 1
 
+# Optional root containing data/sql/fury. Leave empty for the source checkout.
+# Packaged installs can point this at <install>/share/fury.
+Fury.Database.SourceDirectory = ""
+
 # Throttled internal service cadences. These prevent heavy work from running on every world tick.
 Fury.Tick.FastMs = 250
 Fury.Tick.ServiceMs = 1000
