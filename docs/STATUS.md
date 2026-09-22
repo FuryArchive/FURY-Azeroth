@@ -21,7 +21,8 @@ Date: 2026-09-22
 - T11 diagnostics/validation shell: GREEN.
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
-- M2 Campaign Platform: IN_PROGRESS — T13 Campaign schema/service is the only active M2 scope.
+- T13 Campaign schema/service: GREEN.
+- M2 Campaign Platform: IN_PROGRESS — T14 Proof service is the next active scope.
 - M3 Defias Resurgence vertical slice: READY, blocked by M2.
 
 ## Repository baseline
@@ -41,6 +42,10 @@ Bootstrap commit inspected:
 M1 implementation was merged through PR #7 into:
 
 `9f5a9f55d0a2345f44dfa2ae5574e5f1a54dd21a`
+
+T13 Campaign merged through PR #14 into:
+
+`fa4e63c7651d7ee22fc02ff5f3ada2058739e81d`
 
 ## Gate 0 work completed
 
@@ -99,13 +104,29 @@ Final PR #7 CI run **#91** passed every mandatory gate:
 
 The M1 gate therefore satisfies the repository rule that source presence alone is insufficient: compile, persistence, restart, replay, and runtime acceptance have all passed.
 
+## T13 Campaign acceptance evidence
+
+Final PR #14 CI run **#97**, attempt **8**, passed the required Campaign and M1 regression gates:
+
+- `T13 Campaign policy golden gate`: GREEN.
+- `T13 Campaign schema golden gate`: GREEN.
+- `Fast mod-fury compile`: GREEN.
+- `M1 actor-policy golden gate`: GREEN.
+- `M1 schema golden gate`: GREEN.
+- `Locked worldserver + M1 runtime`: GREEN.
+- production pinned `worldserver` build: GREEN.
+- real FURY database lifecycle smoke: GREEN.
+- pinned runtime-data install: GREEN.
+- full `worldserver` smoke: GREEN twice consecutively.
+
+T13 therefore satisfies its acceptance contract: backward transitions are rejected, duplicate completion is idempotent, persistent progression authority is Human-only through the central actor policy, and household power band is derived from canonical completed campaign nodes.
+
 ## Immediate next gate
 
-Complete **T13 Campaign schema/service** only:
+Begin **T14 Proof service** only:
 
-1. fresh-install and M1-upgrade schema paths;
-2. forward-only transitions with optimistic revisions;
-3. household power band derived only from completed campaign nodes;
-4. idempotent recovery and stale-revision tests.
-
-T14+ remain READY and are intentionally outside this pass.
+1. durable proof storage keyed per household;
+2. duplicate grant idempotency;
+3. retain source event;
+4. indexed proof lookup;
+5. keep the full M1 + T13 regression gates mandatory.
