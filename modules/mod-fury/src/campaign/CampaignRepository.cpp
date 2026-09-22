@@ -109,14 +109,12 @@ void CampaignRepository::UpdateState(
     FuryDatabase.Execute(stmt);
 }
 
-void CampaignRepository::RaiseHouseholdPowerBand(
-    HouseholdId householdId,
-    PowerBand powerBand) const
+void CampaignRepository::RecalculateHouseholdPowerBand(
+    HouseholdId householdId) const
 {
     DatabasePreparedStatement* stmt =
-        FuryDatabase.GetPreparedStatement(FURY_UPD_HOUSEHOLD_POWER_BAND);
-    stmt->SetData(0, powerBand);
-    stmt->SetData(1, householdId);
+        FuryDatabase.GetPreparedStatement(FURY_RECALC_HOUSEHOLD_POWER_BAND);
+    stmt->SetData(0, householdId);
     FuryDatabase.Execute(stmt);
 }
 }
