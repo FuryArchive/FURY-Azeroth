@@ -18,6 +18,8 @@ public:
         EventId checkpoint,
         uint32 limit) const;
 
+    [[nodiscard]] std::vector<FuryEvent> Tail(uint32 limit) const;
+
 private:
     static std::array<uint8, 32> HashIdentity(std::string_view identity);
     [[nodiscard]] std::optional<EventId> FindByDedupe(
