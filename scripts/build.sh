@@ -18,6 +18,13 @@ C_COMPILER="${CC:-clang}"
 CXX_COMPILER="${CXX:-clang++}"
 
 TARGET="${FURY_BUILD_TARGET:-}"
+BUILD_TYPE="${FURY_BUILD_TYPE:-RelWithDebInfo}"
+APPS_BUILD="${FURY_APPS_BUILD:-world-only}"
+
+CMAKE_GENERATOR_ARGS=()
+if command -v ninja >/dev/null 2>&1; then
+  CMAKE_GENERATOR_ARGS+=("-G" "Ninja")
+fi
 
 CMAKE_FAST_ARGS=()
 if [[ "${TARGET}" == "fury-only" ]]; then
@@ -38,7 +45,8 @@ fi
 
 echo "[FURY] configure"
 cmake -S "${CORE}" -B "${BUILD_DIR}" \
-  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  "${CMAKE_GENERATOR_ARGS[@]}" \
+  -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
   -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
   -DCMAKE_C_COMPILER="${C_COMPILER}" \
   -DCMAKE_CXX_COMPILER="${CXX_COMPILER}" \
@@ -46,7 +54,7 @@ cmake -S "${CORE}" -B "${BUILD_DIR}" \
   -DTOOLS_BUILD=none \
   -DSCRIPTS=static \
   -DMODULES=static \
-  -DAPPS_BUILD=all \
+  -DAPPS_BUILD="${APPS_BUILD}" \
   "${CMAKE_LAUNCHER_ARGS[@]}" \
   "${CMAKE_FAST_ARGS[@]}"
 
@@ -58,13 +66,10 @@ elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
   cmake --build "${BUILD_DIR}" --target "${TARGET}" --parallel "${JOBS}"
 else
-  echo "[FURY] compile module target first"
-  cmake --build "${BUILD_DIR}" --target modules --parallel "${JOBS}"
+  echo "[FURY] build worldserver dependency graph with ${JOBS} job(s)"
+  cmake --build "${BUILD_DIR}" --target worldserver --parallel "${JOBS}"
 
-  echo "[FURY] build full server with ${JOBS} job(s)"
-  cmake --build "${BUILD_DIR}" --parallel "${JOBS}"
-
-  echo "[FURY] install build artifacts"
+  echo "[FURY] install worldserver runtime artifacts"
   cmake --install "${BUILD_DIR}"
 
   echo "[FURY] worldserver binary smoke"
