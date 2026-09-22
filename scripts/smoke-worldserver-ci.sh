@@ -35,7 +35,6 @@ export AC_WORLD_DATABASE_INFO="$(db_info acore_world)"
 export AC_CHARACTER_DATABASE_INFO="$(db_info acore_characters)"
 export AC_PLAYERBOTS_DATABASE_INFO="$(db_info acore_playerbots)"
 export AC_FURY_DATABASE_INFO="$(db_info acore_fury)"
-export AC_FURY_ENABLE=1
 export AC_FURY_UPDATES_ENABLE_DATABASES=1
 unset AC_FURY_DATABASE_SOURCE_DIRECTORY || true
 export AC_DATA_DIR="${DATA_DIR}"
@@ -44,6 +43,15 @@ export AC_LOG_ASYNC_ENABLE=0
 
 export FURY_WORLDSERVER_CONF="${FURY_WORLDSERVER_CONF:-${CONF_DIR}/worldserver.conf.dist}"
 export FURY_STARTUP_TIMEOUT="${FURY_STARTUP_TIMEOUT:-600}"
-export FURY_SMOKE_RUNS="${FURY_SMOKE_RUNS:-2}"
 
+echo "[FURY] full runtime smoke with Fury.Enable=0"
+export AC_FURY_ENABLE=0
+export FURY_EXPECT_DATABASE_READY=0
+export FURY_SMOKE_RUNS=1
+bash "${ROOT}/scripts/smoke-worldserver.sh"
+
+echo "[FURY] full runtime smoke with Fury.Enable=1"
+export AC_FURY_ENABLE=1
+export FURY_EXPECT_DATABASE_READY=1
+export FURY_SMOKE_RUNS=2
 exec bash "${ROOT}/scripts/smoke-worldserver.sh"
