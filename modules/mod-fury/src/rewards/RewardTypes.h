@@ -76,6 +76,41 @@ enum class RewardClaimOutcome : uint8
     PersistenceFailed = 7
 };
 
+[[nodiscard]] constexpr RewardClaimOutcome EvaluatePowerBand(
+    PowerBand current,
+    PowerBand minimum,
+    bool hasMaximum = false,
+    PowerBand maximum = PowerBand::None)
+{
+    uint16 const currentValue = static_cast<uint16>(current);
+    uint16 const minimumValue = static_cast<uint16>(minimum);
+
+    if (currentValue < minimumValue)
+        return RewardClaimOutcome::BelowPowerBand;
+
+    if (hasMaximum &&
+        currentValue > static_cast<uint16>(maximum))
+    {
+        return RewardClaimOutcome::AbovePowerBand;
+    }
+
+    return RewardClaimOutcome::Created;
+}
+
+static_assert(
+    EvaluatePowerBand(PowerBand::ClassicMC, PowerBand::ClassicBWL) ==
+    RewardClaimOutcome::BelowPowerBand);
+static_assert(
+    EvaluatePowerBand(PowerBand::ClassicBWL, PowerBand::ClassicMC) ==
+    RewardClaimOutcome::Created);
+static_assert(
+    EvaluatePowerBand(
+        PowerBand::ClassicNaxx,
+        PowerBand::ClassicPreRaid,
+        true,
+        PowerBand::ClassicBWL) ==
+    RewardClaimOutcome::AbovePowerBand);
+
 struct RewardClaimResult
 {
     RewardClaimOutcome outcome = RewardClaimOutcome::InvalidRequest;
