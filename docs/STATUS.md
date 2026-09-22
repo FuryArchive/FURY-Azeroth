@@ -1,6 +1,6 @@
 # FURY Azeroth — Implementation Status
 
-Date: 2026-09-22
+Date: 2026-09-23
 
 ## Current state
 
@@ -22,8 +22,9 @@ Date: 2026-09-22
 - T12 M1 automated gate: GREEN.
 - **M1 FURY Kernel: GREEN.**
 - T13 Campaign schema/service: GREEN.
-- M2 Campaign Platform: IN_PROGRESS — T13–T19 are GREEN; T20 M2 automated gate is next.
-- M3 Defias Resurgence vertical slice: READY, blocked by M2.
+- T20 M2 automated gate: GREEN.
+- **M2 Campaign Platform: GREEN.**
+- M3 Defias Resurgence vertical slice: IN_PROGRESS — T21 Living World source audit is next.
 
 ## Repository baseline
 
@@ -121,10 +122,16 @@ Final PR #14 CI run **#97**, attempt **8**, passed the required Campaign and M1 
 
 T13 therefore satisfies its acceptance contract: backward transitions are rejected, duplicate completion is idempotent, persistent progression authority is Human-only through the central actor policy, and household power band is derived from canonical completed campaign nodes.
 
+## T20 / M2 acceptance evidence
+
+PR #22 merged T20 through commit `028b7aa61efd01e61e5ad72b36582fcfd31439f5`.
+
+GitHub Actions run **#118** completed GREEN. The dedicated `T20 M2 campaign platform golden gate` passed the mandatory M1 regression plus all T13–T19 policy/schema scenarios, including campaign transitions, household/character gate separation, proof idempotency, contract replay/crash recovery, Director duplicate-start/restart persistence, Profession Order filtering/replay, Bestiary filtering/replay, and Individual Progression read-only/absence behavior.
+
+The fast `mod-fury` compile passed in the same run. Full AzerothCore/worldserver runtime remains intentionally outside ordinary PR CI and is reserved for integration-sensitive milestones.
+
+**M2 Campaign Platform is GREEN.**
+
 ## Immediate next gate
 
-Begin **T20 M2 automated gate** next.
-
-T19 is GREEN through the read-only/absence gate, Campaign IP schema migration gate, all M1 + T13–T18 regressions, and Fast mod-fury compile against the pinned Individual Progression module.
-
-T20 is the final M2 gate before milestone closure.
+Begin **T21 Living World source audit** next, using only the exact pinned `mod-living-world` revision from `vendor/lock/fury.lock.yaml`.
