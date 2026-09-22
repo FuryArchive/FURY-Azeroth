@@ -3,6 +3,8 @@
 
 #include "RewardTypes.h"
 
+#include <vector>
+
 namespace Fury
 {
 class RewardPolicy;
