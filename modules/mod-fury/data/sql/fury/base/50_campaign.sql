@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS `fury_campaign_node` (
   `display_name` varchar(160) NOT NULL,
   `required_power_band` smallint unsigned NOT NULL DEFAULT 0,
   `grants_power_band` smallint unsigned NOT NULL DEFAULT 0,
+  `ip_required_state` tinyint unsigned NOT NULL DEFAULT 0,
   `enabled` tinyint unsigned NOT NULL DEFAULT 1,
   PRIMARY KEY (`node_key`),
   KEY `ix_fury_campaign_node_order` (`era`, `ordinal`)
@@ -33,3 +34,9 @@ CREATE TABLE IF NOT EXISTS `fury_campaign_state` (
     REFERENCES `fury_event` (`id`)
     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+ALTER TABLE `fury_campaign_node`
+  ADD COLUMN IF NOT EXISTS `ip_required_state`
+    tinyint unsigned NOT NULL DEFAULT 0
+    AFTER `grants_power_band`;
