@@ -248,7 +248,7 @@ Acceptance:
 - validation prints actionable subsystem/key/error information.
 
 ## T12 M1 automated gate
-Status: READY
+Status: IN_PROGRESS
 Depends on: T01–T11
 Commit target: `test: add M1 kernel golden scenarios`
 
