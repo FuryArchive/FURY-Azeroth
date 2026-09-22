@@ -149,6 +149,16 @@ sql "INSERT IGNORE INTO fury_chronicle_entry (household_id, entry_key, category,
 sql "INSERT IGNORE INTO fury_chronicle_entry (household_id, entry_key, category, title, source_event_id, occurred_at, metadata) SELECT 1, 'golden.entry', 'golden', 'Golden entry', id, occurred_at, JSON_OBJECT('pass', 2) FROM fury_event WHERE id=1;"
 assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_chronicle_entry WHERE household_id=1 AND entry_key='golden.entry' AND source_event_id=1;")" "Chronicle replay is idempotent"
 
+echo "[FURY] Chronicle timeline ordering"
+sql "UPDATE fury_event SET occurred_at='2026-09-22 00:00:01.000000' WHERE id=1;"
+order_hash="UNHEX(SHA2('golden:chronicle:order:2', 256))"
+sql "INSERT INTO fury_event (occurred_at, event_type, actor_kind, actor_guid, account_id, household_id, source_system, dedupe_key, payload) VALUES ('2026-09-22 00:00:02.000000', 'golden.chronicle.order', 1, 1, 1001, 1, 'golden', ${order_hash}, JSON_OBJECT('order', 2));"
+order_event_id="$(sql "SELECT id FROM fury_event WHERE dedupe_key=${order_hash};")"
+sql "INSERT INTO fury_chronicle_entry (household_id, entry_key, category, title, source_event_id, occurred_at) VALUES (1, 'golden.order.first', 'golden', 'First', 1, '2026-09-22 00:00:01.000000');"
+sql "INSERT INTO fury_chronicle_entry (household_id, entry_key, category, title, source_event_id, occurred_at) VALUES (1, 'golden.order.second', 'golden', 'Second', ${order_event_id}, '2026-09-22 00:00:02.000000');"
+timeline_order="$(sql "SELECT GROUP_CONCAT(entry_key ORDER BY occurred_at DESC, id DESC SEPARATOR ',') FROM fury_chronicle_entry WHERE household_id=1 AND entry_key LIKE 'golden.order.%';")"
+assert_eq "golden.order.second,golden.order.first" "${timeline_order}" "Chronicle timeline is deterministic newest-first"
+
 echo "[FURY] clean re-apply after populated data"
 apply_base 3
 
