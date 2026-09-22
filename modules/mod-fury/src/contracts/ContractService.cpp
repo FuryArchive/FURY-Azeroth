@@ -61,7 +61,12 @@ ContractAcceptResult ContractService::Accept(
         return {ContractAcceptOutcome::AlreadyCompleted, std::nullopt};
     }
 
-    if (_repository.CountObjectives(contractKey) == 0)
+    std::optional<uint32> objectiveCount =
+        _repository.CountObjectives(contractKey);
+    if (!objectiveCount)
+        return {ContractAcceptOutcome::PersistenceFailed, std::nullopt};
+
+    if (*objectiveCount == 0)
         return {ContractAcceptOutcome::MissingObjectives, std::nullopt};
 
     _repository.InsertActiveInstance(
