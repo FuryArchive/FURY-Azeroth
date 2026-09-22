@@ -17,6 +17,7 @@
 #include "diagnostics/DiagnosticsService.h"
 #include "campaign/CampaignRepository.h"
 #include "campaign/CampaignService.h"
+#include "integrations/IndividualProgressionAdapter.h"
 #include "proofs/ProofRepository.h"
 #include "proofs/ProofService.h"
 #include "contracts/ContractRepository.h"
@@ -52,6 +53,10 @@ public:
     ChronicleService& Chronicle() { return _chronicle; }
     DiagnosticsService& Diagnostics() { return _diagnostics; }
     CampaignService& Campaign() { return _campaign; }
+    IndividualProgressionAdapter& IndividualProgression()
+    {
+        return _individualProgression;
+    }
     ProofService& Proofs() { return _proofs; }
     ContractService& Contracts() { return _contracts; }
     DirectorService& Director() { return _director; }
@@ -98,6 +103,7 @@ private:
     DiagnosticsRepository _diagnosticsRepository;
     DiagnosticsService _diagnostics;
 
+    IndividualProgressionAdapter _individualProgression;
     CampaignRepository _campaignRepository;
     CampaignService _campaign;
 
