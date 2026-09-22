@@ -3,6 +3,7 @@
 #include "events/FuryEventFactory.h"
 
 #include "DBCStructure.h"
+#include "Player.h"
 #include "PlayerScript.h"
 #include "Spell.h"
 #include "SpellMgr.h"
@@ -48,7 +49,7 @@ void Publish(Fury::FuryEvent event)
     if (!Fury::ShouldPersistGeneralEvent(event.actor.kind))
         return;
 
-    Fury::App::Instance().Events().Append(event);
+    (void)Fury::App::Instance().Events().Append(event);
 }
 
 class FuryPlayerScript final : public PlayerScript
