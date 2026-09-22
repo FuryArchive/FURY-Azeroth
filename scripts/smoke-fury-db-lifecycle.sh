@@ -77,6 +77,7 @@ export AC_UPDATES_ENABLE_DATABASES=7
 export AC_UPDATES_AUTO_SETUP=1
 export AC_PLAYERBOTS_DATABASE_INFO="$(db_info acore_playerbots)"
 export AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES=1
+export AC_FURY_ENABLE=1
 export AC_FURY_DATABASE_INFO="$(db_info acore_fury)"
 export AC_FURY_UPDATES_ENABLE_DATABASES=1
 export AC_FURY_DATABASE_SOURCE_DIRECTORY="${ROOT}/modules/mod-fury"
@@ -92,6 +93,52 @@ sql_global "
   DROP DATABASE IF EXISTS acore_world;
   DROP DATABASE IF EXISTS acore_auth;
 "
+
+run_until_fury_disabled() (
+  local workdir log pid=""
+  workdir="$(mktemp -d)"
+  log="${workdir}/worldserver.log"
+
+  cleanup() {
+    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+      kill -TERM "${pid}" 2>/dev/null || true
+      local deadline=$((SECONDS + 15))
+      while kill -0 "${pid}" 2>/dev/null && (( SECONDS < deadline )); do
+        sleep 1
+      done
+      if kill -0 "${pid}" 2>/dev/null; then
+        kill -KILL "${pid}" 2>/dev/null || true
+      fi
+      wait "${pid}" 2>/dev/null || true
+    fi
+    rm -rf "${workdir}"
+  }
+  trap cleanup EXIT
+
+  echo "[FURY] disabled-mode worldserver database startup"
+  "${WORLDSERVER}" -c "${WORLDSERVER_CONF}" </dev/null >"${log}" 2>&1 &
+  pid=$!
+
+  local deadline=$((SECONDS + STARTUP_TIMEOUT))
+  while (( SECONDS < deadline )); do
+    if grep -Fq "[FURY] module disabled; skipping FURY database startup." "${log}"; then
+      echo "[FURY][PASS] disabled mode skips the FURY database lifecycle"
+      return 0
+    fi
+
+    if ! kill -0 "${pid}" 2>/dev/null; then
+      echo "[FURY][FAIL] disabled-mode worldserver exited before FURY skip marker" >&2
+      tail -n 250 "${log}" >&2 || true
+      return 1
+    fi
+
+    sleep 1
+  done
+
+  echo "[FURY][FAIL] timeout waiting for disabled FURY database skip marker" >&2
+  tail -n 250 "${log}" >&2 || true
+  return 1
+)
 
 run_until_fury_db_ready() (
   local run_number="$1"
@@ -137,6 +184,11 @@ run_until_fury_db_ready() (
   return 1
 )
 
+export AC_FURY_ENABLE=0
+run_until_fury_disabled
+assert_eq "0" "$(sql_global "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='acore_fury';")"   "disabled mode does not create acore_fury"
+
+export AC_FURY_ENABLE=1
 run_until_fury_db_ready 1
 
 assert_eq "1" "$(sql_global "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='acore_fury';")"   "FURY database auto-created by worldserver"
