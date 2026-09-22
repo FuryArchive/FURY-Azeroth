@@ -2,15 +2,13 @@
 #define MOD_FURY_CONTRACT_TYPES_H
 
 #include "events/FuryEvent.h"
+#include "core/FuryIds.h"
 
 #include <optional>
 #include <string>
 
 namespace Fury
 {
-using ContractInstanceId = uint64;
-using DirectorRunId = uint64;
-
 enum class ContractRepeatPolicy : uint8
 {
     Once = 1,
