@@ -88,7 +88,7 @@ while IFS= read -r file; do
   "${mysql_cmd[@]}" < "${file}"
 done < <(find "${SQL_BASE}" -maxdepth 1 -type f -name '*.sql' -print | sort)
 
-assert_eq "3" "$(sql "SELECT status FROM fury_campaign_state WHERE household_id=1 AND node_key='golden.campaign';")" "schema re-apply preserves campaign state"
+assert_eq "4" "$(sql "SELECT status FROM fury_campaign_state WHERE household_id=1 AND node_key='golden.campaign';")" "schema re-apply preserves campaign state"
 assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_proof WHERE household_id=1 AND proof_key='golden.proof';")" "schema re-apply preserves proof"
 
 echo "[FURY] M2 campaign/proof schema golden gate passed"
