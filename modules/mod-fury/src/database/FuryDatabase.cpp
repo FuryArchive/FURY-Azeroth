@@ -99,5 +99,15 @@ void DatabaseConnection::DoPrepareStatements()
         "FROM fury_chronicle_entry WHERE household_id = ? "
         "ORDER BY occurred_at DESC, id DESC LIMIT ?",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_DIAGNOSTIC_COUNTS,
+        "SELECT "
+        "(SELECT COUNT(*) FROM fury_household), "
+        "(SELECT COUNT(*) FROM fury_household_member), "
+        "(SELECT COUNT(*) FROM fury_event), "
+        "(SELECT COUNT(*) FROM fury_event_consumer), "
+        "(SELECT COUNT(*) FROM fury_reward_claim), "
+        "(SELECT COUNT(*) FROM fury_chronicle_entry)",
+        CONNECTION_SYNCH);
 }
 }
