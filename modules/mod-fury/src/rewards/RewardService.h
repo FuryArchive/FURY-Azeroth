@@ -18,6 +18,8 @@ public:
     [[nodiscard]] RewardClaimResult Claim(
         RewardRequest const& request) const;
 
+    [[nodiscard]] std::vector<RewardClaimView> TailClaims(uint32 limit) const;
+
 private:
     RewardRepository const& _repository;
     RewardPolicy const& _policy;
