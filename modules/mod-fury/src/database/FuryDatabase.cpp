@@ -391,5 +391,37 @@ void DatabaseConnection::DoPrepareStatements()
         "completed_at = CURRENT_TIMESTAMP(6), revision = revision + 1 "
         "WHERE id = ? AND household_id = ? AND status = 2",
         CONNECTION_SYNCH);
+
+    PrepareStatement(FURY_SEL_BESTIARY_MAPPINGS,
+        "SELECT m.entry_key, m.discovery_level "
+        "FROM fury_bestiary_creature_map m "
+        "JOIN fury_bestiary_entry e ON e.entry_key = m.entry_key "
+        "WHERE m.creature_entry = ? AND m.enabled = 1 AND e.enabled = 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_BESTIARY_STATE,
+        "SELECT discovery_level, kill_count, first_event_id, last_event_id, revision "
+        "FROM fury_bestiary_state WHERE account_id = ? AND entry_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPSERT_BESTIARY_KILL,
+        "INSERT INTO fury_bestiary_state "
+        "(account_id, entry_key, discovery_level, kill_count, first_event_id, last_event_id, revision) "
+        "VALUES (?, ?, ?, 1, ?, ?, 0) "
+        "ON DUPLICATE KEY UPDATE "
+        "discovery_level = IF(last_event_id < VALUES(last_event_id), "
+        "GREATEST(discovery_level, VALUES(discovery_level)), discovery_level), "
+        "kill_count = IF(last_event_id < VALUES(last_event_id), kill_count + 1, kill_count), "
+        "revision = IF(last_event_id < VALUES(last_event_id), revision + 1, revision), "
+        "last_event_id = GREATEST(last_event_id, VALUES(last_event_id))",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPSERT_BESTIARY_LEVEL,
+        "INSERT INTO fury_bestiary_state "
+        "(account_id, entry_key, discovery_level, kill_count, first_event_id, last_event_id, revision) "
+        "VALUES (?, ?, ?, 0, ?, ?, 0) "
+        "ON DUPLICATE KEY UPDATE "
+        "discovery_level = IF(last_event_id < VALUES(last_event_id), "
+        "GREATEST(discovery_level, VALUES(discovery_level)), discovery_level), "
+        "revision = IF(last_event_id < VALUES(last_event_id), revision + 1, revision), "
+        "last_event_id = GREATEST(last_event_id, VALUES(last_event_id))",
+        CONNECTION_SYNCH);
 }
 }
