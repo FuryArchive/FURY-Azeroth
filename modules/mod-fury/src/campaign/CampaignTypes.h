@@ -3,6 +3,7 @@
 
 #include "events/FuryEvent.h"
 #include "rewards/RewardTypes.h"
+#include "integrations/IndividualProgressionAdapter.h"
 
 #include <optional>
 #include <string>
@@ -25,6 +26,7 @@ struct CampaignNodeDefinition
     std::string displayName;
     PowerBand requiredPowerBand = PowerBand::None;
     PowerBand grantsPowerBand = PowerBand::None;
+    uint8 ipRequiredState = 0;
     bool enabled = false;
 };
 
@@ -47,6 +49,33 @@ enum class CampaignTransitionOutcome : uint8
     PowerBandTooLow = 6,
     InvalidTransition = 7,
     PersistenceFailed = 8
+};
+
+enum class CampaignCharacterAccessOutcome : uint8
+{
+    Allowed = 1,
+    HouseholdLocked = 2,
+    NodeNotFound = 3,
+    NodeDisabled = 4,
+    InvalidIpRequirement = 5,
+    IpUnavailable = 6,
+    IpDisabled = 7,
+    PlayerUnavailable = 8,
+    CharacterProgressTooLow = 9
+};
+
+struct CampaignCharacterAccessResult
+{
+    CampaignCharacterAccessOutcome outcome =
+        CampaignCharacterAccessOutcome::HouseholdLocked;
+    CampaignStatus householdStatus = CampaignStatus::Locked;
+    uint8 requiredIpState = 0;
+    uint8 currentIpState = 0;
+
+    [[nodiscard]] bool Allowed() const
+    {
+        return outcome == CampaignCharacterAccessOutcome::Allowed;
+    }
 };
 
 struct CampaignTransitionResult
