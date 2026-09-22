@@ -39,7 +39,10 @@ cmake -S "${CORE}" -B "${BUILD_DIR}" \
   -DAPPS_BUILD=all \
   "${CMAKE_LAUNCHER_ARGS[@]}"
 
-echo "[FURY] build with ${JOBS} job(s)"
+echo "[FURY] compile module target first"
+cmake --build "${BUILD_DIR}" --target modules --parallel "${JOBS}"
+
+echo "[FURY] build full server with ${JOBS} job(s)"
 cmake --build "${BUILD_DIR}" --parallel "${JOBS}"
 
 if command -v ccache >/dev/null 2>&1; then
