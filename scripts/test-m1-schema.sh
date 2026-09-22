@@ -134,6 +134,16 @@ sql "INSERT IGNORE INTO fury_reward_claim (source_event_id, reward_key, benefici
 sql "INSERT IGNORE INTO fury_reward_claim (source_event_id, reward_key, beneficiary_kind, beneficiary_id, status) VALUES (1, 'golden.reward', 3, 1, 0);"
 assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_reward_claim WHERE source_event_id=1 AND reward_key='golden.reward' AND beneficiary_kind=3 AND beneficiary_id=1;")" "reward claim is idempotent"
 
+pending_claim_id="$(sql "SELECT id FROM fury_reward_claim WHERE source_event_id=1 AND reward_key='golden.reward' AND beneficiary_kind=3 AND beneficiary_id=1 LIMIT 1;")"
+assert_eq "0" "$(sql "SELECT status FROM fury_reward_claim WHERE id=${pending_claim_id};")" "new reward claim starts pending"
+
+sql "UPDATE fury_reward_claim SET status=1, delivered_at=CURRENT_TIMESTAMP(6) WHERE id=${pending_claim_id} AND status=0;"
+assert_eq "1" "$(sql "SELECT status FROM fury_reward_claim WHERE id=${pending_claim_id};")" "pending reward claim transitions to delivered"
+assert_eq "1" "$(sql "SELECT delivered_at IS NOT NULL FROM fury_reward_claim WHERE id=${pending_claim_id};")" "delivered reward claim records delivery timestamp"
+
+sql "UPDATE fury_reward_claim SET status=2 WHERE id=${pending_claim_id} AND status=0;"
+assert_eq "1" "$(sql "SELECT status FROM fury_reward_claim WHERE id=${pending_claim_id};")" "terminal reward claim cannot be overwritten by a second reconciliation"
+
 echo "[FURY] Chronicle projection idempotency"
 sql "INSERT IGNORE INTO fury_chronicle_entry (household_id, entry_key, category, title, source_event_id, occurred_at, metadata) SELECT 1, 'golden.entry', 'golden', 'Golden entry', id, occurred_at, JSON_OBJECT('pass', 1) FROM fury_event WHERE id=1;"
 sql "INSERT IGNORE INTO fury_chronicle_entry (household_id, entry_key, category, title, source_event_id, occurred_at, metadata) SELECT 1, 'golden.entry', 'golden', 'Golden entry', id, occurred_at, JSON_OBJECT('pass', 2) FROM fury_event WHERE id=1;"

@@ -84,9 +84,22 @@ void DatabaseConnection::DoPrepareStatements()
         "(source_event_id, reward_key, beneficiary_kind, beneficiary_id, status) "
         "VALUES (?, ?, ?, ?, ?)",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_REWARD_CLAIM_BY_ID,
+        "SELECT id, source_event_id, reward_key, beneficiary_kind, beneficiary_id, status "
+        "FROM fury_reward_claim WHERE id = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_REWARD_CLAIM_TAIL,
         "SELECT id, source_event_id, reward_key, beneficiary_kind, beneficiary_id, status "
         "FROM fury_reward_claim ORDER BY id DESC LIMIT ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_PENDING_REWARD_CLAIMS,
+        "SELECT id, source_event_id, reward_key, beneficiary_kind, beneficiary_id, status "
+        "FROM fury_reward_claim WHERE status = ? ORDER BY id ASC LIMIT ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_REWARD_CLAIM_STATUS,
+        "UPDATE fury_reward_claim "
+        "SET status = ?, delivered_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP(6) ELSE delivered_at END "
+        "WHERE id = ? AND status = 0",
         CONNECTION_SYNCH);
 
     PrepareStatement(FURY_INS_CHRONICLE_ENTRY,

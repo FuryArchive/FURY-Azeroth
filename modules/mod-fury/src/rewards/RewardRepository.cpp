@@ -7,6 +7,37 @@
 
 namespace Fury
 {
+namespace
+{
+RewardClaimView ReadClaimRow(Field* fields)
+{
+    RewardClaimView claim;
+    claim.id = fields[0].Get<uint64>();
+    claim.sourceEventId = fields[1].Get<EventId>();
+    claim.rewardKey = fields[2].Get<std::string>();
+    claim.beneficiaryKind =
+        static_cast<BeneficiaryKind>(fields[3].Get<uint8>());
+    claim.beneficiaryId = fields[4].Get<uint64>();
+    claim.status =
+        static_cast<RewardClaimStatus>(fields[5].Get<uint8>());
+    return claim;
+}
+
+std::vector<RewardClaimView> ReadClaimRows(PreparedQueryResult const& result)
+{
+    std::vector<RewardClaimView> claims;
+    if (!result)
+        return claims;
+
+    do
+    {
+        claims.push_back(ReadClaimRow(result->Fetch()));
+    } while (result->NextRow());
+
+    return claims;
+}
+}
+
 std::optional<RewardPolicyBounds> RewardRepository::FindPolicy(
     std::string_view rewardKey) const
 {
@@ -61,37 +92,59 @@ void RewardRepository::InsertClaim(RewardRequest const& request) const
     FuryDatabase.Execute(stmt);
 }
 
+std::optional<RewardClaimView> RewardRepository::FindClaimById(uint64 claimId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_REWARD_CLAIM_BY_ID);
+    stmt->SetData(0, claimId);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return std::nullopt;
+
+    return ReadClaimRow(result->Fetch());
+}
+
 std::vector<RewardClaimView> RewardRepository::TailClaims(uint32 limit) const
 {
-    std::vector<RewardClaimView> claims;
     if (!limit)
-        return claims;
+        return {};
 
     DatabasePreparedStatement* stmt =
         FuryDatabase.GetPreparedStatement(FURY_SEL_REWARD_CLAIM_TAIL);
     stmt->SetData(0, limit);
 
-    PreparedQueryResult result = FuryDatabase.Query(stmt);
-    if (!result)
-        return claims;
+    return ReadClaimRows(FuryDatabase.Query(stmt));
+}
 
-    do
-    {
-        Field* fields = result->Fetch();
+std::vector<RewardClaimView> RewardRepository::PendingClaims(uint32 limit) const
+{
+    if (!limit)
+        return {};
 
-        RewardClaimView claim;
-        claim.id = fields[0].Get<uint64>();
-        claim.sourceEventId = fields[1].Get<EventId>();
-        claim.rewardKey = fields[2].Get<std::string>();
-        claim.beneficiaryKind =
-            static_cast<BeneficiaryKind>(fields[3].Get<uint8>());
-        claim.beneficiaryId = fields[4].Get<uint64>();
-        claim.status =
-            static_cast<RewardClaimStatus>(fields[5].Get<uint8>());
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_PENDING_REWARD_CLAIMS);
+    stmt->SetData(0, RewardClaimStatus::Pending);
+    stmt->SetData(1, limit);
 
-        claims.push_back(std::move(claim));
-    } while (result->NextRow());
+    return ReadClaimRows(FuryDatabase.Query(stmt));
+}
 
-    return claims;
+bool RewardRepository::ResolvePendingClaim(
+    uint64 claimId,
+    RewardClaimStatus terminalStatus) const
+{
+    if (!claimId || terminalStatus == RewardClaimStatus::Pending)
+        return false;
+
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_UPD_REWARD_CLAIM_STATUS);
+    stmt->SetData(0, terminalStatus);
+    stmt->SetData(1, terminalStatus);
+    stmt->SetData(2, claimId);
+    FuryDatabase.Execute(stmt);
+
+    std::optional<RewardClaimView> claim = FindClaimById(claimId);
+    return claim && claim->status == terminalStatus;
 }
 }

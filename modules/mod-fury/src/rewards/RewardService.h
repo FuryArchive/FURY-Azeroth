@@ -21,6 +21,11 @@ public:
         RewardRequest const& request) const;
 
     [[nodiscard]] std::vector<RewardClaimView> TailClaims(uint32 limit) const;
+    [[nodiscard]] std::vector<RewardClaimView> PendingClaims(uint32 limit) const;
+
+    [[nodiscard]] bool ResolvePendingClaim(
+        uint64 claimId,
+        RewardClaimStatus terminalStatus) const;
 
 private:
     RewardRepository const& _repository;

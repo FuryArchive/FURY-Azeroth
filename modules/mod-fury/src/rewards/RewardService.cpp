@@ -48,4 +48,16 @@ std::vector<RewardClaimView> RewardService::TailClaims(uint32 limit) const
 {
     return _repository.TailClaims(limit);
 }
+
+std::vector<RewardClaimView> RewardService::PendingClaims(uint32 limit) const
+{
+    return _repository.PendingClaims(limit);
+}
+
+bool RewardService::ResolvePendingClaim(
+    uint64 claimId,
+    RewardClaimStatus terminalStatus) const
+{
+    return _repository.ResolvePendingClaim(claimId, terminalStatus);
+}
 }

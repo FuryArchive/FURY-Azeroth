@@ -21,7 +21,13 @@ public:
 
     void InsertClaim(RewardRequest const& request) const;
 
+    [[nodiscard]] std::optional<RewardClaimView> FindClaimById(uint64 claimId) const;
     [[nodiscard]] std::vector<RewardClaimView> TailClaims(uint32 limit) const;
+    [[nodiscard]] std::vector<RewardClaimView> PendingClaims(uint32 limit) const;
+
+    [[nodiscard]] bool ResolvePendingClaim(
+        uint64 claimId,
+        RewardClaimStatus terminalStatus) const;
 };
 }
 
