@@ -10,7 +10,7 @@ Date: 2026-09-22
 - GitHub repository access: GREEN.
 - T00.1 repository intake: GREEN.
 - T00.2 pinned upstream API verification: GREEN.
-- T00.3 reproducible lock/resolver: IN_PROGRESS pending clean CI resolution/build proof.
+- T00.3 reproducible lock/resolver: GREEN; multiple clean CI runners resolved the exact pinned upstream revisions successfully.
 - T01 mod-fury skeleton: IN_PROGRESS pending compile/start acceptance.
 - T02 module-owned database: IN_PROGRESS on `agent/t02-fury-db`; source/schema present, compile/start acceptance pending.
 - T03 FuryApp composition root: IN_PROGRESS on `agent/t03-fury-app`; throttled lifecycle implemented, compile/regression proof pending.
