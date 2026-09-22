@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS `fury_bestiary_creature_map` (
   PRIMARY KEY (`creature_entry`, `entry_key`),
   KEY `ix_fury_bestiary_creature_map_lookup`
     (`creature_entry`, `enabled`),
+  CONSTRAINT `chk_fury_bestiary_creature_map_level`
+    CHECK (`discovery_level` BETWEEN 1 AND 3),
   CONSTRAINT `fk_fury_bestiary_creature_map_entry`
     FOREIGN KEY (`entry_key`)
     REFERENCES `fury_bestiary_entry` (`entry_key`)
@@ -30,6 +32,8 @@ CREATE TABLE IF NOT EXISTS `fury_bestiary_state` (
   PRIMARY KEY (`account_id`, `entry_key`),
   KEY `ix_fury_bestiary_state_level`
     (`account_id`, `discovery_level`),
+  CONSTRAINT `chk_fury_bestiary_state_level`
+    CHECK (`discovery_level` BETWEEN 0 AND 3),
   CONSTRAINT `fk_fury_bestiary_state_entry`
     FOREIGN KEY (`entry_key`)
     REFERENCES `fury_bestiary_entry` (`entry_key`)
