@@ -33,6 +33,7 @@ public:
     void RemoveMember(HouseholdId householdId, uint32 accountId) const;
 
     [[nodiscard]] std::optional<HouseholdId> FindByAccount(uint32 accountId) const;
+    [[nodiscard]] uint32 CountMembers(HouseholdId householdId) const;
 
 private:
     static constexpr uint32 MaxHumanMembers = 2;
