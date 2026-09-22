@@ -336,7 +336,7 @@ Acceptance:
 - replay does not double-count.
 
 ## T18 Minimal Bestiary projection
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T08
 Commit target: `feat(bestiary): add minimal discovery projection`
 
