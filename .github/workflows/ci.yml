@@ -55,9 +55,9 @@ jobs:
 
 
   module-compile:
-    name: Fast module compile
+    name: Fast mod-fury compile
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
       - name: Checkout FURY
@@ -89,10 +89,10 @@ jobs:
       - name: Resolve locked upstream source
         run: bash scripts/sync-upstreams.sh
 
-      - name: Compile modules only
+      - name: Compile mod-fury only
         env:
           FURY_BUILD_JOBS: "4"
-          FURY_BUILD_TARGET: modules
+          FURY_BUILD_TARGET: fury-only
         run: bash scripts/build.sh
 
   schema-golden:
