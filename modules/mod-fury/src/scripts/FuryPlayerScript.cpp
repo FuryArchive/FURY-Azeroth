@@ -3,9 +3,38 @@
 #include "events/FuryEventFactory.h"
 
 #include "PlayerScript.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
+
+#include <unordered_map>
 
 namespace
 {
+struct PendingCreatedItem
+{
+    uint32 itemId = 0;
+    uint32 count = 0;
+};
+
+uint32 ResolveCraftOutputItem(uint32 spellId)
+{
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+    if (!spellInfo)
+        return 0;
+
+    for (SpellEffectInfo const& effect : spellInfo->GetEffects())
+    {
+        if ((effect.Effect == SPELL_EFFECT_CREATE_ITEM ||
+             effect.Effect == SPELL_EFFECT_CREATE_ITEM_2) &&
+            effect.ItemType)
+        {
+            return effect.ItemType;
+        }
+    }
+
+    return 0;
+}
+
 void Publish(Fury::FuryEvent event)
 {
     // Random world-population bots are intentionally not written to the
@@ -31,7 +60,8 @@ public:
                 PLAYERHOOK_ON_CREATURE_KILL,
                 PLAYERHOOK_ON_CREATURE_KILLED_BY_PET,
                 PLAYERHOOK_ON_LOOT_ITEM,
-                PLAYERHOOK_ON_CREATE_ITEM
+                PLAYERHOOK_ON_CREATE_ITEM,
+                PLAYERHOOK_ON_UPDATE_CRAFTING_SKILL
             })
     {
     }
@@ -85,7 +115,51 @@ public:
     void OnPlayerCreateItem(Player* player, Item* item, uint32 count) override
     {
         Publish(Fury::FuryEventFactory::ItemCreated(player, item, count));
+
+        if (!player || !item || !count)
+            return;
+
+        _pendingCreatedItems[player->GetGUID().GetRawValue()] = {
+            item->GetEntry(),
+            count
+        };
     }
+
+    void OnPlayerUpdateCraftingSkill(
+        Player* player,
+        SkillLineAbilityEntry const* skill,
+        uint32 /*currentLevel*/,
+        uint32& /*gain*/) override
+    {
+        if (!player || !skill || !skill->SkillLine || !skill->Spell)
+            return;
+
+        uint64 const playerGuid = player->GetGUID().GetRawValue();
+        auto itr = _pendingCreatedItems.find(playerGuid);
+        if (itr == _pendingCreatedItems.end())
+            return;
+
+        PendingCreatedItem const pending = itr->second;
+        _pendingCreatedItems.erase(itr);
+
+        uint32 const expectedItemId =
+            ResolveCraftOutputItem(skill->Spell);
+        if (!expectedItemId ||
+            expectedItemId != pending.itemId)
+        {
+            return;
+        }
+
+        Publish(Fury::FuryEventFactory::ProfessionCrafted(
+            player,
+            skill->SkillLine,
+            skill->Spell,
+            pending.itemId,
+            pending.count));
+    }
+
+private:
+    std::unordered_map<uint64, PendingCreatedItem> _pendingCreatedItems;
 };
 }
 
