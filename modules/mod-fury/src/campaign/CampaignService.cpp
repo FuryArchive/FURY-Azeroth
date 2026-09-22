@@ -65,7 +65,7 @@ CampaignStatus CampaignService::GetStatus(
 std::optional<PowerBand> CampaignService::GetHouseholdPowerBand(
     HouseholdId householdId) const
 {
-    return _repository.FindHouseholdPowerBand(householdId);
+    return _repository.CalculateHouseholdPowerBand(householdId);
 }
 
 CampaignTransitionResult CampaignService::MarkAvailable(
@@ -109,8 +109,10 @@ CampaignTransitionResult CampaignService::Transition(
     if (!node->enabled)
         return {CampaignTransitionOutcome::NodeDisabled, CampaignStatus::Locked};
 
+    // Canonical campaign completion state is the authority. The household
+    // column is only a derived cache and must never authorize progression.
     std::optional<PowerBand> currentBand =
-        _repository.FindHouseholdPowerBand(householdId);
+        _repository.CalculateHouseholdPowerBand(householdId);
     if (!currentBand)
         return {CampaignTransitionOutcome::PersistenceFailed, CampaignStatus::Locked};
 
