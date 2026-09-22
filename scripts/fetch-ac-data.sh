@@ -63,7 +63,7 @@ mkdir -p "${DATA_DIR}"
 
 for dir in dbc maps vmaps mmaps cameras Cameras; do
   if [[ -d "${SOURCE_DIR}/${dir}" ]]; then
-    cp -a "${SOURCE_DIR}/${dir}" "${DATA_DIR}/"
+    mv "${SOURCE_DIR}/${dir}" "${DATA_DIR}/"
   fi
 done
 
