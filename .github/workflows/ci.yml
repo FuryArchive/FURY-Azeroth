@@ -96,7 +96,7 @@ jobs:
           key: fury-server-data-v20-a3d4df635ae6c2c8
 
       - name: Fetch pinned startup server data
-        run: bash scripts/fetch-server-data.sh
+        run: bash scripts/fetch-ci-server-data.sh
 
       - name: Run full worldserver startup/restart smoke
         env:
