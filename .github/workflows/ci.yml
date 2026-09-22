@@ -25,9 +25,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git cmake make gcc g++ clang \
+            git cmake make gcc g++ clang ccache \
             libssl-dev libbz2-dev libreadline-dev libncurses-dev \
             libboost-all-dev libmysqlclient-dev
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
+            fury-ccache-${{ runner.os }}-
+
+      - name: Configure compiler cache
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --set-config=compression=true
+          ccache --zero-stats
 
       - name: Resolve locked upstream source
         run: bash scripts/sync-upstreams.sh
