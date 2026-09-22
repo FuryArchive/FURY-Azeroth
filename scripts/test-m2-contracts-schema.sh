@@ -11,7 +11,7 @@ MYSQL_DATABASE="${MYSQL_DATABASE:-acore_fury}"
 export MYSQL_HOST MYSQL_PORT MYSQL_USER MYSQL_PASSWORD MYSQL_DATABASE
 export MYSQL_PWD="${MYSQL_PASSWORD}"
 
-bash "${ROOT}/scripts/test-m2-proof-schema.sh"
+bash "${ROOT}/scripts/test-m1-schema.sh"
 
 mysql_cmd=(
   mysql --protocol=tcp
