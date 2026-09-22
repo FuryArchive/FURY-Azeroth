@@ -30,6 +30,7 @@ CXX="${CXX:-g++}"
   -std=c++17 \
   -Wall -Wextra -Werror \
   -I"${WORKDIR}" \
+  -I"${ROOT}/modules/mod-fury/src" \
   -I"${ROOT}/modules/mod-fury/src/actors" \
   "${ROOT}/tests/golden/actor_policy_golden.cpp" \
   -o "${WORKDIR}/actor_policy_golden"
