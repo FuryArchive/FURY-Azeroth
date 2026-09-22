@@ -163,8 +163,15 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE household_id = ? AND node_key = ? AND revision = ?",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_UPD_HOUSEHOLD_POWER_BAND,
-        "UPDATE fury_household SET current_power_band = ?, revision = revision + 1 "
-        "WHERE id = ? AND current_power_band <> ?",
+        "UPDATE fury_household h "
+        "JOIN ("
+        "SELECT ? AS household_id, COALESCE(MAX(n.grants_power_band), 0) AS derived_band "
+        "FROM fury_campaign_state s "
+        "JOIN fury_campaign_node n ON n.node_key = s.node_key "
+        "WHERE s.household_id = ? AND s.status = 4"
+        ") d ON d.household_id = h.id "
+        "SET h.current_power_band = d.derived_band, h.revision = h.revision + 1 "
+        "WHERE h.current_power_band <> d.derived_band",
         CONNECTION_SYNCH);
 }
 }
