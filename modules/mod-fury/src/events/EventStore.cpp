@@ -6,6 +6,8 @@
 
 #include <openssl/sha.h>
 
+#include <utility>
+
 namespace Fury
 {
 namespace
