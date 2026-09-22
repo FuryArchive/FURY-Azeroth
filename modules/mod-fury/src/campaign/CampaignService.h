@@ -6,13 +6,16 @@
 namespace Fury
 {
 class EventStore;
+class IndividualProgressionAdapter;
+class Player;
 
 class CampaignService final
 {
 public:
     CampaignService(
         CampaignRepository const& repository,
-        EventStore const& events);
+        EventStore const& events,
+        IndividualProgressionAdapter const& individualProgression);
 
     [[nodiscard]] CampaignStatus GetStatus(
         HouseholdId householdId,
@@ -20,6 +23,11 @@ public:
 
     [[nodiscard]] std::optional<PowerBand> CurrentPowerBand(
         HouseholdId householdId) const;
+
+    [[nodiscard]] CampaignCharacterAccessResult CheckCharacterAccess(
+        Player* player,
+        HouseholdId householdId,
+        std::string_view nodeKey) const;
 
     [[nodiscard]] CampaignTransitionResult MarkAvailable(
         FuryEvent const& source,
@@ -48,6 +56,7 @@ private:
 
     CampaignRepository const& _repository;
     EventStore const& _events;
+    IndividualProgressionAdapter const& _individualProgression;
 };
 }
 
