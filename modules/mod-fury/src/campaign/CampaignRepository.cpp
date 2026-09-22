@@ -27,7 +27,8 @@ std::optional<CampaignNodeDefinition> CampaignRepository::FindNode(
     node.displayName = fields[2].Get<std::string>();
     node.requiredPowerBand = static_cast<PowerBand>(fields[3].Get<uint16>());
     node.grantsPowerBand = static_cast<PowerBand>(fields[4].Get<uint16>());
-    node.enabled = fields[5].Get<uint8>() != 0;
+    node.ipRequiredState = fields[5].Get<uint8>();
+    node.enabled = fields[6].Get<uint8>() != 0;
     return node;
 }
 
