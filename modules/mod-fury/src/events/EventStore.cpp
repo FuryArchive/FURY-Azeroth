@@ -8,6 +8,68 @@
 
 namespace Fury
 {
+namespace
+{
+FuryEvent ReadEventRow(Field* fields)
+{
+    FuryEvent event;
+    event.id = fields[0].Get<EventId>();
+    event.type = fields[1].Get<std::string>();
+    event.actor.kind = static_cast<ActorKind>(fields[2].Get<uint8>());
+
+    if (!fields[3].IsNull())
+    {
+        ObjectGuid guid;
+        guid.Set(fields[3].Get<uint64>());
+        event.actor.characterGuid = guid;
+    }
+
+    if (!fields[4].IsNull())
+        event.actor.accountId = fields[4].Get<uint32>();
+
+    if (!fields[5].IsNull())
+        event.actor.householdId = fields[5].Get<HouseholdId>();
+
+    event.actor.isEligibleForPersistentProgression =
+        event.actor.kind == ActorKind::Human;
+
+    event.mapId = fields[6].Get<uint32>();
+    event.zoneId = fields[7].Get<uint32>();
+    event.areaId = fields[8].Get<uint32>();
+
+    if (!fields[9].IsNull())
+        event.subjectType = fields[9].Get<std::string>();
+
+    if (!fields[10].IsNull())
+        event.subjectId = fields[10].Get<uint64>();
+
+    event.sourceSystem = fields[11].Get<std::string>();
+
+    if (!fields[12].IsNull())
+        event.correlationKey = fields[12].Get<std::string>();
+
+    event.payloadJson = fields[13].IsNull()
+        ? "{}"
+        : fields[13].Get<std::string>();
+
+    return event;
+}
+
+std::vector<FuryEvent> ReadEventRows(PreparedQueryResult const& result)
+{
+    std::vector<FuryEvent> events;
+    if (!result)
+        return events;
+
+    do
+    {
+        events.push_back(ReadEventRow(result->Fetch()));
+    } while (result->NextRow());
+
+    return events;
+}
+}
+
 std::optional<EventId> EventStore::Append(FuryEvent const& event) const
 {
     if (event.type.empty() || event.sourceSystem.empty() || event.dedupeIdentity.empty())
@@ -89,67 +151,27 @@ std::optional<EventId> EventStore::Append(FuryEvent const& event) const
 
 std::vector<FuryEvent> EventStore::ReadAfter(EventId checkpoint, uint32 limit) const
 {
-    std::vector<FuryEvent> events;
     if (!limit)
-        return events;
+        return {};
 
     DatabasePreparedStatement* stmt =
         FuryDatabase.GetPreparedStatement(FURY_SEL_EVENTS_AFTER_ID);
     stmt->SetData(0, checkpoint);
     stmt->SetData(1, limit);
 
-    PreparedQueryResult result = FuryDatabase.Query(stmt);
-    if (!result)
-        return events;
+    return ReadEventRows(FuryDatabase.Query(stmt));
+}
 
-    do
-    {
-        Field* fields = result->Fetch();
+std::vector<FuryEvent> EventStore::Tail(uint32 limit) const
+{
+    if (!limit)
+        return {};
 
-        FuryEvent event;
-        event.id = fields[0].Get<EventId>();
-        event.type = fields[1].Get<std::string>();
-        event.actor.kind = static_cast<ActorKind>(fields[2].Get<uint8>());
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_EVENT_TAIL);
+    stmt->SetData(0, limit);
 
-        if (!fields[3].IsNull())
-        {
-            ObjectGuid guid;
-            guid.Set(fields[3].Get<uint64>());
-            event.actor.characterGuid = guid;
-        }
-
-        if (!fields[4].IsNull())
-            event.actor.accountId = fields[4].Get<uint32>();
-
-        if (!fields[5].IsNull())
-            event.actor.householdId = fields[5].Get<HouseholdId>();
-
-        event.actor.isEligibleForPersistentProgression =
-            event.actor.kind == ActorKind::Human;
-
-        event.mapId = fields[6].Get<uint32>();
-        event.zoneId = fields[7].Get<uint32>();
-        event.areaId = fields[8].Get<uint32>();
-
-        if (!fields[9].IsNull())
-            event.subjectType = fields[9].Get<std::string>();
-
-        if (!fields[10].IsNull())
-            event.subjectId = fields[10].Get<uint64>();
-
-        event.sourceSystem = fields[11].Get<std::string>();
-
-        if (!fields[12].IsNull())
-            event.correlationKey = fields[12].Get<std::string>();
-
-        event.payloadJson = fields[13].IsNull()
-            ? "{}"
-            : fields[13].Get<std::string>();
-
-        events.push_back(std::move(event));
-    } while (result->NextRow());
-
-    return events;
+    return ReadEventRows(FuryDatabase.Query(stmt));
 }
 
 std::array<uint8, 32> EventStore::HashIdentity(std::string_view identity)
