@@ -22,6 +22,8 @@
 #include "contracts/ContractRepository.h"
 #include "contracts/ContractService.h"
 #include "contracts/ContractRewardConsumer.h"
+#include "director/DirectorRepository.h"
+#include "director/DirectorService.h"
 
 namespace Fury
 {
@@ -47,6 +49,7 @@ public:
     CampaignService& Campaign() { return _campaign; }
     ProofService& Proofs() { return _proofs; }
     ContractService& Contracts() { return _contracts; }
+    DirectorService& Director() { return _director; }
 
 private:
     struct TickConfig
@@ -93,6 +96,9 @@ private:
     ContractRepository _contractRepository;
     ContractService _contracts;
     ContractRewardConsumer _contractRewards;
+
+    DirectorRepository _directorRepository;
+    DirectorService _director;
 
     TickConfig _ticks;
 
