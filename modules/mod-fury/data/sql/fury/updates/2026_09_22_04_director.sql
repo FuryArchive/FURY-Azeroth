@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `fury_director_run` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_fury_director_active_scope`
     (`household_id`, `active_scope_key`),
-  UNIQUE KEY `uq_fury_director_external_runtime`
+  KEY `ix_fury_director_external_runtime`
     (`external_runtime_id`),
   KEY `ix_fury_director_run_graph`
     (`household_id`, `graph_key`, `status`),
