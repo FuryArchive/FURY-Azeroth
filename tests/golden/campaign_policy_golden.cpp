@@ -48,8 +48,8 @@ int main()
 
     Require(CanAuthorCampaignTransition(ActorKind::Human),
         "Human may author household campaign transitions");
-    Require(CanAuthorCampaignTransition(ActorKind::System),
-        "System durable events may reconcile household campaign transitions");
+    Require(!CanAuthorCampaignTransition(ActorKind::System),
+        "System may not author persistent campaign progression");
     Require(!CanAuthorCampaignTransition(ActorKind::HouseholdAltBot),
         "HouseholdAltBot may not author campaign progression");
     Require(!CanAuthorCampaignTransition(ActorKind::RandomPlayerBot),
