@@ -205,8 +205,15 @@ void DatabaseConnection::DoPrepareStatements()
         "AND (o.subject_type IS NULL OR o.subject_type = ?) "
         "AND (o.subject_id IS NULL OR o.subject_id = ?)",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_PROGRESS_ROW,
+        "SELECT progress_count, last_event_id "
+        "FROM fury_contract_progress "
+        "WHERE instance_id = ? AND objective_ordinal = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_UPD_CONTRACT_PROGRESS,
         "UPDATE fury_contract_progress p "
+        "JOIN fury_contract_instance i "
+        "ON i.id = p.instance_id AND i.status = 2 "
         "JOIN fury_contract_objective o "
         "ON o.contract_key = ? AND o.ordinal = p.objective_ordinal "
         "SET p.completed_at = CASE "
