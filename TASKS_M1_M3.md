@@ -36,7 +36,7 @@ Acceptance:
 - every later task references only verified APIs.
 
 ### T00.3 Establish lock file
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T00.1
 
 Create/update `fury.lock.yaml` with exact commits for core and required modules.
