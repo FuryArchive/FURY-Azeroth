@@ -1,6 +1,7 @@
 #include "IndividualProgressionAdapter.h"
 
 #include "Player.h"
+#include "World.h"
 
 #if __has_include("IndividualProgression.h")
 #include "IndividualProgression.h"
@@ -18,9 +19,15 @@ IndividualProgressionAdapter::Availability() const
     if (!sIndividualProgression)
         return IndividualProgressionAvailability::Unavailable;
 
-    return sIndividualProgression->enabled
-        ? IndividualProgressionAvailability::Available
-        : IndividualProgressionAvailability::Disabled;
+    if (!sIndividualProgression->enabled)
+        return IndividualProgressionAvailability::Disabled;
+
+    if (!sWorld->getBoolConfig(CONFIG_PLAYER_SETTINGS_ENABLED))
+    {
+        return IndividualProgressionAvailability::PlayerSettingsDisabled;
+    }
+
+    return IndividualProgressionAvailability::Available;
 #else
     return IndividualProgressionAvailability::Unavailable;
 #endif
@@ -63,6 +70,15 @@ IndividualProgressionAdapter::Check(
     {
         return {
             IndividualProgressionGateOutcome::ModuleDisabled,
+            requiredState,
+            0
+        };
+    }
+
+    if (!sWorld->getBoolConfig(CONFIG_PLAYER_SETTINGS_ENABLED))
+    {
+        return {
+            IndividualProgressionGateOutcome::PlayerSettingsDisabled,
             requiredState,
             0
         };
