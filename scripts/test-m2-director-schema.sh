@@ -42,7 +42,7 @@ for table in fury_director_graph fury_director_run; do
 done
 
 echo "[FURY] T15 -> T16 migration path"
-sql "DROP TABLE fury_director_run; DROP TABLE fury_director_graph;"
+sql "DROP TABLE IF EXISTS fury_director_score_award; DROP TABLE IF EXISTS fury_director_score_component; DROP TABLE fury_director_run; DROP TABLE fury_director_graph;"
 "${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/updates/2026_09_22_04_director.sql"
 for table in fury_director_graph fury_director_run; do
   assert_eq "1" "$(sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${MYSQL_DATABASE}' AND table_name='${table}';")" "migration creates ${table}"
