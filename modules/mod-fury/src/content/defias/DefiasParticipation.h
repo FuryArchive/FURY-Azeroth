@@ -77,8 +77,20 @@ private:
         LivingWorldEntityMetadata const& metadata,
         LivingWorldRuntimeSnapshot const& runtime);
 
+    bool EmitBestiaryParticipation(
+        Player* player,
+        Creature* creature,
+        LivingWorldEntityMetadata const& metadata,
+        ParticipationCreditKind kind);
+
     void AddCredit(
         std::unordered_map<HouseholdId, HouseholdCredit>& credits,
+        Player* player,
+        ParticipationCreditKind kind,
+        uint32 secondsSinceAnchorAction) const;
+
+    void AddIndividualCredit(
+        std::unordered_map<uint32, HouseholdCredit>& credits,
         Player* player,
         ParticipationCreditKind kind,
         uint32 secondsSinceAnchorAction) const;
