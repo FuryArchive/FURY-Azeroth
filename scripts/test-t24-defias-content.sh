@@ -81,4 +81,46 @@ for pattern in patterns:
 print("[FURY][PASS] Defias world-DB overlay is a single narrow id=1 update")
 PY
 
+if command -v mysql >/dev/null 2>&1 && [[ -n "${MYSQL_HOST:-}" ]]; then
+  MYSQL_PORT="${MYSQL_PORT:-3306}"
+  MYSQL_USER="${MYSQL_USER:-root}"
+  MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
+  TEST_DB="${MYSQL_DATABASE:-fury_t24_world}"
+
+  mysql_args=(
+    -h "${MYSQL_HOST}"
+    -P "${MYSQL_PORT}"
+    -u "${MYSQL_USER}"
+    --protocol=TCP
+  )
+
+  if [[ -n "${MYSQL_PASSWORD}" ]]; then
+    mysql_args+=("-p${MYSQL_PASSWORD}")
+  fi
+
+  mysql "${mysql_args[@]}" -e "DROP DATABASE IF EXISTS \`${TEST_DB}\`; CREATE DATABASE \`${TEST_DB}\`;"
+  mysql "${mysql_args[@]}" "${TEST_DB}" <<'SQL'
+CREATE TABLE lw_invasion (
+  id INT UNSIGNED NOT NULL PRIMARY KEY,
+  allow_random_start TINYINT UNSIGNED NOT NULL DEFAULT 1
+);
+INSERT INTO lw_invasion (id, allow_random_start) VALUES
+  (1, 1),
+  (2, 1);
+SQL
+
+  mysql "${mysql_args[@]}" "${TEST_DB}" < "${OVERLAY}"
+  mysql "${mysql_args[@]}" "${TEST_DB}" < "${OVERLAY}"
+
+  defias_random="$(mysql "${mysql_args[@]}" -N -s "${TEST_DB}" -e "SELECT allow_random_start FROM lw_invasion WHERE id=1;")"
+  other_random="$(mysql "${mysql_args[@]}" -N -s "${TEST_DB}" -e "SELECT allow_random_start FROM lw_invasion WHERE id=2;")"
+
+  [[ "${defias_random}" == "0" ]]
+  [[ "${other_random}" == "1" ]]
+
+  mysql "${mysql_args[@]}" -e "DROP DATABASE \`${TEST_DB}\`;"
+
+  echo "[FURY][PASS] Defias overlay is idempotent and leaves non-Defias invasions unchanged"
+fi
+
 echo "[FURY][PASS] T24 Defias content/overlay gate passed"
