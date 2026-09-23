@@ -2,6 +2,7 @@
 
 #include "DefiasContent.h"
 #include "DefiasContracts.h"
+#include "DefiasGraph.h"
 #include "actors/ActorResolver.h"
 #include "events/EventStore.h"
 #include "events/FuryEventFactory.h"
