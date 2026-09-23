@@ -28,7 +28,7 @@ enum class DirectorReconcileAction : uint8
     None = 1,
     AttachExternalRuntime = 2,
     ReattachExistingRuntime = 3,
-    RestartMissingRuntime = 4,
+    AbortMissingRuntime = 4,
     ResolveFromExternal = 5,
     FailFromExternal = 6,
     RuntimeConflict = 7
@@ -86,7 +86,7 @@ public:
         }
 
         if (state == ExternalRuntimeState::Missing)
-            return DirectorReconcileAction::RestartMissingRuntime;
+            return DirectorReconcileAction::AbortMissingRuntime;
 
         if (actualRuntimeId == 0 || actualRuntimeId != expectedRuntimeId)
             return DirectorReconcileAction::RuntimeConflict;
