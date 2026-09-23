@@ -515,7 +515,7 @@ Acceptance:
 - no mod-hunts dependency yet.
 
 ## T31 Adaptive Field Relief profession order
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T17, T27
 Commit target: `content(defias): add Field Relief order`
 
@@ -527,7 +527,7 @@ Acceptance:
 - craft events replay safely.
 
 ## T32 Defias persistent resolution
-Status: READY
+Status: IN_PROGRESS
 Depends on: T14, T29
 Commit target: `feat(defias): add persistent outcomes`
 
