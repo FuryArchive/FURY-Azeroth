@@ -108,7 +108,14 @@ instance_id="$(sql "SELECT id FROM fury_contract_instance WHERE household_id=${h
 
 recon_event="$(make_event t29-recon-complete contract.completed classic.westfall.defias.scout_report)"
 recon_event_2="$(make_event t29-recon-complete-duplicate contract.completed classic.westfall.defias.scout_report)"
-sql "UPDATE fury_event SET subject_type='contract_instance', subject_id=${instance_id} WHERE id IN (${recon_event},${recon_event_2});"
+sql "UPDATE fury_event
+  SET subject_type='contract_instance',
+      subject_id=${instance_id},
+      source_system='fury.contracts'
+  WHERE id IN (${recon_event},${recon_event_2});"
+sql "UPDATE fury_contract_instance
+  SET completed_event_id=${recon_event}
+  WHERE id=${instance_id};"
 
 resolved_contract_run="$(sql "SELECT i.director_run_id
   FROM fury_contract_instance i
@@ -117,8 +124,19 @@ resolved_contract_run="$(sql "SELECT i.director_run_id
     AND i.household_id=${household_id}
     AND i.contract_key='classic.westfall.defias.scout_report'
     AND r.graph_key='${GRAPH}'
+    AND i.completed_event_id=${recon_event}
   LIMIT 1;")"
 assert_eq "${run_id}" "${resolved_contract_run}"   "contract completion resolves its attached Director run"
+
+duplicate_completion_run_count="$(sql "SELECT COUNT(*)
+  FROM fury_contract_instance i
+  JOIN fury_director_run r ON r.id=i.director_run_id
+  WHERE i.id=${instance_id}
+    AND i.household_id=${household_id}
+    AND i.contract_key='classic.westfall.defias.scout_report'
+    AND r.graph_key='${GRAPH}'
+    AND i.completed_event_id=${recon_event_2};")"
+assert_eq "0" "${duplicate_completion_run_count}"   "non-canonical duplicate completion event cannot resolve a score run"
 
 wrong_contract_run_count="$(sql "SELECT COUNT(*)
   FROM fury_contract_instance i
@@ -130,7 +148,11 @@ wrong_contract_run_count="$(sql "SELECT COUNT(*)
 assert_eq "0" "${wrong_contract_run_count}"   "unknown contract instance cannot resolve a score run"
 
 final_stage_event="$(make_event t29-final-stage defias.final_stage.participated "${GRAPH}")"
-sql "UPDATE fury_event SET subject_type='living_world_runtime', subject_id=77 WHERE id=${final_stage_event};"
+sql "UPDATE fury_event
+  SET subject_type='living_world_runtime',
+      subject_id=77,
+      source_system='fury.defias'
+  WHERE id=${final_stage_event};"
 resolved_runtime_run="$(sql "SELECT id FROM fury_director_run
   WHERE household_id=${household_id}
     AND graph_key='${GRAPH}'
@@ -188,6 +210,9 @@ if grep -Fq 'FindLatestGraph' "${SCORE_SERVICE}"; then
 fi
 grep -Fq 'FURY_SEL_DIRECTOR_SCORE_RUN_FOR_CONTRACT' "${DATABASE}"
 grep -Fq 'FURY_SEL_DIRECTOR_SCORE_RUN_FOR_RUNTIME' "${DATABASE}"
+grep -Fq 'i.completed_event_id = ?' "${DATABASE}"
+grep -Fq 'event.sourceSystem == "fury.contracts"' "${ROOT}/modules/mod-fury/src/director/DirectorScoreRepository.cpp"
+grep -Fq 'event.sourceSystem == "fury.defias"' "${ROOT}/modules/mod-fury/src/director/DirectorScoreRepository.cpp"
 grep -Fq 'Fury.Defias.Score.PartialThreshold = 30' "${CONFIG}"
 grep -Fq 'Fury.Defias.Score.SuccessThreshold = 70' "${CONFIG}"
 
