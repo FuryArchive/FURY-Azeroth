@@ -230,9 +230,15 @@ void DatabaseConnection::DoPrepareStatements()
         "ON i.contract_key = o.contract_key AND i.household_id = ? AND i.status = 2 "
         "JOIN fury_contract_progress p "
         "ON p.instance_id = i.id AND p.objective_ordinal = o.ordinal "
+        "LEFT JOIN fury_director_run d ON d.id = i.director_run_id "
         "WHERE o.event_type = ? "
         "AND (o.subject_type IS NULL OR o.subject_type = ?) "
-        "AND (o.subject_id IS NULL OR o.subject_id = ?)",
+        "AND (o.subject_id IS NULL OR o.subject_id = ?) "
+        "AND i.accepted_event_id <= ? "
+        "AND (i.director_run_id IS NULL "
+        "OR o.event_type <> 'living_world.entity.killed' "
+        "OR d.external_runtime_id = CAST("
+        "JSON_UNQUOTE(JSON_EXTRACT(?, '$.runtime_id')) AS UNSIGNED))",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_CONTRACT_PROGRESS_ROW,
         "SELECT progress_count, last_event_id "

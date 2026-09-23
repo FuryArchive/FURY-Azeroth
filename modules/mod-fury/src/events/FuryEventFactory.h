@@ -12,6 +12,7 @@ class Quest;
 
 namespace Fury
 {
+struct LivingWorldEntityMetadata;
 class FuryEventFactory final
 {
 public:
@@ -21,6 +22,11 @@ public:
     static FuryEvent ZoneChanged(Player* player, uint32 newZone, uint32 newArea);
     static FuryEvent QuestCompleted(Player* player, Quest const* quest);
     static FuryEvent CreatureKilled(Player* player, Creature* creature, bool viaPet);
+    static FuryEvent LivingWorldEntityKilled(
+        Player* player,
+        Creature* creature,
+        bool viaPet,
+        LivingWorldEntityMetadata const& metadata);
     static FuryEvent ItemLooted(
         Player* player,
         Item* item,

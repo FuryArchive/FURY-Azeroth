@@ -463,7 +463,7 @@ Acceptance:
 - no custom client patch required.
 
 ## T27 Six Defias contracts
-Status: READY
+Status: IN_PROGRESS
 Depends on: T21, T26
 Commit target: `feat(defias): add initial Westfall contracts`
 
@@ -633,4 +633,4 @@ T21–T25 are GREEN. T25 merged through PR #26 / commit `d328e889c403fcd79d84f9c
 
 T26 is GREEN. PR #27 passed FURY CI #133 and Full Runtime #5, including the pinned worldserver build, real FURY DB lifecycle, world-data application, and two worldserver smokes.
 
-Continue with **T27 Six Defias contracts**. Runtime objectives must use the verified Living World reverse entity metadata; ordinary Westfall Defias kills must never count.
+T27 is IN_PROGRESS on `agent/m3-t27-defias-contracts`: runtime-qualified Living World kills, replay cutoffs, Director-runtime binding, six contract definitions/objectives and a dedicated CI gate are implemented pending branch acceptance.
