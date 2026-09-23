@@ -5,19 +5,13 @@
 #include "director/DirectorScoreRepository.h"
 #include "events/EventConsumer.h"
 
-namespace Fury
-{
-class DirectorRepository;
-}
-
 namespace Fury::Defias
 {
 class ScoreService final : public EventConsumer
 {
 public:
-    ScoreService(
-        DirectorScoreRepository const& scores,
-        DirectorRepository const& director);
+    explicit ScoreService(
+        DirectorScoreRepository const& scores);
 
     void Initialize();
     void Reset();
@@ -47,7 +41,6 @@ public:
 
 private:
     DirectorScoreRepository const& _scores;
-    DirectorRepository const& _director;
     ScoreThresholds _thresholds;
     bool _enabled = false;
 };
