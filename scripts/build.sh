@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CORE="${ROOT}/upstream/azerothcore-wotlk"
 BUILD_DIR="${ROOT}/build/azerothcore"
 INSTALL_DIR="${ROOT}/build/dist"
+LOCK="${ROOT}/vendor/lock/fury.lock.yaml"
 
 if [[ ! -f "${CORE}/CMakeLists.txt" ]]; then
   echo "[FURY] AzerothCore workspace missing. Run: bash scripts/sync-upstreams.sh" >&2
@@ -27,7 +28,7 @@ if command -v ninja >/dev/null 2>&1; then
 fi
 
 CMAKE_FAST_ARGS=()
-if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "living-world-only" ]]; then
+if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "living-world-only" || "${TARGET}" == "selected-modules-only" ]]; then
   CMAKE_FAST_ARGS+=(
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
     "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"
@@ -58,14 +59,45 @@ cmake -S "${CORE}" -B "${BUILD_DIR}" \
   "${CMAKE_LAUNCHER_ARGS[@]}" \
   "${CMAKE_FAST_ARGS[@]}"
 
+compile_module_tus() {
+  local module="$1"
+  echo "[FURY] compile ${module} translation units only"
+  FURY_BUILD_JOBS="${JOBS}" FURY_SOURCE_MODULE="${module}" python3 "${ROOT}/scripts/compile-fury-only.py" \
+    "${BUILD_DIR}/compile_commands.json"
+}
+
 if [[ "${TARGET}" == "fury-only" ]]; then
-  echo "[FURY] compile mod-fury translation units only"
-  FURY_BUILD_JOBS="${JOBS}" FURY_SOURCE_MODULE="mod-fury" python3 "${ROOT}/scripts/compile-fury-only.py" \
-    "${BUILD_DIR}/compile_commands.json"
+  compile_module_tus "mod-fury"
 elif [[ "${TARGET}" == "living-world-only" ]]; then
-  echo "[FURY] compile mod-living-world translation units only"
-  FURY_BUILD_JOBS="${JOBS}" FURY_SOURCE_MODULE="mod-living-world" python3 "${ROOT}/scripts/compile-fury-only.py" \
-    "${BUILD_DIR}/compile_commands.json"
+  compile_module_tus "mod-living-world"
+elif [[ "${TARGET}" == "selected-modules-only" ]]; then
+  if [[ ! -f "${LOCK}" ]]; then
+    echo "[FURY] missing selected-stack lock: ${LOCK}" >&2
+    exit 1
+  fi
+
+  mapfile -t selected_modules < <(python3 - "${LOCK}" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    lock = json.load(fh)
+
+for module in lock["modules"].values():
+    if module.get("tier") == "selected":
+        print(module["directory"])
+PY
+)
+
+  if [[ "${#selected_modules[@]}" -eq 0 ]]; then
+    echo "[FURY] selected module list is empty" >&2
+    exit 1
+  fi
+
+  echo "[FURY] fast selected-stack compile: ${#selected_modules[@]} module(s)"
+  for module in "${selected_modules[@]}"; do
+    compile_module_tus "${module}"
+  done
 elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
   cmake --build "${BUILD_DIR}" --target "${TARGET}" --parallel "${JOBS}"

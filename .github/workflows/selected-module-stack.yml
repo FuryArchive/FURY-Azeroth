@@ -1,0 +1,50 @@
+name: Selected Module Stack CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - ".github/workflows/selected-module-stack.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - ".github/workflows/selected-module-stack.yml"
+
+concurrency:
+  group: selected-module-stack-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  selected-module-compile:
+    name: Selected server module fast compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake ninja-build make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Resolve selected server stack
+        env:
+          FURY_STACK_PROFILE: server
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Fast compile selected modules
+        env:
+          FURY_BUILD_TARGET: selected-modules-only
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
