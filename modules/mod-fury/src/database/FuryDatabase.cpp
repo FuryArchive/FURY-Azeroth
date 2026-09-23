@@ -340,6 +340,35 @@ void DatabaseConnection::DoPrepareStatements()
         "AND status IN (1, 2, 3)",
         CONNECTION_SYNCH);
 
+    PrepareStatement(FURY_SEL_DIRECTOR_SCORE_COMPONENT_MATCHES,
+        "SELECT component_key, score_value, source_correlation_key "
+        "FROM fury_director_score_component "
+        "WHERE graph_key = ? AND source_event_type = ? "
+        "AND (source_correlation_key IS NULL OR source_correlation_key = ?) "
+        "AND enabled = 1 ORDER BY component_key ASC",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_SCORE_DEFINITION_TOTAL,
+        "SELECT COALESCE(SUM(score_value), 0) "
+        "FROM fury_director_score_component "
+        "WHERE graph_key = ? AND enabled = 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_INS_DIRECTOR_SCORE_AWARD,
+        "INSERT IGNORE INTO fury_director_score_award "
+        "(director_run_id, graph_key, component_key, score_value, source_event_id) "
+        "SELECT ?, ?, ?, ?, ? "
+        "FROM fury_director_run r "
+        "WHERE r.id = ? AND r.graph_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_SCORE_AWARD,
+        "SELECT graph_key, score_value, source_event_id "
+        "FROM fury_director_score_award "
+        "WHERE director_run_id = ? AND component_key = ?",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_SCORE_TOTAL,
+        "SELECT COALESCE(SUM(score_value), 0) "
+        "FROM fury_director_score_award WHERE director_run_id = ?",
+        CONNECTION_SYNCH);
+
     PrepareStatement(FURY_SEL_PROFESSION_ORDER,
         "SELECT title, repeat_policy, enabled "
         "FROM fury_profession_order WHERE order_key = ?",
