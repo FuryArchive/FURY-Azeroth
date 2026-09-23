@@ -1,5 +1,7 @@
 #include "core/FuryApp.h"
 #include "actors/ActorPolicy.h"
+#include "content/defias/DefiasContent.h"
+#include "content/defias/DefiasContracts.h"
 #include "events/FuryEventFactory.h"
 
 #include "DBCStructure.h"
@@ -60,6 +62,42 @@ void Publish(Fury::FuryEvent event)
     app.Events().Append(event);
 }
 
+void PublishLivingWorldKill(
+    Player* player,
+    Creature* creature,
+    bool viaPet)
+{
+    if (!player || !creature)
+        return;
+
+    Fury::App& app = Fury::App::Instance();
+    if (!app.IsInitialized() || !app.IsEnabled())
+        return;
+
+    std::optional<Fury::LivingWorldEntityMetadata> metadata =
+        app.LivingWorld().FindEntity(creature->GetGUID());
+    if (!metadata ||
+        !Fury::Defias::IsHostileSpawnGroup(metadata->spawnGroupId))
+    {
+        return;
+    }
+
+    std::optional<Fury::LivingWorldRuntimeSnapshot> runtime =
+        app.LivingWorld().RuntimeForInvasion(Fury::Defias::InvasionId);
+    if (!runtime ||
+        !runtime->IsActive() ||
+        runtime->runtimeId != metadata->runtimeId)
+    {
+        return;
+    }
+
+    Publish(Fury::FuryEventFactory::LivingWorldEntityKilled(
+        player,
+        creature,
+        viaPet,
+        *metadata));
+}
+
 class FuryPlayerScript final : public PlayerScript
 {
 public:
@@ -111,11 +149,13 @@ public:
     void OnPlayerCreatureKill(Player* player, Creature* creature) override
     {
         Publish(Fury::FuryEventFactory::CreatureKilled(player, creature, false));
+        PublishLivingWorldKill(player, creature, false);
     }
 
     void OnPlayerCreatureKilledByPet(Player* owner, Creature* creature) override
     {
         Publish(Fury::FuryEventFactory::CreatureKilled(owner, creature, true));
+        PublishLivingWorldKill(owner, creature, true);
     }
 
     void OnPlayerLootItem(
