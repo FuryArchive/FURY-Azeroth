@@ -22,3 +22,8 @@ Fury.Tick.ReconcileMs = 30000
 
 # Durable event consumers process at most this many events per consumer/service tick.
 Fury.Event.ReplayBatchSize = 500
+
+# Defias Resurgence score thresholds. The enabled score components must total 100.
+# 0 <= Partial < Success <= 100; invalid ordering disables Defias scoring.
+Fury.Defias.Score.PartialThreshold = 30
+Fury.Defias.Score.SuccessThreshold = 70
