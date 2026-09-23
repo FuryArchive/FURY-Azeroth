@@ -1,4 +1,5 @@
 #include "ContractService.h"
+#include "ContractBoardPolicy.h"
 #include "ContractPolicy.h"
 
 #include "core/FuryKey.h"
@@ -15,6 +16,58 @@ ContractService::ContractService(
     : _repository(repository),
       _events(events)
 {
+}
+
+std::vector<ContractBoardEntry> ContractService::ListBoard(
+    std::string_view boardKey,
+    ContractBoardContext const& context) const
+{
+    std::vector<ContractBoardEntry> entries;
+    if (!IsCanonicalKey(boardKey) || !context.householdId)
+        return entries;
+
+    for (ContractDefinition const& definition :
+         _repository.ListBoardDefinitions(boardKey))
+    {
+        std::optional<ContractInstance> active =
+            _repository.FindActiveInstance(
+                context.householdId,
+                definition.contractKey);
+        bool const completed =
+            _repository.HasCompletedInstance(
+                context.householdId,
+                definition.contractKey);
+
+        if (!ShouldShowContractOnBoard(
+                definition,
+                context,
+                active.has_value(),
+                completed))
+        {
+            continue;
+        }
+
+        ContractBoardEntry entry;
+        entry.definition = definition;
+
+        if (active)
+        {
+            entry.status = ContractStatus::Active;
+            entry.instanceId = active->id;
+        }
+        else if (completed)
+        {
+            entry.status = ContractStatus::Complete;
+        }
+        else
+        {
+            entry.status = ContractStatus::Available;
+        }
+
+        entries.push_back(std::move(entry));
+    }
+
+    return entries;
 }
 
 ContractAcceptResult ContractService::Accept(
