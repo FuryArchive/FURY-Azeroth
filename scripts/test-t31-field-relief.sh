@@ -82,9 +82,9 @@ accept_event="$(sql "SELECT id FROM fury_event
   WHERE dedupe_key=UNHEX(SHA2('t31-field-relief-accept',256));")"
 
 sql "INSERT INTO fury_contract_instance
-  (household_id, contract_key, status, accepted_event_id, last_event_id)
+  (household_id, contract_key, status, accepted_event_id)
   VALUES
-  (${household_id},'${CONTRACT}',2,${accept_event},${accept_event});"
+  (${household_id},'${CONTRACT}',2,${accept_event});"
 contract_instance="$(sql "SELECT id FROM fury_contract_instance
   WHERE household_id=${household_id} AND contract_key='${CONTRACT}'
     AND status=2 ORDER BY id DESC LIMIT 1;")"
