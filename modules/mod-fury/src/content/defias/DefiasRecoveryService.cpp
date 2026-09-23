@@ -295,3 +295,4 @@ bool RecoveryService::Reconcile() const
 
     return ok;
 }
+}
