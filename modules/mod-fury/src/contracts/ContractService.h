@@ -20,6 +20,10 @@ public:
         return "contracts.progress.v1";
     }
 
+    [[nodiscard]] std::vector<ContractBoardEntry> ListBoard(
+        std::string_view boardKey,
+        ContractBoardContext const& context) const;
+
     [[nodiscard]] ContractAcceptResult Accept(
         FuryEvent const& source,
         std::string_view contractKey,
