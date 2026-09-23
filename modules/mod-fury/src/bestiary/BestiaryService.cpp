@@ -190,6 +190,8 @@ bool BestiaryService::ApplyDefiasSuccessMastery(
         run->householdId != *source.actor.householdId ||
         run->graphKey != Defias::GraphKey ||
         run->status != DirectorRunStatus::Complete ||
+        !run->resolvedEventId ||
+        *run->resolvedEventId != source.id ||
         !run->outcomeKey ||
         *run->outcomeKey != "success")
     {
