@@ -422,7 +422,7 @@ Acceptance:
 - adapter can query current runtime during restart reconciliation.
 
 ## T24 Defias content validation + disable random start
-Status: READY
+Status: GREEN
 Depends on: T21, T23
 Commit target: `content(defias): pin FURY-controlled invasion`
 
