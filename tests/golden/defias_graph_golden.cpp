@@ -17,11 +17,17 @@ struct Port final : GraphPort
     {
         if (disabled) return {DirectorOutcome::GraphDisabled, {}};
         if (busy) return {DirectorOutcome::ScopeBusy, {}};
-        if (!saved) {
+        bool const terminal = saved &&
+            (saved->status == DirectorRunStatus::Complete ||
+             saved->status == DirectorRunStatus::Failed ||
+             saved->status == DirectorRunStatus::Aborted);
+        if (!saved || terminal) {
             ++starts;
             saved = DirectorRun{};
-            saved->id = 1; saved->householdId = *e.actor.householdId;
-            saved->graphKey = GraphKey; saved->phaseKey = "rumours";
+            saved->id = starts; saved->householdId = *e.actor.householdId;
+            saved->graphKey = GraphKey; saved->scopeKey = ScopeKey;
+            saved->phaseKey = "rumours";
+            saved->status = DirectorRunStatus::Active;
             saved->startedEventId = e.id;
         }
         if (failStartEmit) return {DirectorOutcome::PersistenceFailed, saved};
@@ -73,6 +79,10 @@ int main()
     assert(restarted.Activate(e, 1)); assert(p.externalStarts == 1);
     p.saved->status = DirectorRunStatus::Complete; p.saved->outcomeKey = "partial";
     assert(restarted.Enter(e, 10)); assert(p.starts == 1);
+    e.id = 2;
+    assert(restarted.Enter(e, 10)); assert(p.starts == 2);
+    assert(p.saved->startedEventId == 2);
+    assert(p.saved->phaseKey == "rumours");
     assert(OutcomeForScore(0) == "ignored"); assert(OutcomeForScore(29) == "ignored");
     assert(OutcomeForScore(30) == "partial"); assert(OutcomeForScore(69) == "partial");
     assert(OutcomeForScore(70) == "success"); assert(OutcomeForScore(100) == "success");

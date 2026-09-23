@@ -47,6 +47,11 @@ void DatabaseConnection::DoPrepareStatements()
     PrepareStatement(FURY_SEL_EVENT_ID_BY_DEDUPE,
         "SELECT id FROM fury_event WHERE dedupe_key = ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_EVENT_BY_ID,
+        "SELECT id, event_type, actor_kind, actor_guid, account_id, household_id, "
+        "map_id, zone_id, area_id, subject_type, subject_id, source_system, correlation_key, payload "
+        "FROM fury_event WHERE id = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_EVENTS_AFTER_ID,
         "SELECT id, event_type, actor_kind, actor_guid, account_id, household_id, "
         "map_id, zone_id, area_id, subject_type, subject_id, source_system, correlation_key, payload "
@@ -327,14 +332,19 @@ void DatabaseConnection::DoPrepareStatements()
         CONNECTION_SYNCH);
     PrepareStatement(FURY_UPD_DIRECTOR_RESOLVE,
         "UPDATE fury_director_run SET "
-        "status = 4, outcome_key = ?, resolved_event_id = ?, last_event_id = ?, "
+        "status = 4, outcome_key = ?, resolved_event_id = NULL, last_event_id = ?, "
         "completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP(6)), revision = revision + 1 "
         "WHERE id = ? AND household_id = ? AND revision = ? "
         "AND status IN (1, 2, 3)",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_DIRECTOR_TERMINAL_EVENT,
+        "UPDATE fury_director_run SET resolved_event_id = ?, last_event_id = ? "
+        "WHERE id = ? AND household_id = ? AND status IN (4, 6) "
+        "AND resolved_event_id IS NULL",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_UPD_DIRECTOR_ABORT,
         "UPDATE fury_director_run SET "
-        "status = 6, outcome_key = ?, resolved_event_id = ?, last_event_id = ?, "
+        "status = 6, outcome_key = ?, resolved_event_id = NULL, last_event_id = ?, "
         "completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP(6)), revision = revision + 1 "
         "WHERE id = ? AND household_id = ? AND revision = ? "
         "AND status IN (1, 2, 3)",

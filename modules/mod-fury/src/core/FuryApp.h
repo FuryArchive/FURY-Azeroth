@@ -35,6 +35,7 @@
 #include "content/defias/DefiasParticipation.h"
 #include "content/defias/DefiasFieldReliefService.h"
 #include "content/defias/DefiasScoreService.h"
+#include "content/defias/DefiasResolutionService.h"
 #include "content/defias/DefiasService.h"
 
 namespace Fury
@@ -152,6 +153,7 @@ private:
     Defias::ParticipationService _defiasParticipation;
     Defias::FieldReliefService _defiasFieldRelief;
     Defias::ScoreService _defiasScore;
+    Defias::ResolutionService _defiasResolution;
     Defias::Service _defiasGraph;
 
     TickConfig _ticks;

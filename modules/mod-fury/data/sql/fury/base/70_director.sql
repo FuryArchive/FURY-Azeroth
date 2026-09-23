@@ -33,11 +33,6 @@ CREATE TABLE IF NOT EXISTS `fury_director_run` (
     GENERATED ALWAYS AS (
       CASE WHEN `status` IN (1,2,3) THEN `scope_key` ELSE NULL END
     ) STORED,
-  `defias_once` tinyint unsigned
-    GENERATED ALWAYS AS (
-      CASE WHEN `graph_key` = 'classic.westfall.defias_resurgence.v1' THEN 1 ELSE NULL END
-    ) STORED,
-  UNIQUE KEY `uq_fury_defias_once` (`household_id`, `defias_once`),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_fury_director_active_scope`
     (`household_id`, `active_scope_key`),

@@ -54,6 +54,11 @@ public:
         std::string_view outcomeKey,
         EventId sourceEventId) const;
 
+    void BindTerminalEvent(
+        DirectorRunId runId,
+        HouseholdId householdId,
+        EventId terminalEventId) const;
+
     void Abort(
         DirectorRunId runId,
         HouseholdId householdId,

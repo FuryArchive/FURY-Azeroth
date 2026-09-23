@@ -183,10 +183,23 @@ void DirectorRepository::Resolve(
         FuryDatabase.GetPreparedStatement(FURY_UPD_DIRECTOR_RESOLVE);
     stmt->SetData(0, std::string(outcomeKey));
     stmt->SetData(1, sourceEventId);
-    stmt->SetData(2, sourceEventId);
-    stmt->SetData(3, runId);
-    stmt->SetData(4, householdId);
-    stmt->SetData(5, expectedRevision);
+    stmt->SetData(2, runId);
+    stmt->SetData(3, householdId);
+    stmt->SetData(4, expectedRevision);
+    FuryDatabase.Execute(stmt);
+}
+
+void DirectorRepository::BindTerminalEvent(
+    DirectorRunId runId,
+    HouseholdId householdId,
+    EventId terminalEventId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_UPD_DIRECTOR_TERMINAL_EVENT);
+    stmt->SetData(0, terminalEventId);
+    stmt->SetData(1, terminalEventId);
+    stmt->SetData(2, runId);
+    stmt->SetData(3, householdId);
     FuryDatabase.Execute(stmt);
 }
 
@@ -201,10 +214,9 @@ void DirectorRepository::Abort(
         FuryDatabase.GetPreparedStatement(FURY_UPD_DIRECTOR_ABORT);
     stmt->SetData(0, std::string(outcomeKey));
     stmt->SetData(1, sourceEventId);
-    stmt->SetData(2, sourceEventId);
-    stmt->SetData(3, runId);
-    stmt->SetData(4, householdId);
-    stmt->SetData(5, expectedRevision);
+    stmt->SetData(2, runId);
+    stmt->SetData(3, householdId);
+    stmt->SetData(4, expectedRevision);
     FuryDatabase.Execute(stmt);
 }
 }

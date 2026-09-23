@@ -151,6 +151,22 @@ std::optional<EventId> EventStore::Append(FuryEvent const& event) const
     return persisted;
 }
 
+std::optional<FuryEvent> EventStore::Find(EventId eventId) const
+{
+    if (!eventId)
+        return std::nullopt;
+
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_EVENT_BY_ID);
+    stmt->SetData(0, eventId);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return std::nullopt;
+
+    return ReadEventRow(result->Fetch());
+}
+
 std::vector<FuryEvent> EventStore::ReadAfter(EventId checkpoint, uint32 limit) const
 {
     if (!limit)

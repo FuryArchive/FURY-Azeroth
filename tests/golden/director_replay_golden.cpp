@@ -29,6 +29,8 @@ void DirectorRepository::AttachRuntime(DirectorRunId, HouseholdId, uint64, uint6
 { saved->externalRuntimeId = runtime; saved->lastEventId = event; ++saved->revision; }
 void DirectorRepository::Resolve(DirectorRunId, HouseholdId, uint64, std::string_view outcome, EventId event) const
 { saved->status = DirectorRunStatus::Complete; saved->outcomeKey = outcome; saved->lastEventId = event; ++saved->revision; }
+void DirectorRepository::BindTerminalEvent(DirectorRunId, HouseholdId, EventId event) const
+{ saved->resolvedEventId = event; saved->lastEventId = event; }
 void DirectorRepository::Abort(DirectorRunId, HouseholdId, uint64, std::string_view outcome, EventId event) const
 { saved->status = DirectorRunStatus::Aborted; saved->outcomeKey = outcome; saved->lastEventId = event; ++saved->revision; }
 std::optional<EventId> EventStore::Append(FuryEvent const& e) const

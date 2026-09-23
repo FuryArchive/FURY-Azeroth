@@ -50,7 +50,16 @@ public:
                 auto result = _port.Start(source);
                 return result.Accepted() || result.outcome == DirectorOutcome::GraphDisabled;
             }
-            return true;
+
+            // Replaying the trigger that created a terminal run must never
+            // create a new attempt. A genuinely later eligible Human event
+            // may start another run after Partial/Ignored while the campaign
+            // remains incomplete.
+            if (existing->startedEventId == source.id)
+                return true;
+
+            if (Active(*existing))
+                return true;
         }
         if (_port.CampaignComplete(household)) return true;
         DirectorResult result = _port.Start(source);

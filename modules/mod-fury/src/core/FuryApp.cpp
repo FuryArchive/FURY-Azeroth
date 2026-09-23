@@ -37,6 +37,7 @@ App::App()
       _defiasParticipation(_livingWorld, _actors, _events),
       _defiasFieldRelief(_events),
       _defiasScore(_directorScoreRepository),
+      _defiasResolution(_director, _defiasScore, _campaign, _proofs, _rewards, _events),
       _defiasGraph(_director, _directorRepository, _campaign, _livingWorld, _defiasContent, _events, _actors)
 {
     _eventBus.RegisterConsumer(_chronicle);
@@ -46,6 +47,7 @@ App::App()
     _eventBus.RegisterConsumer(_bestiary);
     _eventBus.RegisterConsumer(_defiasGraph);
     _eventBus.RegisterConsumer(_defiasScore);
+    _eventBus.RegisterConsumer(_defiasResolution);
 }
 
 App& App::Instance()
