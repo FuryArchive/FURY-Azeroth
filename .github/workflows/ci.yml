@@ -527,3 +527,41 @@ jobs:
 
       - name: Run Living World adapter policy/boundary scenarios
         run: bash scripts/test-t23-living-world-adapter.sh
+
+
+  defias-content:
+    name: T24 Defias content/overlay golden gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install T24 test dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y g++ default-mysql-client
+
+      - name: Run Defias content and overlay gate
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+          MYSQL_DATABASE: fury_t24_world
+        run: bash scripts/test-t24-defias-content.sh
