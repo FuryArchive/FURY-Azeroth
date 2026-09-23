@@ -38,6 +38,7 @@ App::App()
       _defiasFieldRelief(_events),
       _defiasScore(_directorScoreRepository),
       _defiasResolution(_director, _defiasScore, _campaign, _proofs, _rewards, _events),
+      _defiasRecovery(_director, _directorRepository, _livingWorld, _events),
       _defiasGraph(_director, _directorRepository, _campaign, _livingWorld, _defiasContent, _events, _actors)
 {
     _eventBus.RegisterConsumer(_chronicle);
@@ -193,15 +194,11 @@ void App::RunDirectorTick()
 
 void App::RunReconcileTick()
 {
-    // Living World exposes stable runtime queries rather than a generic
-    // lifecycle callback surface. Normalize currently managed runtimes into
-    // replay-safe FURY events, then let the existing Director reconciler
-    // inspect the same adapter boundary. T33 executes non-trivial recovery
-    // decisions; T23 establishes the probe/integration seam only.
-    _livingWorld.PollManagedRuntimes();
-
-    auto const plan =
-        _directorReconciliation.BuildPlan(_livingWorld);
-    (void)plan;
+    if (!_defiasRecovery.Reconcile())
+    {
+        LOG_ERROR(
+            "server.loading",
+            "[FURY Recovery] Defias reconciliation reported an unresolved recovery action; it will retry on the next reconcile tick.");
+    }
 }
 }

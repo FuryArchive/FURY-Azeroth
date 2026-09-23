@@ -90,8 +90,15 @@ int main()
         DirectorReconciliationService::EvaluateRuntime(
             42,
             ExternalRuntimeState::Active,
+            99) == DirectorReconcileAction::AdoptReplacementRuntime,
+        "active replacement runtime is adopted after crash-window");
+
+    Require(
+        DirectorReconciliationService::EvaluateRuntime(
+            42,
+            ExternalRuntimeState::Complete,
             99) == DirectorReconcileAction::RuntimeConflict,
-        "mismatched runtime id is a conflict");
+        "terminal mismatched runtime remains a conflict");
 
     std::cout << "[FURY][PASS] T16 Director policy/reconciliation golden gate passed\n";
     return 0;

@@ -527,7 +527,7 @@ Acceptance:
 - craft events replay safely.
 
 ## T32 Defias persistent resolution
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T14, T29
 Commit target: `feat(defias): add persistent outcomes`
 
@@ -553,7 +553,7 @@ Acceptance:
 - valuable physical reward duplication is impossible or valuable physical rewards are withheld until a safe receipt mechanism exists.
 
 ## T33 Director/Living World reconciler
-Status: READY
+Status: IN_PROGRESS
 Depends on: T16, T23, T25
 Commit target: `feat(recovery): reconcile Director and Living World`
 

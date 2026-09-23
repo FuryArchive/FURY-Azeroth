@@ -172,6 +172,26 @@ void DirectorRepository::AttachRuntime(
     FuryDatabase.Execute(stmt);
 }
 
+void DirectorRepository::RecoverRuntime(
+    DirectorRunId runId,
+    HouseholdId householdId,
+    uint64 expectedRevision,
+    uint64 expectedRuntimeId,
+    uint64 replacementRuntimeId,
+    EventId sourceEventId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_UPD_DIRECTOR_RUNTIME_RECOVER);
+    stmt->SetData(0, replacementRuntimeId);
+    stmt->SetData(1, sourceEventId);
+    stmt->SetData(2, runId);
+    stmt->SetData(3, householdId);
+    stmt->SetData(4, expectedRevision);
+    stmt->SetData(5, expectedRuntimeId);
+    stmt->SetData(6, expectedRuntimeId);
+    FuryDatabase.Execute(stmt);
+}
+
 void DirectorRepository::Resolve(
     DirectorRunId runId,
     HouseholdId householdId,

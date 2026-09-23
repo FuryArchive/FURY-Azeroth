@@ -31,6 +31,13 @@ public:
         uint64 expectedRevision,
         uint64 externalRuntimeId) const;
 
+    [[nodiscard]] DirectorResult RecoverRuntime(
+        FuryEvent const& source,
+        DirectorRunId runId,
+        uint64 expectedRevision,
+        uint64 expectedRuntimeId,
+        uint64 replacementRuntimeId) const;
+
     [[nodiscard]] DirectorResult Resolve(
         FuryEvent const& source,
         DirectorRunId runId,
@@ -66,6 +73,11 @@ private:
     [[nodiscard]] std::optional<EventId> EmitRuntimeEvent(
         FuryEvent const& source,
         DirectorRun const& run) const;
+
+    [[nodiscard]] std::optional<EventId> EmitRuntimeRecoveryEvent(
+        FuryEvent const& source,
+        DirectorRun const& run,
+        uint64 previousRuntimeId) const;
 
     [[nodiscard]] std::optional<EventId> EmitTerminalEvent(
         FuryEvent const& source,

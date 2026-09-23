@@ -330,6 +330,14 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE id = ? AND household_id = ? AND revision = ? "
         "AND status IN (1, 2, 3) AND external_runtime_id IS NULL",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_UPD_DIRECTOR_RUNTIME_RECOVER,
+        "UPDATE fury_director_run SET "
+        "external_runtime_id = ?, last_event_id = ?, revision = revision + 1 "
+        "WHERE id = ? AND household_id = ? AND revision = ? "
+        "AND status IN (1, 2, 3) "
+        "AND ((external_runtime_id = ?) OR "
+        "(external_runtime_id IS NULL AND ? = 0))",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_UPD_DIRECTOR_RESOLVE,
         "UPDATE fury_director_run SET "
         "status = 4, outcome_key = ?, resolved_event_id = NULL, last_event_id = ?, "
