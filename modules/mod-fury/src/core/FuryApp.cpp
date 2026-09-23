@@ -35,6 +35,7 @@ App::App()
       _professionOrders(_professionOrderRepository, _events),
       _bestiary(_bestiaryRepository, _events),
       _defiasParticipation(_livingWorld, _actors, _events),
+      _defiasScore(_directorScoreRepository, _directorRepository),
       _defiasGraph(_director, _directorRepository, _campaign, _livingWorld, _defiasContent, _events, _actors)
 {
     _eventBus.RegisterConsumer(_chronicle);
@@ -42,6 +43,7 @@ App::App()
     _eventBus.RegisterConsumer(_professionOrders);
     _eventBus.RegisterConsumer(_bestiary);
     _eventBus.RegisterConsumer(_defiasGraph);
+    _eventBus.RegisterConsumer(_defiasScore);
 }
 
 App& App::Instance()
@@ -98,6 +100,7 @@ void App::Initialize()
     if (_enabled)
     {
         _defiasParticipation.Initialize();
+        _defiasScore.Initialize();
         _defiasGraph.Initialize();
     }
 
@@ -139,6 +142,7 @@ void App::Shutdown()
     LOG_INFO("server.loading", "[FURY] mod-fury shutdown.");
 
     _defiasGraph.Reset();
+    _defiasScore.Reset();
     _defiasParticipation.Reset();
     _defiasContent.Reset();
     _livingWorld.Reset();
