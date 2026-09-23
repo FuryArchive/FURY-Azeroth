@@ -43,6 +43,12 @@ This closes a generic replay edge: even if a consumer checkpoint is rebuilt
 far behind current state, historical events from before the contract was
 accepted cannot progress the active instance.
 
+For `living_world.entity.killed`, the objective query also joins the
+contract's `director_run_id` and requires the event payload's `runtime_id`
+to equal that Director run's attached `external_runtime_id`. A manually
+started/conflicting Living World runtime therefore cannot feed a different
+FURY Director contract.
+
 ## Initial contracts
 
 ### Recon Roads
@@ -123,7 +129,8 @@ Leadership group containing Captain Garrick Vane.
 - repeatable seed migration;
 - pre-acceptance runtime events cannot progress a contract after replay;
 - ordinary entry-449 Defias kills do not match;
-- a post-acceptance runtime group-100 kill does match.
+- a post-acceptance runtime group-100 kill does match;
+- a kill from a different external runtime does not match.
 
 Fast `mod-fury` compilation validates the PlayerScript → LivingWorldAdapter
 → EventStore integration against the exact pinned AzerothCore/Living World
