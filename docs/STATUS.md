@@ -163,4 +163,6 @@ T29 is **GREEN** through PR #33 / merge commit `cb3e4b6b1929a2949f38b110eee4e43d
 
 T30 is **GREEN** through PR #34 / merge commit `e0f90103e60667819bcfe8362f508c5d4094cbc0`. FURY CI **#161** passed the dedicated runtime/mastery gate, Fast mod-fury compile, and the active regressions.
 
-T31 Adaptive Field Relief is **IN_PROGRESS** on `agent/m3-t31-field-relief-r2`: three low-rank profession paths are seeded, board selection is adaptive to the active human character, and Profession Order completion projects the stable T27 Field Relief signal.
+T31 is **GREEN** through PR #38 / merge commit `f6610fb4d31faa8f92ad26c8a8ea25964f0a9957`. FURY CI **#168** passed the dedicated adaptive Field Relief gate, Fast mod-fury compile, and all active regressions.
+
+T32 Persistent Defias Resolution is **IN_PROGRESS** on `agent/m3-t32-persistent-resolution`: canonical Director terminal event binding, Success/Partial/Ignored projections, campaign continuation after non-success, replay-safe proofs/Chronicle, emergency pressure, and a pending-only Success reward entitlement are implemented pending branch acceptance.
