@@ -1,17 +1,15 @@
 #include "core/FuryApp.h"
 #include "actors/ActorPolicy.h"
-#include "content/defias/DefiasContent.h"
-#include "content/defias/DefiasContracts.h"
 #include "events/FuryEventFactory.h"
 
 #include "Creature.h"
 #include "DBCStructure.h"
 #include "Player.h"
 #include "PlayerScript.h"
+#include "UnitScript.h"
 #include "Spell.h"
 #include "SpellMgr.h"
 
-#include <optional>
 
 namespace
 {
@@ -65,42 +63,6 @@ void Publish(Fury::FuryEvent event)
     app.Events().Append(event);
 }
 
-void PublishLivingWorldKill(
-    Player* player,
-    Creature* creature,
-    bool viaPet)
-{
-    if (!player || !creature)
-        return;
-
-    Fury::App& app = Fury::App::Instance();
-    if (!app.IsInitialized() || !app.IsEnabled())
-        return;
-
-    std::optional<Fury::LivingWorldEntityMetadata> metadata =
-        app.LivingWorld().FindEntity(creature->GetGUID());
-    if (!metadata ||
-        !Fury::Defias::IsHostileSpawnGroup(metadata->spawnGroupId))
-    {
-        return;
-    }
-
-    std::optional<Fury::LivingWorldRuntimeSnapshot> runtime =
-        app.LivingWorld().RuntimeForInvasion(Fury::Defias::InvasionId);
-    if (!runtime ||
-        !runtime->IsActive() ||
-        runtime->runtimeId != metadata->runtimeId)
-    {
-        return;
-    }
-
-    Publish(Fury::FuryEventFactory::LivingWorldEntityKilled(
-        player,
-        creature,
-        viaPet,
-        *metadata));
-}
-
 class FuryPlayerScript final : public PlayerScript
 {
 public:
@@ -152,13 +114,11 @@ public:
     void OnPlayerCreatureKill(Player* player, Creature* creature) override
     {
         Publish(Fury::FuryEventFactory::CreatureKilled(player, creature, false));
-        PublishLivingWorldKill(player, creature, false);
     }
 
     void OnPlayerCreatureKilledByPet(Player* owner, Creature* creature) override
     {
         Publish(Fury::FuryEventFactory::CreatureKilled(owner, creature, true));
-        PublishLivingWorldKill(owner, creature, true);
     }
 
     void OnPlayerLootItem(
@@ -204,9 +164,51 @@ public:
         }
     }
 };
+
+class FuryParticipationUnitScript final : public UnitScript
+{
+public:
+    FuryParticipationUnitScript()
+        : UnitScript(
+            "FuryParticipationUnitScript",
+            true,
+            {
+                UNITHOOK_ON_DAMAGE,
+                UNITHOOK_ON_UNIT_DEATH
+            })
+    {
+    }
+
+    void OnDamage(
+        Unit* attacker,
+        Unit* victim,
+        uint32& damage) override
+    {
+        Fury::App& app = Fury::App::Instance();
+        if (!app.IsInitialized() || !app.IsEnabled())
+            return;
+
+        app.DefiasParticipation().ObserveDamage(
+            attacker,
+            victim,
+            damage);
+    }
+
+    void OnUnitDeath(Unit* unit, Unit* killer) override
+    {
+        Fury::App& app = Fury::App::Instance();
+        if (!app.IsInitialized() || !app.IsEnabled())
+            return;
+
+        app.DefiasParticipation().ObserveDeath(
+            unit,
+            killer);
+    }
+};
 }
 
 void AddFuryPlayerScripts()
 {
     new FuryPlayerScript();
+    new FuryParticipationUnitScript();
 }
