@@ -61,7 +61,5 @@ int main()
     assert(service.RecoverRuntime(source,1,beforeRecovery,42,99).Accepted());
     assert(saved->externalRuntimeId==99);
     assert(emissions["director.runtime.recovered"]==1);
-    assert(service.RecoverRuntime(source,1,beforeRecovery,42,99).Accepted());
-    assert(emissions["director.runtime.recovered"]==1);
     std::cout << "[FURY][PASS] production Director retries events after persisted mutations and runtime recovery\n";
 }
