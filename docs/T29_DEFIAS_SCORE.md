@@ -90,9 +90,18 @@ final stage do not award the 15 points more than once.
 ## Event consumer
 
 `Defias::ScoreService` is a replayable EventConsumer
-(`defias.score.v1`). For each matching event it resolves the household's
-canonical Defias Director run, inserts the component award idempotently, and
-verifies the award is persisted.
+(`defias.score.v1`). For each matching event it resolves the exact Director run from authoritative
+event identity rather than "latest run" state:
+
+- `contract.completed` must come from `fury.contracts`, point at the
+  canonical contract instance, and match that instance's persisted
+  `completed_event_id`;
+- `defias.final_stage.participated` must come from `fury.defias` and point
+  at the Living World runtime attached to the Director run.
+
+The service then inserts the component award idempotently and verifies the
+award is persisted. A similar-looking synthetic/duplicate event cannot be
+attributed to the run.
 
 The service exposes current score and threshold-derived outcome preview.
 `.fury defias` reports both while the run is active.
@@ -109,6 +118,8 @@ The service exposes current score and threshold-derived outcome preview.
 - final-stage participation is exactly 15;
 - a repeated component event awards once;
 - the first source event remains authoritative;
+- a non-canonical duplicate contract completion cannot resolve a score run;
+- final-stage score resolves only through the attached external runtime;
 - later definition tuning cannot rewrite an award snapshot;
 - migration re-application preserves awards and definitions;
 - final-stage participation is tied to stage 1006.
