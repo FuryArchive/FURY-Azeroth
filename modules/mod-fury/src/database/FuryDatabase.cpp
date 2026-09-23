@@ -232,7 +232,8 @@ void DatabaseConnection::DoPrepareStatements()
         "ON p.instance_id = i.id AND p.objective_ordinal = o.ordinal "
         "WHERE o.event_type = ? "
         "AND (o.subject_type IS NULL OR o.subject_type = ?) "
-        "AND (o.subject_id IS NULL OR o.subject_id = ?)",
+        "AND (o.subject_id IS NULL OR o.subject_id = ?) "
+        "AND i.accepted_event_id <= ?",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_CONTRACT_PROGRESS_ROW,
         "SELECT progress_count, last_event_id "
