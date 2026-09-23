@@ -219,6 +219,79 @@ DirectorResult DirectorService::AttachRuntime(
     return {DirectorOutcome::Updated, persisted};
 }
 
+DirectorResult DirectorService::RecoverRuntime(
+    FuryEvent const& source,
+    DirectorRunId runId,
+    uint64 expectedRevision,
+    uint64 expectedRuntimeId,
+    uint64 replacementRuntimeId) const
+{
+    if (!replacementRuntimeId)
+        return {DirectorOutcome::InvalidKey, std::nullopt};
+
+    std::optional<DirectorRun> run = _repository.FindRun(runId);
+    if (!run)
+        return {DirectorOutcome::RunNotFound, std::nullopt};
+
+    if (!IsMutationSource(source, run->householdId))
+        return {DirectorOutcome::InvalidSource, run};
+
+    if (IsTerminal(run->status))
+        return {DirectorOutcome::InvalidState, run};
+
+    uint64 const currentRuntimeId =
+        run->externalRuntimeId.value_or(0);
+
+    if (currentRuntimeId == replacementRuntimeId)
+    {
+        if (!EmitRuntimeRecoveryEvent(
+                source,
+                *run,
+                expectedRuntimeId))
+        {
+            return {DirectorOutcome::PersistenceFailed, run};
+        }
+
+        return {DirectorOutcome::AlreadyApplied, run};
+    }
+
+    if (currentRuntimeId != expectedRuntimeId)
+        return {DirectorOutcome::RuntimeConflict, run};
+
+    if (run->revision != expectedRevision)
+        return {DirectorOutcome::RevisionConflict, run};
+
+    _repository.RecoverRuntime(
+        runId,
+        run->householdId,
+        expectedRevision,
+        expectedRuntimeId,
+        replacementRuntimeId,
+        source.id);
+
+    std::optional<DirectorRun> persisted =
+        _repository.FindRun(runId);
+    if (!persisted)
+        return {DirectorOutcome::PersistenceFailed, std::nullopt};
+
+    if (!persisted->externalRuntimeId ||
+        *persisted->externalRuntimeId != replacementRuntimeId ||
+        persisted->revision <= expectedRevision)
+    {
+        return {DirectorOutcome::RevisionConflict, persisted};
+    }
+
+    if (!EmitRuntimeRecoveryEvent(
+            source,
+            *persisted,
+            expectedRuntimeId))
+    {
+        return {DirectorOutcome::PersistenceFailed, persisted};
+    }
+
+    return {DirectorOutcome::Updated, persisted};
+}
+
 DirectorResult DirectorService::Resolve(
     FuryEvent const& source,
     DirectorRunId runId,
@@ -461,6 +534,41 @@ std::optional<EventId> DirectorService::EmitRuntimeEvent(
         "\"source_event_id\":{}}}",
         run.id,
         run.graphKey,
+        *run.externalRuntimeId,
+        run.revision,
+        run.lastEventId);
+    return _events.Append(event);
+}
+
+std::optional<EventId> DirectorService::EmitRuntimeRecoveryEvent(
+    FuryEvent const& source,
+    DirectorRun const& run,
+    uint64 previousRuntimeId) const
+{
+    if (!run.externalRuntimeId)
+        return std::nullopt;
+
+    FuryEvent event;
+    event.type = "director.runtime.recovered";
+    event.actor = source.actor;
+    event.mapId = source.mapId;
+    event.zoneId = source.zoneId;
+    event.areaId = source.areaId;
+    event.subjectType = "director_run";
+    event.subjectId = run.id;
+    event.sourceSystem = "fury.director";
+    event.correlationKey = run.graphKey;
+    event.dedupeIdentity = Acore::StringFormat(
+        "director:runtime-recovered:v1:{}:{}",
+        run.id,
+        *run.externalRuntimeId);
+    event.payloadJson = Acore::StringFormat(
+        "{{\"run_id\":{},\"graph_key\":\"{}\","
+        "\"previous_runtime_id\":{},\"external_runtime_id\":{},"
+        "\"revision\":{},\"source_event_id\":{}}}",
+        run.id,
+        run.graphKey,
+        previousRuntimeId,
         *run.externalRuntimeId,
         run.revision,
         run.lastEventId);
