@@ -106,6 +106,12 @@ public:
         }
 
         Fury::App& app = Fury::App::Instance();
+        if (!app.IsInitialized() || !app.IsEnabled())
+        {
+            Render(player, go);
+            return true;
+        }
+
         Fury::ActorContext actor = app.Actors().Resolve(player);
         Fury::ContractBoardContext context = BuildContext(app, actor);
         std::vector<Fury::ContractBoardEntry> entries =
