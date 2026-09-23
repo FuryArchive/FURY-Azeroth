@@ -553,7 +553,7 @@ Acceptance:
 - valuable physical reward duplication is impossible or valuable physical rewards are withheld until a safe receipt mechanism exists.
 
 ## T33 Director/Living World reconciler
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T16, T23, T25
 Commit target: `feat(recovery): reconcile Director and Living World`
 
@@ -569,7 +569,7 @@ Acceptance:
 - reconciliation is observable in logs/diagnostics.
 
 ## T34 Defias golden suite + acceptance runbook
-Status: READY
+Status: IN_PROGRESS
 Depends on: T24–T33
 Commit targets:
 - `test(defias): add vertical-slice golden suite`
