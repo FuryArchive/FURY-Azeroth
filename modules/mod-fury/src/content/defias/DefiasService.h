@@ -41,6 +41,7 @@ private:
     std::optional<uint64> StartExternal(FuryEvent const& source) override;
     bool Attach(FuryEvent const& source, DirectorRun const& run, uint64 runtime) override;
     bool RequestActivation(FuryEvent source, DirectorRun const& run);
+    bool EmitFieldReliefCompleted(FuryEvent const& source);
 
     DirectorService& _director;
     DirectorRepository const& _repository;
