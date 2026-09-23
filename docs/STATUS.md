@@ -27,7 +27,8 @@ Date: 2026-09-23
 - T21 Living World source audit: GREEN.
 - T22 Living World external bridge patch: GREEN.
 - T23 FURY LivingWorldAdapter: GREEN.
-- M3 Defias Resurgence vertical slice: IN_PROGRESS — T24 Defias content validation/random-start overlay is next.
+- T24 Defias content validation/random-start overlay: GREEN.
+- M3 Defias Resurgence vertical slice: IN_PROGRESS — T25 Defias Director graph is next.
 
 ## Repository baseline
 
@@ -143,4 +144,6 @@ T22 is GREEN through PR #23 / commit `4697a9dc58c78a0a1b44187cb416c490ccf13667`.
 
 T23 is GREEN through PR #24 / commit `41de42d2b7410fc2b3dfe449e2b42c1238db1d88`. Fast CI run #124 passed the adapter boundary gate, patched Living World regression and Fast mod-fury compile.
 
-Begin **T24 Defias content validation + disable random start** next.
+T24 is GREEN through PR #25 / commit `106f157c7676d740f868a11b4a4412c80b743119`. Fast CI run #126 passed the exact Defias content contract gate, MySQL overlay idempotency/isolation check, Fast mod-fury compile, and Living World/M2 regressions.
+
+Begin **T25 Defias Director graph** next.
