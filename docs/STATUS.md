@@ -29,7 +29,9 @@ Date: 2026-09-23
 - T23 FURY LivingWorldAdapter: GREEN.
 - T24 Defias content validation/random-start overlay: GREEN.
 - T25 Defias Director graph: GREEN.
-- M3 Defias Resurgence vertical slice: IN_PROGRESS — T26 Westfall contract board is underway.
+- T26 Westfall contract board: GREEN.
+- T27 Six Defias contracts: IN_PROGRESS.
+- M3 Defias Resurgence vertical slice: IN_PROGRESS.
 
 ## Repository baseline
 
@@ -149,4 +151,6 @@ T24 is GREEN through PR #25 / commit `106f157c7676d740f868a11b4a4412c80b743119`.
 
 T25 is GREEN through PR #26 / commit `d328e889c403fcd79d84f9ca7908068d8a8f2b71`. Final FURY CI run **#131** passed the Defias graph/persistence suite, replay/presence/Living World terminal-delivery regressions, Fast mod-fury compile, and existing regression gates.
 
-T26 Westfall contract board is now **IN_PROGRESS** on `agent/m3-t26-westfall-board`. It uses the pinned AzerothCore GameObject gossip surface, the existing Contracts service as the single acceptance authority, and a FURY-owned Sentinel Hill world object. T27 remains responsible for the six actual Defias contract definitions and objectives.
+T26 is GREEN through PR #27. FURY CI **#133** and Full Runtime **#5** passed, including the pinned worldserver build, real FURY database lifecycle, world-data application and worldserver smoke.
+
+T27 is **IN_PROGRESS** on `agent/m3-t27-defias-contracts`. The branch adds the six initial Defias contracts, runtime-qualified kill events from verified Living World entity metadata, pre-acceptance replay rejection, Director-runtime binding, SQL content validation and a dedicated CI gate.
