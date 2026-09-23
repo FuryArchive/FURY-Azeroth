@@ -61,8 +61,10 @@ if [[ -n "${violations}" ]]; then
   exit 1
 fi
 
-grep -Fq '_directorReconciliation.BuildPlan(_livingWorld)'   "${ROOT}/modules/mod-fury/src/core/FuryApp.cpp"
+grep -Fq '_defiasRecovery.Reconcile()'   "${ROOT}/modules/mod-fury/src/core/FuryApp.cpp"
+grep -Fq '_livingWorld.Inspect(run)'   "${ROOT}/modules/mod-fury/src/content/defias/DefiasRecoveryService.cpp"
+grep -Fq '_livingWorld.AbortRuntime'   "${ROOT}/modules/mod-fury/src/content/defias/DefiasRecoveryService.cpp"
 
 echo "[FURY][PASS] Living World calls remain isolated behind the adapter"
-echo "[FURY][PASS] Director reconciliation probes Living World through adapter"
+echo "[FURY][PASS] Director reconciliation executes through the Living World adapter"
 echo "[FURY][PASS] T23 Living World adapter boundary gate passed"
