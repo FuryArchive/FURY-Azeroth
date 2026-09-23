@@ -220,6 +220,7 @@ std::vector<ContractObjectiveMatch> ContractRepository::FindMatchingObjectives(
         stmt->SetData(3, nullptr);
 
     stmt->SetData(4, event.id);
+    stmt->SetData(5, event.payloadJson);
 
     PreparedQueryResult result = FuryDatabase.Query(stmt);
     if (!result)
