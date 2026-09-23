@@ -451,7 +451,7 @@ Acceptance:
 - LW start occurs only after configured activation condition.
 
 ## T26 Westfall contract board
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T15, T25
 Commit target: `feat(defias): add Westfall contract board`
 
@@ -463,7 +463,7 @@ Acceptance:
 - no custom client patch required.
 
 ## T27 Six Defias contracts
-Status: READY
+Status: IN_PROGRESS
 Depends on: T21, T26
 Commit target: `feat(defias): add initial Westfall contracts`
 
@@ -631,4 +631,6 @@ T13–T20 are GREEN and **M2 Campaign Platform is GREEN**. GitHub Actions run #1
 
 T21–T25 are GREEN. T25 merged through PR #26 / commit `d328e889c403fcd79d84f9ca7908068d8a8f2b71`; final FURY CI run #131 passed.
 
-Continue with **T26 Westfall contract board**. Keep it server-side through the pinned AzerothCore GameObject gossip API; T27 owns the six Defias contract definitions/objectives.
+T26 is GREEN. PR #27 passed FURY CI #133 and Full Runtime #5, including the pinned worldserver build, real FURY DB lifecycle, world-data application, and two worldserver smokes.
+
+T27 is IN_PROGRESS on `agent/m3-t27-defias-contracts`: runtime-qualified Living World kills, replay cutoffs, Director-runtime binding, six contract definitions/objectives and a dedicated CI gate are implemented pending branch acceptance.
