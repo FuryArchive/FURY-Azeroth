@@ -47,6 +47,14 @@ public:
         uint64 externalRuntimeId,
         EventId sourceEventId) const;
 
+    void RecoverRuntime(
+        DirectorRunId runId,
+        HouseholdId householdId,
+        uint64 expectedRevision,
+        uint64 expectedRuntimeId,
+        uint64 replacementRuntimeId,
+        EventId sourceEventId) const;
+
     void Resolve(
         DirectorRunId runId,
         HouseholdId householdId,
