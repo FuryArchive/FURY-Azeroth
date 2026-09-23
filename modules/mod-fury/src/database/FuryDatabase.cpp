@@ -461,6 +461,24 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE m.creature_entry = ? AND m.enabled = 1 "
         "ORDER BY m.entry_key ASC",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_BESTIARY_EVENT_MAPPINGS,
+        "SELECT m.entry_key, m.discovery_level "
+        "FROM fury_bestiary_event_map m "
+        "FORCE INDEX (ix_fury_bestiary_event_map_lookup) "
+        "JOIN fury_bestiary_entry e "
+        "ON e.entry_key = m.entry_key AND e.enabled = 1 "
+        "WHERE m.event_type = ? AND m.subject_type = ? "
+        "AND m.subject_id = ? AND m.enabled = 1 "
+        "ORDER BY m.entry_key ASC",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_BESTIARY_HOUSEHOLD_ACCOUNTS_AT_LEVEL,
+        "SELECT s.account_id "
+        "FROM fury_bestiary_state s "
+        "JOIN fury_household_member h ON h.account_id = s.account_id "
+        "WHERE h.household_id = ? AND s.entry_key = ? "
+        "AND s.discovery_level >= ? "
+        "ORDER BY s.account_id ASC",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_BESTIARY_STATE,
         "SELECT discovery_level, kill_count, first_event_id, last_event_id, revision "
         "FROM fury_bestiary_state WHERE account_id = ? AND entry_key = ?",
