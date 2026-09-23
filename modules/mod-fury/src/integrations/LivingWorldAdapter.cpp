@@ -320,6 +320,29 @@ LivingWorldAdapter::RuntimeForInvasion(uint32 invasionId) const
 #endif
 }
 
+bool LivingWorldAdapter::AbortRuntime(
+    uint64 runtimeId,
+    std::string_view reason) const
+{
+#if !FURY_HAS_LIVING_WORLD
+    (void)runtimeId;
+    (void)reason;
+    return false;
+#else
+    if (!runtimeId)
+        return false;
+
+    std::string const ownedReason =
+        reason.empty()
+            ? std::string("FURY reconciliation")
+            : std::string(reason);
+
+    return sInvasionRuntimeMgr.FailRuntime(
+        runtimeId,
+        ownedReason.c_str());
+#endif
+}
+
 std::optional<LivingWorldEntityMetadata>
 LivingWorldAdapter::FindEntity(ObjectGuid guid) const
 {
