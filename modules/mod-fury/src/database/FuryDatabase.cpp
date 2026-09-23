@@ -189,6 +189,11 @@ void DatabaseConnection::DoPrepareStatements()
         "SELECT board_key, title, campaign_node_key, director_phase, repeat_policy, reward_key, enabled "
         "FROM fury_contract WHERE contract_key = ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_CONTRACT_BOARD_DEFINITIONS,
+        "SELECT contract_key, title, campaign_node_key, director_phase, repeat_policy, reward_key, enabled "
+        "FROM fury_contract WHERE board_key = ? "
+        "ORDER BY contract_key ASC",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_CONTRACT_ACTIVE_INSTANCE,
         "SELECT id, status, accepted_event_id, completed_event_id, revision "
         "FROM fury_contract_instance "
