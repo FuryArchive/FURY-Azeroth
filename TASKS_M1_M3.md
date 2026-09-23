@@ -493,7 +493,7 @@ Acceptance:
 - radius/time/group rules are configurable/tested.
 
 ## T29 Participation score/outcome policy
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T27, T28
 Commit target: `feat(defias): add participation scoring`
 
@@ -637,4 +637,6 @@ T27 is GREEN through PR #31 / commit `cd22585fe90b93b87d1960143ce4fe968acedc92`;
 
 T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`; FURY CI #141 passed the participation policy gate, Fast mod-fury compile and regressions.
 
-T29 is IN_PROGRESS on `agent/m3-t29-participation-score`: generic Director score persistence, the accepted 100-point Defias component set, replay-idempotent snapshot awards and final-stage participation scoring are implemented pending branch acceptance.
+T29 is GREEN through PR #33 / merge commit `cb3e4b6b1929a2949f38b110eee4e43dde075c08`. FURY CI #159 and Full Runtime #13 passed, including the exact-run score attribution fixes, pinned worldserver build, real FURY DB lifecycle, and two worldserver smokes.
+
+T30 is IN_PROGRESS on `agent/m3-t30-defias-bestiary-r2`: runtime-only Defias Bestiary mappings, personal Human participation credit, and success-gated commander Mastered projection are implemented pending CI.
