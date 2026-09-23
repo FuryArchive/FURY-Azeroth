@@ -48,3 +48,28 @@ not collide with an earlier running observation.
   schema upgrade twice, duplicate and terminal re-entry, fresh-connection state.
 - Existing M1/M2, LW boundary/content gates and Fast mod-fury compile in CI.
 - Full worldserver acceptance remains T34; this is not yet a playable M3 slice.
+
+## Review corrections
+
+Production DirectorService now retries an event append for the same persisted
+phase/revision. Graph retries also re-emit original start, runtime binding and
+final phase events instead of treating row presence as proof of event delivery.
+Tests inject failure after persistence, then reload and retry. Presence tracking
+resets on each fresh login and a normalized logout event, including a reconnect
+between polling ticks. A database-disabled graph consumes its trigger safely.
+
+Pinned LW removes completed/failed/timed-out runtimes immediately. The narrow
+external-module bridge now offers an optional, domain-neutral completion
+observer before cleanup. FURY's adapter acknowledges only after the terminal
+observation is durable; failure defers cleanup. Standalone LW still works without
+FURY. This closes normal terminal delivery, while crash/start restoration and
+conflicting/missing runtimes remain T33.
+
+The prior `defias.resurgence` SQL prototype is preserved and disabled by a new
+migration. Any existing prototype run blocks automatic creation of a second
+scenario for that household; it is never silently migrated or discarded.
+
+Additional regressions: `test-t25-director-replay.sh` exercises the production
+DirectorService with external persistence/append failure injection;
+`test-t25-defias-presence.sh` tests the production session timer;
+`test-t25-lw-completion.sh` tests the patched optional completion observer.

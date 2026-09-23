@@ -8,12 +8,14 @@ struct Port final : GraphPort
 {
     std::optional<DirectorRun> saved;
     bool valid = true, complete = false, busy = false, failAttach = false;
-    unsigned starts = 0, externalStarts = 0;
+    unsigned starts = 0, externalStarts = 0, startEmits = 0, phaseEmits = 0, attachEmits = 0;
+    bool disabled = false, failStartEmit = false, failPhaseEmit = false, failAttachEmit = false;
     std::optional<DirectorRun> Find(HouseholdId) override { return saved; }
     bool ContentValid() const override { return valid; }
     bool CampaignComplete(HouseholdId) override { return complete; }
     DirectorResult Start(FuryEvent const& e) override
     {
+        if (disabled) return {DirectorOutcome::GraphDisabled, {}};
         if (busy) return {DirectorOutcome::ScopeBusy, {}};
         if (!saved) {
             ++starts;
@@ -22,14 +24,19 @@ struct Port final : GraphPort
             saved->graphKey = GraphKey; saved->phaseKey = "rumours";
             saved->startedEventId = e.id;
         }
-        return {DirectorOutcome::Started, saved};
+        if (failStartEmit) return {DirectorOutcome::PersistenceFailed, saved};
+        ++startEmits; return {DirectorOutcome::Started, saved};
     }
     bool Advance(FuryEvent const&, DirectorRun const&, std::string_view phase) override
-    { saved->phaseKey = phase; ++saved->revision; return true; }
+    { if(saved->phaseKey != phase) { saved->phaseKey = phase; ++saved->revision; }
+        if (failPhaseEmit) return false;
+        ++phaseEmits; return true; }
     std::optional<uint64> StartExternal(FuryEvent const&) override
     { if (!externalStarts) ++externalStarts; return 42; }
     bool Attach(FuryEvent const&, DirectorRun const&, uint64 id) override
-    { if (failAttach) return false; saved->externalRuntimeId = id; ++saved->revision; return true; }
+    { if (failAttach) return false; saved->externalRuntimeId = id; ++saved->revision;
+        if (failAttachEmit) return false;
+        ++attachEmits; return true; }
 };
 FuryEvent Human()
 {
@@ -69,5 +76,25 @@ int main()
     assert(OutcomeForScore(0) == "ignored"); assert(OutcomeForScore(29) == "ignored");
     assert(OutcomeForScore(30) == "partial"); assert(OutcomeForScore(69) == "partial");
     assert(OutcomeForScore(70) == "success"); assert(OutcomeForScore(100) == "success");
+    Port disabled; disabled.disabled = true; Graph disabledGraph(disabled);
+    assert(disabledGraph.Enter(e, 10));
+    Port recovery; Graph repair(recovery); recovery.failStartEmit = true;
+    assert(!repair.Enter(e, 10)); recovery.failStartEmit = false;
+    assert(repair.Enter(e, 10)); assert(recovery.startEmits == 1);
+    recovery.failPhaseEmit = true;
+    assert(!repair.Activate(e, 1)); recovery.failPhaseEmit = false;
+    assert(repair.Activate(e, 1)); assert(recovery.phaseEmits == 1);
+    recovery.saved->externalRuntimeId.reset(); recovery.failAttachEmit = true;
+    assert(!repair.Activate(e, 1)); recovery.failAttachEmit = false;
+    auto emitted = recovery.attachEmits;
+    assert(repair.Activate(e, 1)); assert(recovery.attachEmits == emitted + 1);
+    recovery.failPhaseEmit = true;
+    assert(!repair.Observe(e, 42, 1006, false)); recovery.failPhaseEmit = false;
+    emitted = recovery.phaseEmits;
+    assert(repair.Observe(e, 42, 1006, false)); assert(recovery.phaseEmits == emitted + 1);
+    recovery.failPhaseEmit = true;
+    assert(!repair.Observe(e, 42, 1006, true)); recovery.failPhaseEmit = false;
+    emitted = recovery.phaseEmits;
+    assert(repair.Observe(e, 42, 1006, true)); assert(recovery.phaseEmits == emitted + 1);
     std::cout << "[FURY][PASS] T25 eligibility, one-shot, activation retry/restart, runtime isolation, phases, outcome boundaries\n";
 }

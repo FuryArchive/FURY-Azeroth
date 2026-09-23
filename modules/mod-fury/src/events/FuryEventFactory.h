@@ -16,6 +16,7 @@ class FuryEventFactory final
 {
 public:
     static FuryEvent PlayerLogin(Player* player);
+    static FuryEvent PlayerLogout(Player* player);
     static FuryEvent LevelChanged(Player* player, uint8 oldLevel);
     static FuryEvent ZoneChanged(Player* player, uint32 newZone, uint32 newArea);
     static FuryEvent QuestCompleted(Player* player, Quest const* quest);

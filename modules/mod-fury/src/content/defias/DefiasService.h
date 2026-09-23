@@ -2,6 +2,7 @@
 #define MOD_FURY_DEFIAS_SERVICE_H
 
 #include "DefiasGraph.h"
+#include "DefiasPresence.h"
 #include "DefiasContent.h"
 #include "events/EventConsumer.h"
 #include <chrono>
@@ -41,11 +42,6 @@ private:
     bool Attach(FuryEvent const& source, DirectorRun const& run, uint64 runtime) override;
     bool RequestActivation(FuryEvent source, DirectorRun const& run);
 
-    struct Presence
-    {
-        FuryEvent source;
-        std::chrono::steady_clock::time_point since;
-    };
     DirectorService& _director;
     DirectorRepository const& _repository;
     CampaignService& _campaign;
@@ -54,7 +50,7 @@ private:
     EventStore const& _events;
     ActorResolver& _actors;
     Graph _graph;
-    std::unordered_map<uint64, Presence> _presence;
+    PresenceTracker _presence;
     bool _enabled = false;
     bool _contractActivation = true;
     bool _presenceActivation = true;

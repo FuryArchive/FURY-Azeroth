@@ -34,7 +34,11 @@ jobs:
       - name: Install MySQL client
         run: sudo apt-get update && sudo apt-get install -y default-mysql-client
       - name: Graph behavior
-        run: bash scripts/test-t25-defias-graph.sh
+        run: |
+          bash scripts/test-t25-defias-graph.sh
+          bash scripts/test-t25-director-replay.sh
+          bash scripts/test-t25-defias-presence.sh
+          bash scripts/test-t25-lw-completion.sh
       - name: Upgrade and persistence
         run: bash scripts/test-t25-defias-schema.sh
 

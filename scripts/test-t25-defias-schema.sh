@@ -12,6 +12,9 @@ assert_eq() { [[ "$1" == "$2" ]] || { echo "FAIL $3: expected $1 got $2"; exit 1
 for pass in 1 2; do
   "${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/updates/2026_09_23_00_defias_graph.sql"
 done
+"${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/updates/2026_09_23_08_defias_director.sql"
+"${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/updates/2026_09_23_09_defias_retire_prototype.sql"
+assert_eq 0 "$(sql "SELECT enabled FROM fury_director_graph WHERE graph_key='defias.resurgence';")" "prototype retained but retired"
 assert_eq 1 "$(sql "SELECT COUNT(*) FROM fury_director_graph WHERE graph_key='classic.westfall.defias_resurgence.v1' AND enabled=1;")" "idempotent graph seed"
 household="$(sql "SELECT id FROM fury_household WHERE slug='alpha';")"
 event="$(sql 'SELECT MIN(id) FROM fury_event;')"

@@ -72,6 +72,13 @@ FuryEvent FuryEventFactory::PlayerLogin(Player* player)
     return event;
 }
 
+FuryEvent FuryEventFactory::PlayerLogout(Player* player)
+{
+    FuryEvent event = Base(player, "player.logout");
+    event.dedupeIdentity = OccurrenceIdentity("logout", player);
+    return event;
+}
+
 FuryEvent FuryEventFactory::LevelChanged(Player* player, uint8 oldLevel)
 {
     FuryEvent event = Base(player, "player.level.changed");

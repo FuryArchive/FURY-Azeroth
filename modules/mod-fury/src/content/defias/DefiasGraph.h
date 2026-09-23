@@ -41,12 +41,20 @@ public:
         if (!Eligible(source, level, minimumLevel) || !_port.ContentValid())
             return true;
         auto household = *source.actor.householdId;
-        if (_port.CampaignComplete(household) || _port.Find(household))
+        auto existing = _port.Find(household);
+        if (existing)
+        {
+            // Retry the original start's event emission after row persistence.
+            if (Active(*existing) && existing->startedEventId == source.id)
+                return _port.Start(source).Accepted();
             return true;
+        }
+        if (_port.CampaignComplete(household)) return true;
         DirectorResult result = _port.Start(source);
         // Another graph owns the exclusive scope. This trigger is consumed;
         // a later eligible entry can try again, without blocking the stream.
-        return result.Accepted() || result.outcome == DirectorOutcome::ScopeBusy;
+        return result.Accepted() || result.outcome == DirectorOutcome::ScopeBusy ||
+            result.outcome == DirectorOutcome::GraphDisabled;
     }
 
     [[nodiscard]] bool Activate(FuryEvent const& source, DirectorRunId runId)
@@ -56,7 +64,7 @@ public:
         auto run = _port.Find(*source.actor.householdId);
         if (!run || run->id != runId || !Active(*run))
             return true;
-        if (run->phaseKey == "rumours")
+        if (run->phaseKey == "rumours" || (run->phaseKey == "invasion" && !run->externalRuntimeId))
         {
             // Persist the activation decision BEFORE starting the executor.
             // Replay resumes this phase after a crash before runtime binding.
@@ -65,8 +73,9 @@ public:
             run = _port.Find(*source.actor.householdId);
             if (!run) return false;
         }
-        if (run->phaseKey != "invasion" || run->externalRuntimeId)
-            return true;
+        if (run->phaseKey != "invasion") return true;
+        if (run->externalRuntimeId)
+            return _port.Attach(source, *run, *run->externalRuntimeId);
         auto runtime = _port.StartExternal(source);
         return runtime && _port.Attach(source, *run, *runtime);
     }
@@ -80,9 +89,9 @@ public:
         if (!run || !Active(*run) || !run->externalRuntimeId ||
             *run->externalRuntimeId != runtimeId)
             return true;
-        if (terminal && (run->phaseKey == "invasion" || run->phaseKey == "final_battle"))
+        if (terminal && (run->phaseKey == "invasion" || run->phaseKey == "final_battle" || run->phaseKey == "resolution"))
             return _port.Advance(source, *run, "resolution");
-        if (!terminal && stageId == 1006 && run->phaseKey == "invasion")
+        if (!terminal && stageId == 1006 && (run->phaseKey == "invasion" || run->phaseKey == "final_battle"))
             return _port.Advance(source, *run, "final_battle");
         return true;
     }

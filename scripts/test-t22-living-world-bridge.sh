@@ -18,20 +18,25 @@ fi
 echo "[FURY][PASS] Living World exact pin resolved"
 
 changed="$(git -C "${LW}" diff --name-only | sort)"
-expected=$'src/core/RuntimeEntityGroup.cpp\nsrc/core/RuntimeEntityGroup.h'
+expected=$'src/core/RuntimeEntityGroup.cpp\nsrc/core/RuntimeEntityGroup.h\nsrc/invasions/InvasionRuntimeManager.cpp\nsrc/invasions/InvasionRuntimeManager.h'
 if [[ "${changed}" != "${expected}" ]]; then
   echo "[FURY][FAIL] unexpected Living World patch surface:" >&2
   printf '%s\n' "${changed}" >&2
   exit 1
 fi
 
-echo "[FURY][PASS] bridge patch touches only RuntimeEntityGroup API/implementation"
+echo "[FURY][PASS] bridge patch touches only runtime entity metadata and terminal observer APIs"
 
 grep -Fq "struct RuntimeEntityMetadata" "${LW}/src/core/RuntimeEntityGroup.h"
 grep -Fq "FindEntityMetadata(ObjectGuid guid, RuntimeEntityMetadata& metadata) const" "${LW}/src/core/RuntimeEntityGroup.h"
 grep -Fq "RuntimeEntityGroupManager::FindEntityMetadata" "${LW}/src/core/RuntimeEntityGroup.cpp"
 
 echo "[FURY][PASS] reverse runtime-entity lookup surface exists"
+test -f "${LW}/src/invasions/RuntimeCompletionObserver.h"
+grep -Fq "SetCompletionObserver" "${LW}/src/invasions/InvasionRuntimeManager.h"
+grep -Fq "if (!NotifyCompletion(iterator->second, true))" "${LW}/src/invasions/InvasionRuntimeManager.cpp"
+grep -Fq "if (!NotifyCompletion(iterator->second, false))" "${LW}/src/invasions/InvasionRuntimeManager.cpp"
+bash "${ROOT}/scripts/test-t25-lw-completion.sh"
 
 if grep -Eiq 'Household|Contract|Chronicle|Reward|Campaign|Director' "${PATCH}"; then
   echo "[FURY][FAIL] Living World bridge leaked FURY domain concepts" >&2

@@ -8,6 +8,7 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "StringFormat.h"
+#include <boost/bind/placeholders.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <sstream>
 #include <algorithm>
@@ -61,7 +62,7 @@ void Service::Initialize()
 
 void Service::Reset()
 {
-    _presence.clear();
+    _presence.Reset();
     _enabled = false;
 }
 
@@ -70,24 +71,20 @@ bool Service::Handle(FuryEvent const& event)
     // Keep a queued durable activation behind the checkpoint while content is
     // unavailable; otherwise an already persisted invasion intent can be lost.
     if (!Enabled()) return event.type != "defias.activation.requested";
-    if (event.type == "player.zone.changed" || event.type == "player.login" || event.type == "player.level.changed")
+    if (event.type == "player.zone.changed" || event.type == "player.login" || event.type == "player.level.changed" || event.type == "player.logout")
     {
         if (event.sourceSystem != "azerothcore") return true;
         uint32 level = Number(event.payloadJson, "actor_level").value_or(0);
-        if (!_graph.Enter(event, level, _minimumLevel)) return false;
+        if (event.type != "player.logout" && !_graph.Enter(event, level, _minimumLevel)) return false;
         uint64 guid = event.actor.characterGuid.GetRawValue();
         if (!guid) return true;
-        if (!Graph::Eligible(event, level, _minimumLevel))
-            _presence.erase(guid);
-        else if (_presenceActivation)
+        bool eligible = _presenceActivation && Graph::Eligible(event, level, _minimumLevel);
+        if (eligible)
         {
             auto run = Find(*event.actor.householdId);
-            if (run && run->phaseKey == "rumours" && run->status == DirectorRunStatus::Active)
-            {
-                // Never credit replay backlog/offline time as live presence.
-                _presence.try_emplace(guid, Presence{event, std::chrono::steady_clock::now()});
-            }
+            eligible = run && run->phaseKey == "rumours" && run->status == DirectorRunStatus::Active;
         }
+        _presence.Observe(guid, event, eligible, std::chrono::steady_clock::now());
         return true;
     }
     if (event.type == "contract.accepted" && _contractActivation &&
@@ -131,22 +128,22 @@ void Service::Tick()
     if (!Enabled()) return;
     _livingWorld.PollManagedRuntimes();
     auto now = std::chrono::steady_clock::now();
-    for (auto it = _presence.begin(); it != _presence.end();)
+    for (auto it = _presence.Entries().begin(); it != _presence.Entries().end();)
     {
         auto const& presence = it->second;
         Player* player = ObjectAccessor::FindPlayer(presence.source.actor.characterGuid);
-        if (!player || !player->IsInWorld()) { it = _presence.erase(it); continue; }
+        if (!player || !player->IsInWorld()) { it = _presence.Entries().erase(it); continue; }
         FuryEvent current = presence.source;
         current.actor = _actors.Resolve(player);
         current.mapId = player->GetMapId(); current.zoneId = player->GetZoneId();
         if (current.actor.householdId != presence.source.actor.householdId ||
             !Graph::Eligible(current, player->GetLevel(), _minimumLevel))
-        { it = _presence.erase(it); continue; }
+        { it = _presence.Entries().erase(it); continue; }
         auto run = Find(*current.actor.householdId);
         if (!run || run->phaseKey != "rumours" || run->status != DirectorRunStatus::Active)
-        { it = _presence.erase(it); continue; }
+        { it = _presence.Entries().erase(it); continue; }
         if (now - presence.since >= std::chrono::seconds(_presenceSeconds) && RequestActivation(current, *run))
-        { it = _presence.erase(it); continue; }
+        { it = _presence.Entries().erase(it); continue; }
         ++it;
     }
 }
@@ -170,6 +167,10 @@ bool Service::CampaignComplete(HouseholdId household)
 }
 std::optional<DirectorRun> Service::Find(HouseholdId household)
 {
+    // Preserve any run made against the earlier, unpublished SQL prototype.
+    // Do not silently start a second scenario or reinterpret its state.
+    if (auto legacy = _repository.FindLatestGraph(household, "defias.resurgence"))
+        return legacy;
     return _repository.FindLatestGraph(household, GraphKey);
 }
 DirectorResult Service::Start(FuryEvent const& source)

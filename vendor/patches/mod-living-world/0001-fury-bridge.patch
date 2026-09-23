@@ -439,3 +439,126 @@ diff --git a/src/core/RuntimeEntityGroup.cpp b/src/core/RuntimeEntityGroup.cpp
 +    _groupsByRuntime.erase(itr);
 +}
 +}
+diff --git a/src/invasions/InvasionRuntimeManager.cpp b/src/invasions/InvasionRuntimeManager.cpp
+index 56b76e2..2213984 100644
+--- a/src/invasions/InvasionRuntimeManager.cpp
++++ b/src/invasions/InvasionRuntimeManager.cpp
+@@ -177,6 +177,9 @@ bool InvasionRuntimeManager::FailRuntime(uint64 runtimeId, char const* reason)
+         return false;
+     }
+ 
++    if (!NotifyCompletion(iterator->second, false))
++        return false;
++
+     uint64 const now = UnixTimeNow();
+     uint32 const invasionId = iterator->second.GetInvasionId();
+     InvasionDefinition const* definition = sLivingWorldDataMgr.GetDefinition(invasionId);
+@@ -339,6 +342,13 @@ void InvasionRuntimeManager::DeleteRuntime(uint64 runtimeId)
+     CharacterDatabase.Execute("DELETE FROM `lw_active_runtime` WHERE `runtime_id` = {}", runtimeId);
+ }
+ 
++bool InvasionRuntimeManager::NotifyCompletion(InvasionRuntime const& runtime, bool success) const
++{
++    auto const* stage = runtime.GetCurrentStage();
++    return _completionObserver.Notify({runtime.GetRuntimeId(), runtime.GetInvasionId(),
++        stage ? stage->Id : 0, success});
++}
++
+ void InvasionRuntimeManager::CompleteRuntime(uint64 runtimeId, uint64 now)
+ {
+     auto iterator = _runtimes.find(runtimeId);
+@@ -347,6 +357,9 @@ void InvasionRuntimeManager::CompleteRuntime(uint64 runtimeId, uint64 now)
+         return;
+     }
+ 
++    if (!NotifyCompletion(iterator->second, true))
++        return;
++
+     uint32 const invasionId = iterator->second.GetInvasionId();
+     sRuntimeSignalMgr.ClearRuntime(runtimeId);
+     DeleteRuntime(runtimeId);
+@@ -363,6 +376,9 @@ void InvasionRuntimeManager::TimeoutRuntime(uint64 runtimeId, uint64 now)
+         return;
+     }
+ 
++    if (!NotifyCompletion(iterator->second, false))
++        return;
++
+     uint32 const invasionId = iterator->second.GetInvasionId();
+     InvasionDefinition const* definition = sLivingWorldDataMgr.GetDefinition(invasionId);
+ 
+diff --git a/src/invasions/InvasionRuntimeManager.h b/src/invasions/InvasionRuntimeManager.h
+index 5cf7374..2e7c8ed 100644
+--- a/src/invasions/InvasionRuntimeManager.h
++++ b/src/invasions/InvasionRuntimeManager.h
+@@ -3,6 +3,7 @@
+ 
+ #include "Define.h"
+ #include "InvasionRuntime.h"
++#include "RuntimeCompletionObserver.h"
+ 
+ #include <string>
+ #include <unordered_map>
+@@ -22,6 +23,10 @@ public:
+     bool AdvanceRuntime(uint64 runtimeId);
+     bool FailRuntime(uint64 runtimeId, char const* reason);
+     void AbortAll();
++    void SetCompletionObserver(RuntimeCompletionObserver::Handler handler)
++    {
++        _completionObserver.Set(std::move(handler));
++    }
+ 
+     [[nodiscard]] uint32 GetActiveRuntimeCount() const;
+     [[nodiscard]] InvasionRuntime const* GetRuntimeForInvasion(uint32 invasionId) const;
+@@ -34,10 +39,12 @@ private:
+     void LoadActiveRuntimes(uint64 now);
+     void SaveRuntime(InvasionRuntime const& runtime);
+     void DeleteRuntime(uint64 runtimeId);
++    bool NotifyCompletion(InvasionRuntime const& runtime, bool success) const;
+     void CompleteRuntime(uint64 runtimeId, uint64 now);
+     void TimeoutRuntime(uint64 runtimeId, uint64 now);
+     uint64 GenerateRuntimeId(uint64 now);
+ 
++    RuntimeCompletionObserver _completionObserver;
+     std::unordered_map<uint64, InvasionRuntime> _runtimes;
+     std::unordered_map<uint32, uint64> _runtimeByInvasion;
+     uint32 _updateTimerMs = 0;
+diff --git a/src/invasions/RuntimeCompletionObserver.h b/src/invasions/RuntimeCompletionObserver.h
+new file mode 100644
+index 0000000..b73a74b
+--- /dev/null
++++ b/src/invasions/RuntimeCompletionObserver.h
+@@ -0,0 +1,33 @@
++#ifndef MOD_LIVING_WORLD_RUNTIME_COMPLETION_OBSERVER_H
++#define MOD_LIVING_WORLD_RUNTIME_COMPLETION_OBSERVER_H
++#include "Define.h"
++#include <functional>
++#include <utility>
++
++namespace lw
++{
++struct RuntimeCompletion
++{
++    uint64 runtimeId = 0;
++    uint32 invasionId = 0;
++    uint32 stageId = 0;
++    bool success = false;
++};
++
++// Optional external observer. Returning false defers runtime removal so a
++// durable consumer can retry. Without an observer normal standalone behavior
++// is unchanged. Delivery may repeat; consumers must be idempotent.
++class RuntimeCompletionObserver
++{
++public:
++    using Handler = std::function<bool(RuntimeCompletion const&)>;
++    void Set(Handler handler) { _handler = std::move(handler); }
++    bool Notify(RuntimeCompletion const& completion) const
++    {
++        return !_handler || _handler(completion);
++    }
++private:
++    Handler _handler;
++};
++}
++#endif

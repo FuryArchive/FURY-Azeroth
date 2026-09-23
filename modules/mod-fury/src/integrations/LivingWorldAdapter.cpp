@@ -121,11 +121,31 @@ bool LivingWorldAdapter::ManageGraph(
     auto const [itr, inserted] =
         _managedGraphs.emplace(std::string(graphKey), invasionId);
 
+#if FURY_HAS_LIVING_WORLD
+    // The pinned executor deletes terminal runtimes in the same update. Capture
+    // their result durably before deletion instead of hoping polling sees it.
+    sInvasionRuntimeMgr.SetCompletionObserver([this](lw::RuntimeCompletion const& completion)
+    {
+        bool managed = false;
+        for (auto const& entry : _managedGraphs)
+            managed = managed || entry.second == completion.invasionId;
+        if (!managed) return true;
+        LivingWorldRuntimeSnapshot snapshot;
+        snapshot.runtimeId = completion.runtimeId;
+        snapshot.invasionId = completion.invasionId;
+        snapshot.stageId = completion.stageId;
+        snapshot.state = completion.success ? LivingWorldRuntimeState::Complete : LivingWorldRuntimeState::Failed;
+        return ObserveRuntime(nullptr, snapshot, "living_world.runtime.observed");
+    });
+#endif
     return inserted || itr->second == invasionId;
 }
 
 void LivingWorldAdapter::Reset()
 {
+#if FURY_HAS_LIVING_WORLD
+    sInvasionRuntimeMgr.SetCompletionObserver({});
+#endif
     _managedGraphs.clear();
 }
 
