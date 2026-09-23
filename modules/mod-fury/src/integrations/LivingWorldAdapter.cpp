@@ -417,11 +417,7 @@ bool LivingWorldAdapter::ObserveRuntime(
     event.correlationKey = Acore::StringFormat(
         "invasion:{}",
         runtime.invasionId);
-    event.dedupeIdentity = Acore::StringFormat(
-        "living-world:observation:v1:{}:{}:{}",
-        eventType,
-        runtime.runtimeId,
-        runtime.stageId);
+    event.dedupeIdentity = ObservationIdentity(eventType, runtime);
     event.payloadJson = Acore::StringFormat(
         "{{\"runtime_id\":{},\"invasion_id\":{},"
         "\"stage_id\":{},\"state\":{},"

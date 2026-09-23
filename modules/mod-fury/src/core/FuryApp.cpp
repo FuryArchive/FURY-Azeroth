@@ -33,12 +33,14 @@ App::App()
       _director(_directorRepository, _events),
       _directorReconciliation(_directorRepository),
       _professionOrders(_professionOrderRepository, _events),
-      _bestiary(_bestiaryRepository, _events)
+      _bestiary(_bestiaryRepository, _events),
+      _defiasGraph(_director, _directorRepository, _campaign, _livingWorld, _defiasContent, _events, _actors)
 {
     _eventBus.RegisterConsumer(_chronicle);
     _eventBus.RegisterConsumer(_contracts);
     _eventBus.RegisterConsumer(_professionOrders);
     _eventBus.RegisterConsumer(_bestiary);
+    _eventBus.RegisterConsumer(_defiasGraph);
 }
 
 App& App::Instance()
@@ -92,6 +94,8 @@ void App::Initialize()
             "[FURY] Defias authored-content contract validated.");
     }
 
+    if (_enabled) _defiasGraph.Initialize();
+
     _initialized = true;
 
     LOG_INFO(
@@ -129,6 +133,7 @@ void App::Shutdown()
 
     LOG_INFO("server.loading", "[FURY] mod-fury shutdown.");
 
+    _defiasGraph.Reset();
     _defiasContent.Reset();
     _livingWorld.Reset();
     _households.Shutdown();
@@ -169,8 +174,7 @@ void App::RunServiceTick()
 
 void App::RunDirectorTick()
 {
-    // T16 Director mutations are service/event driven. Do not poll the
-    // database every Director cadence.
+    _defiasGraph.Tick();
 }
 
 void App::RunReconcileTick()

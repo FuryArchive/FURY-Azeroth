@@ -19,6 +19,15 @@ void Require(bool condition, char const* label)
 
 int main()
 {
+    Fury::LivingWorldRuntimeSnapshot running;
+    running.runtimeId = 42; running.stageId = 1006;
+    running.state = Fury::LivingWorldRuntimeState::Running;
+    auto completed = running;
+    completed.state = Fury::LivingWorldRuntimeState::Complete;
+    if (Fury::LivingWorldAdapter::ObservationIdentity("living_world.runtime.observed", running) ==
+        Fury::LivingWorldAdapter::ObservationIdentity("living_world.runtime.observed", completed))
+        return 1;
+
     using namespace Fury;
 
     Require(

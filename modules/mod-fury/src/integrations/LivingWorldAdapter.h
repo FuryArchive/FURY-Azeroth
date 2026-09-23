@@ -183,6 +183,14 @@ public:
     // dedupe makes repeated observation replay-safe.
     void PollManagedRuntimes() const;
 
+    [[nodiscard]] static std::string ObservationIdentity(
+        std::string_view eventType, LivingWorldRuntimeSnapshot const& runtime)
+    {
+        return "living-world:observation:v2:" + std::string(eventType) + ":" +
+            std::to_string(runtime.runtimeId) + ":" + std::to_string(runtime.stageId) +
+            ":" + std::to_string(static_cast<uint8>(runtime.state));
+    }
+
     [[nodiscard]] ExternalRuntimeSnapshot Inspect(
         DirectorRun const& run) const override;
 

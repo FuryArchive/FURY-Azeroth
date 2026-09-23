@@ -31,6 +31,7 @@
 #include "bestiary/BestiaryRepository.h"
 #include "bestiary/BestiaryService.h"
 #include "content/defias/DefiasContent.h"
+#include "content/defias/DefiasService.h"
 
 namespace Fury
 {
@@ -74,6 +75,7 @@ public:
         return _professionOrders;
     }
     BestiaryService& Bestiary() { return _bestiary; }
+    Defias::Service& DefiasGraph() { return _defiasGraph; }
     Defias::ContentService& DefiasContent() { return _defiasContent; }
 
 private:
@@ -134,6 +136,7 @@ private:
     BestiaryService _bestiary;
 
     Defias::ContentService _defiasContent;
+    Defias::Service _defiasGraph;
 
     TickConfig _ticks;
 
