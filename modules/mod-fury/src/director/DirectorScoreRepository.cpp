@@ -101,7 +101,7 @@ DirectorScoreRepository::ResolveRunForEvent(
     else if (event.type == "defias.final_stage.participated" &&
              event.sourceSystem == "fury.defias" &&
              event.subjectType == "living_world_runtime" &&
-             event.correlationKey == graphKey)
+             std::string_view(event.correlationKey) == graphKey)
     {
         stmt = FuryDatabase.GetPreparedStatement(
             FURY_SEL_DIRECTOR_SCORE_RUN_FOR_RUNTIME);
