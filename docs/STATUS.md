@@ -31,7 +31,8 @@ Date: 2026-09-23
 - T25 Defias Director graph: GREEN.
 - T26 Westfall contract board: GREEN.
 - T27 Six Defias contracts: GREEN.
-- T28 Human participation resolver: IN_PROGRESS.
+- T28 Human participation resolver: GREEN.
+- T29 Participation score/outcome policy: IN_PROGRESS.
 - M3 Defias Resurgence vertical slice: IN_PROGRESS.
 
 ## Repository baseline
@@ -156,4 +157,6 @@ T26 is GREEN through PR #27. FURY CI **#133** and Full Runtime **#5** passed, in
 
 T27 is GREEN through PR #31 / commit `cd22585fe90b93b87d1960143ce4fe968acedc92`. FURY CI **#139** passed the dedicated Defias contract runtime/replay gate, Fast mod-fury compile, and the existing M1/M2/Living World/Defias regression gates.
 
-T28 is **IN_PROGRESS** on `agent/m3-t28-participation`. It replaces runtime last-hit authorship with UnitScript encounter participation, human pet-owner normalization, configurable time/radius/group policy, and one household-scoped durable kill credit per physical runtime entity.
+T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`. FURY CI **#141** passed the human participation policy gate, Fast mod-fury compile, and the full regression set.
+
+T29 is **IN_PROGRESS** on `agent/m3-t29-participation-score`. It adds a generic Director score ledger, the accepted 100-point Defias model, immutable replay-safe component awards, configurable 70/30 threshold policy, and human final-stage participation as the seventh score component.
