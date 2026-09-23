@@ -1,5 +1,6 @@
 #include "DefiasService.h"
 #include "DefiasContracts.h"
+#include "DefiasFieldRelief.h"
 #include "actors/ActorResolver.h"
 #include "campaign/CampaignService.h"
 #include "director/DirectorService.h"
@@ -103,6 +104,18 @@ bool Service::Handle(FuryEvent const& event)
         event.subjectType == "director_run" && event.subjectId && event.correlationKey == GraphKey)
         return _graph.Activate(event, *event.subjectId);
 
+    if (event.type == "profession.order.completed" &&
+        event.sourceSystem == "fury.professions" &&
+        event.subjectType == "profession_order" &&
+        event.subjectId &&
+        event.correlationKey == FieldReliefOrderKey &&
+        event.actor.kind == ActorKind::Human &&
+        event.actor.householdId &&
+        event.id)
+    {
+        return EmitFieldReliefCompleted(event);
+    }
+
     if ((event.type == "living_world.runtime.observed" || event.type == "living_world.stage.observed") &&
         event.sourceSystem == "living_world" && event.subjectType == "living_world_runtime" &&
         event.subjectId && event.correlationKey == "invasion:1")
@@ -161,6 +174,31 @@ bool Service::RequestActivation(FuryEvent source, DirectorRun const& run)
     source.payloadJson = "{}";
     source.dedupeIdentity = Acore::StringFormat("defias:activate:v1:{}", run.id);
     return _events.Append(source).has_value();
+}
+
+bool Service::EmitFieldReliefCompleted(
+    FuryEvent const& source)
+{
+    if (!source.subjectId)
+        return true;
+
+    FuryEvent event = source;
+    event.id = 0;
+    event.type = "defias.field_relief.completed";
+    event.subjectType = "defias_contract_signal";
+    event.subjectId = 1;
+    event.sourceSystem = "fury.defias";
+    event.correlationKey = FieldReliefContract;
+    event.dedupeIdentity = Acore::StringFormat(
+        "defias:field-relief:v1:{}",
+        *source.subjectId);
+    event.payloadJson = Acore::StringFormat(
+        "{{\"profession_order_instance_id\":{},"
+        "\"source_event_id\":{}}}",
+        *source.subjectId,
+        source.id);
+
+    return _events.Append(event).has_value();
 }
 
 bool Service::CampaignComplete(HouseholdId household)
