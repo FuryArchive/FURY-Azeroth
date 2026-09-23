@@ -86,6 +86,7 @@ DirectorScoreRepository::ResolveRunForEvent(
     DatabasePreparedStatement* stmt = nullptr;
 
     if (event.type == "contract.completed" &&
+        event.sourceSystem == "fury.contracts" &&
         event.subjectType == "contract_instance" &&
         !event.correlationKey.empty())
     {
@@ -98,7 +99,9 @@ DirectorScoreRepository::ResolveRunForEvent(
         stmt->SetData(4, event.id);
     }
     else if (event.type == "defias.final_stage.participated" &&
-             event.subjectType == "living_world_runtime")
+             event.sourceSystem == "fury.defias" &&
+             event.subjectType == "living_world_runtime" &&
+             event.correlationKey == graphKey)
     {
         stmt = FuryDatabase.GetPreparedStatement(
             FURY_SEL_DIRECTOR_SCORE_RUN_FOR_RUNTIME);
