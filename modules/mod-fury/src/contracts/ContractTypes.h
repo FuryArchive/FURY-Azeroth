@@ -81,6 +81,22 @@ struct ContractObjectiveMatch
     EventId lastEventId = 0;
 };
 
+struct ContractBoardContext
+{
+    HouseholdId householdId = 0;
+    bool allowNewContracts = true;
+    std::optional<std::string> campaignNodeKey;
+    std::optional<DirectorRunId> directorRunId;
+    std::optional<std::string> directorPhase;
+};
+
+struct ContractBoardEntry
+{
+    ContractDefinition definition;
+    ContractStatus status = ContractStatus::Available;
+    std::optional<ContractInstanceId> instanceId;
+};
+
 enum class ContractAcceptOutcome : uint8
 {
     Accepted = 1,
