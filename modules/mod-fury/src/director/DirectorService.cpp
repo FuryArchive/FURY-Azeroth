@@ -237,15 +237,20 @@ DirectorResult DirectorService::Resolve(
 
     if (run->status == DirectorRunStatus::Complete)
     {
-        if (run->outcomeKey && *run->outcomeKey == outcomeKey)
-        {
-            if (!EmitTerminalEvent(source, *run, "director.run.resolved"))
-                return {DirectorOutcome::PersistenceFailed, run};
+        if (!run->outcomeKey || *run->outcomeKey != outcomeKey)
+            return {DirectorOutcome::InvalidState, run};
 
-            return {DirectorOutcome::AlreadyApplied, run};
-        }
+        std::optional<EventId> terminal =
+            EmitTerminalEvent(source, *run, "director.run.resolved");
+        if (!terminal)
+            return {DirectorOutcome::PersistenceFailed, run};
 
-        return {DirectorOutcome::InvalidState, run};
+        _repository.BindTerminalEvent(run->id, run->householdId, *terminal);
+        std::optional<DirectorRun> rebound = _repository.FindRun(run->id);
+        if (!rebound || rebound->resolvedEventId != terminal)
+            return {DirectorOutcome::PersistenceFailed, rebound};
+
+        return {DirectorOutcome::AlreadyApplied, rebound};
     }
 
     if (IsTerminal(run->status))
@@ -274,10 +279,22 @@ DirectorResult DirectorService::Resolve(
         return {DirectorOutcome::RevisionConflict, persisted};
     }
 
-    if (!EmitTerminalEvent(source, *persisted, "director.run.resolved"))
+    std::optional<EventId> terminal =
+        EmitTerminalEvent(source, *persisted, "director.run.resolved");
+    if (!terminal)
         return {DirectorOutcome::PersistenceFailed, persisted};
 
-    return {DirectorOutcome::Updated, persisted};
+    _repository.BindTerminalEvent(
+        persisted->id,
+        persisted->householdId,
+        *terminal);
+
+    std::optional<DirectorRun> rebound =
+        _repository.FindRun(persisted->id);
+    if (!rebound || rebound->resolvedEventId != terminal)
+        return {DirectorOutcome::PersistenceFailed, rebound};
+
+    return {DirectorOutcome::Updated, rebound};
 }
 
 DirectorResult DirectorService::Abort(
@@ -298,15 +315,20 @@ DirectorResult DirectorService::Abort(
 
     if (run->status == DirectorRunStatus::Aborted)
     {
-        if (run->outcomeKey && *run->outcomeKey == outcomeKey)
-        {
-            if (!EmitTerminalEvent(source, *run, "director.run.aborted"))
-                return {DirectorOutcome::PersistenceFailed, run};
+        if (!run->outcomeKey || *run->outcomeKey != outcomeKey)
+            return {DirectorOutcome::InvalidState, run};
 
-            return {DirectorOutcome::AlreadyApplied, run};
-        }
+        std::optional<EventId> terminal =
+            EmitTerminalEvent(source, *run, "director.run.aborted");
+        if (!terminal)
+            return {DirectorOutcome::PersistenceFailed, run};
 
-        return {DirectorOutcome::InvalidState, run};
+        _repository.BindTerminalEvent(run->id, run->householdId, *terminal);
+        std::optional<DirectorRun> rebound = _repository.FindRun(run->id);
+        if (!rebound || rebound->resolvedEventId != terminal)
+            return {DirectorOutcome::PersistenceFailed, rebound};
+
+        return {DirectorOutcome::AlreadyApplied, rebound};
     }
 
     if (IsTerminal(run->status))
@@ -335,10 +357,22 @@ DirectorResult DirectorService::Abort(
         return {DirectorOutcome::RevisionConflict, persisted};
     }
 
-    if (!EmitTerminalEvent(source, *persisted, "director.run.aborted"))
+    std::optional<EventId> terminal =
+        EmitTerminalEvent(source, *persisted, "director.run.aborted");
+    if (!terminal)
         return {DirectorOutcome::PersistenceFailed, persisted};
 
-    return {DirectorOutcome::Updated, persisted};
+    _repository.BindTerminalEvent(
+        persisted->id,
+        persisted->householdId,
+        *terminal);
+
+    std::optional<DirectorRun> rebound =
+        _repository.FindRun(persisted->id);
+    if (!rebound || rebound->resolvedEventId != terminal)
+        return {DirectorOutcome::PersistenceFailed, rebound};
+
+    return {DirectorOutcome::Updated, rebound};
 }
 
 std::optional<EventId> DirectorService::EmitStartedEvent(
