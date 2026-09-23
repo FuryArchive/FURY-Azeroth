@@ -172,6 +172,12 @@ public:
         uint64 runtimeId,
         uint32 signalId) const;
 
+    // Recovery-only destructive boundary. The adapter refuses to fail a
+    // runtime unless its invasion is registered as FURY-managed.
+    [[nodiscard]] bool FailManagedRuntime(
+        uint64 runtimeId,
+        std::string_view reason) const;
+
     [[nodiscard]] std::optional<LivingWorldRuntimeSnapshot>
     RuntimeForInvasion(uint32 invasionId) const;
 
