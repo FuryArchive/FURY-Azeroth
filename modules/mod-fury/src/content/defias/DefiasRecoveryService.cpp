@@ -215,13 +215,13 @@ bool RecoveryService::QueueRunAction(
     event.dedupeIdentity = Acore::StringFormat(
         "director:recovery:v1:{}:{}:{}",
         run.id,
-        static_cast<uint8>(action),
+        static_cast<uint32>(action),
         runtimeId);
     event.payloadJson = Acore::StringFormat(
         "{{\"run_id\":{},\"action\":{},"
         "\"expected_runtime_id\":{},\"runtime_id\":{}}}",
         run.id,
-        static_cast<uint8>(action),
+        static_cast<uint32>(action),
         run.externalRuntimeId.value_or(0),
         runtimeId);
 
@@ -278,6 +278,14 @@ bool RecoveryService::HandleRunAction(
         run->graphKey != GraphKey ||
         run->householdId != *event.actor.householdId)
     {
+        return true;
+    }
+
+    if (run->status == DirectorRunStatus::Complete ||
+        run->status == DirectorRunStatus::Failed)
+    {
+        // Another authoritative path won the race. The recovery request is
+        // stale and must not block the event-stream checkpoint.
         return true;
     }
 
@@ -339,6 +347,15 @@ bool RecoveryService::Handle(FuryEvent const& event)
             run->graphKey != GraphKey ||
             run->householdId != *event.actor.householdId)
         {
+            return true;
+        }
+
+        if (run->status == DirectorRunStatus::Complete ||
+            run->status == DirectorRunStatus::Failed ||
+            run->status == DirectorRunStatus::Aborted)
+        {
+            // The recovery intent became stale because another durable path
+            // terminalized the run before this event replayed.
             return true;
         }
 
