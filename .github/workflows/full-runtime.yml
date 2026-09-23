@@ -16,6 +16,8 @@ on:
       - "scripts/smoke-fury-db-lifecycle.sh"
       - "scripts/smoke-worldserver.sh"
       - "scripts/fetch-ac-data.sh"
+      - "scripts/test-t34-defias-vertical-slice.sh"
+      - ".github/workflows/full-runtime.yml"
   workflow_dispatch:
 
 concurrency:
