@@ -352,6 +352,20 @@ void DatabaseConnection::DoPrepareStatements()
         "FROM fury_director_score_component "
         "WHERE graph_key = ? AND enabled = 1",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_SCORE_RUN_FOR_CONTRACT,
+        "SELECT i.director_run_id "
+        "FROM fury_contract_instance i "
+        "JOIN fury_director_run r ON r.id = i.director_run_id "
+        "WHERE i.id = ? AND i.household_id = ? "
+        "AND i.contract_key = ? AND r.graph_key = ? "
+        "LIMIT 1",
+        CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_DIRECTOR_SCORE_RUN_FOR_RUNTIME,
+        "SELECT id FROM fury_director_run "
+        "WHERE household_id = ? AND graph_key = ? "
+        "AND external_runtime_id = ? "
+        "LIMIT 1",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_INS_DIRECTOR_SCORE_AWARD,
         "INSERT IGNORE INTO fury_director_score_award "
         "(director_run_id, graph_key, component_key, score_value, source_event_id) "
