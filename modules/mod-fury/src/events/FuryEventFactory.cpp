@@ -2,6 +2,7 @@
 
 #include "core/FuryApp.h"
 #include "core/FuryTargetId.h"
+#include "integrations/LivingWorldAdapter.h"
 #include "Creature.h"
 #include "Item.h"
 #include "Player.h"
@@ -171,6 +172,49 @@ FuryEvent FuryEventFactory::CreatureKilled(
     event.dedupeIdentity = OccurrenceIdentity(
         viaPet ? "creature-kill-pet" : "creature-kill",
         player);
+
+    return event;
+}
+
+FuryEvent FuryEventFactory::LivingWorldEntityKilled(
+    Player* player,
+    Creature* creature,
+    bool viaPet,
+    LivingWorldEntityMetadata const& metadata)
+{
+    FuryEvent event = Base(player, "living_world.entity.killed");
+
+    uint64 const creatureGuid =
+        creature ? creature->GetGUID().GetRawValue() : 0;
+
+    event.subjectType = "living_world_spawn_group";
+    event.subjectId = metadata.spawnGroupId;
+    event.sourceSystem = "living_world";
+    event.correlationKey = Acore::StringFormat(
+        "runtime:{}",
+        metadata.runtimeId);
+    event.payloadJson = Acore::StringFormat(
+        "{{\"runtime_id\":{},\"runtime_group_id\":{},"
+        "\"spawn_group_id\":{},\"member_id\":{},\"entry\":{},"
+        "\"living_world_template_id\":{},\"tactical_role\":{},"
+        "\"creature_guid\":{},\"via_pet\":{}}}",
+        metadata.runtimeId,
+        metadata.runtimeGroupId,
+        metadata.spawnGroupId,
+        metadata.memberId,
+        metadata.entry,
+        metadata.livingWorldTemplateId,
+        metadata.tacticalRole,
+        creatureGuid,
+        viaPet ? "true" : "false");
+
+    // One spawned runtime entity can die only once. This identity also
+    // collapses duplicate direct/pet callbacks for the same physical kill.
+    event.dedupeIdentity = Acore::StringFormat(
+        "living-world:entity-killed:v1:{}:{}:{}",
+        metadata.runtimeId,
+        metadata.runtimeGroupId,
+        creatureGuid);
 
     return event;
 }
