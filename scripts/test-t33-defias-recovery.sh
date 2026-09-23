@@ -49,7 +49,7 @@ make_event() {
   local household_id="${4:-NULL}"
   local subject_type="${5:-NULL}"
   local subject_id="${6:-NULL}"
-  local payload="${7:-{}}"
+  local runtime_id="${7:-0}"
 
   local household_sql="NULL"
   local subject_type_sql="NULL"
@@ -66,7 +66,8 @@ make_event() {
     ('${event_type}',${actor_kind},${household_sql},
      ${subject_type_sql},${subject_id_sql},
      'fury.recovery','${GRAPH}',
-     UNHEX(SHA2('${identity}',256)),'${payload}');"
+     UNHEX(SHA2('${identity}',256)),
+     JSON_OBJECT('runtime_id',${runtime_id}));"
 
   sql "SELECT id FROM fury_event
     WHERE dedupe_key=UNHEX(SHA2('${identity}',256));"
@@ -90,7 +91,7 @@ run1="$(sql "SELECT id FROM fury_director_run
   WHERE household_id=${household} AND graph_key='${GRAPH}'
   AND status IN (1,2,3) LIMIT 1;")"
 
-attach_event="$(make_event "director:recovery:v1:${run1}:2:42"   "director.recovery.attach_runtime" 5 "${household}"   "director_run" "${run1}"   "{\"run_id\":${run1},\"action\":2,\"expected_runtime_id\":0,\"runtime_id\":42}")"
+attach_event="$(make_event "director:recovery:v1:${run1}:2:42"   "director.recovery.attach_runtime" 5 "${household}"   "director_run" "${run1}"   42)"
 
 sql "UPDATE fury_director_run
   SET external_runtime_id=42,
@@ -131,7 +132,7 @@ assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_director_run
     AND status IN (1,2,3);")"   "restart cannot create a second active Defias run"
 
 echo "[FURY] bound Director + missing Living World runtime -> safe abort"
-missing_event="$(make_event "director:recovery:v1:${run1}:4:42"   "director.recovery.abort_missing" 5 "${household}"   "director_run" "${run1}"   "{\"run_id\":${run1},\"action\":4,\"expected_runtime_id\":42,\"runtime_id\":42}")"
+missing_event="$(make_event "director:recovery:v1:${run1}:4:42"   "director.recovery.abort_missing" 5 "${household}"   "director_run" "${run1}"   42)"
 
 sql "UPDATE fury_director_run
   SET status=6,
@@ -199,7 +200,7 @@ sql "UPDATE fury_director_run
   SET external_runtime_id=77,revision=1
   WHERE id=${run2};"
 
-conflict_event="$(make_event "director:recovery:v1:${run2}:7:88"   "director.recovery.abort_conflict" 5 "${household}"   "director_run" "${run2}"   "{\"run_id\":${run2},\"action\":7,\"expected_runtime_id\":77,\"runtime_id\":88}")"
+conflict_event="$(make_event "director:recovery:v1:${run2}:7:88"   "director.recovery.abort_conflict" 5 "${household}"   "director_run" "${run2}"   88)"
 
 sql "UPDATE fury_director_run
   SET status=6,
@@ -216,8 +217,8 @@ assert_eq "recovery.runtime_conflict" "$(sql "SELECT outcome_key
   FROM fury_director_run WHERE id=${run2};")"   "runtime conflict has deterministic abort outcome"
 
 echo "[FURY] orphan managed runtime intent is replay-idempotent"
-orphan1="$(make_event "director:recovery:orphan:v1:9001"   "director.recovery.orphan_runtime" 5 NULL   "living_world_runtime" 9001   "{\"runtime_id\":9001,\"invasion_id\":1}")"
-orphan2="$(make_event "director:recovery:orphan:v1:9001"   "director.recovery.orphan_runtime" 5 NULL   "living_world_runtime" 9001   "{\"runtime_id\":9001,\"invasion_id\":1}")"
+orphan1="$(make_event "director:recovery:orphan:v1:9001"   "director.recovery.orphan_runtime" 5 NULL   "living_world_runtime" 9001   9001)"
+orphan2="$(make_event "director:recovery:orphan:v1:9001"   "director.recovery.orphan_runtime" 5 NULL   "living_world_runtime" 9001   9001)"
 assert_eq "${orphan1}" "${orphan2}"   "orphan cleanup intent dedupes on replay"
 assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_event
   WHERE event_type='director.recovery.orphan_runtime'
