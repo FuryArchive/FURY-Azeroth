@@ -26,12 +26,14 @@
 #include "director/DirectorRepository.h"
 #include "director/DirectorService.h"
 #include "director/DirectorReconciliation.h"
+#include "director/DirectorScoreRepository.h"
 #include "professions/ProfessionOrderRepository.h"
 #include "professions/ProfessionOrderService.h"
 #include "bestiary/BestiaryRepository.h"
 #include "bestiary/BestiaryService.h"
 #include "content/defias/DefiasContent.h"
 #include "content/defias/DefiasParticipation.h"
+#include "content/defias/DefiasScoreService.h"
 #include "content/defias/DefiasService.h"
 
 namespace Fury
@@ -81,6 +83,10 @@ public:
     Defias::ParticipationService& DefiasParticipation()
     {
         return _defiasParticipation;
+    }
+    Defias::ScoreService& DefiasScore()
+    {
+        return _defiasScore;
     }
 
 private:
@@ -133,6 +139,7 @@ private:
     DirectorRepository _directorRepository;
     DirectorService _director;
     DirectorReconciliationService _directorReconciliation;
+    DirectorScoreRepository _directorScoreRepository;
 
     ProfessionOrderRepository _professionOrderRepository;
     ProfessionOrderService _professionOrders;
@@ -142,6 +149,7 @@ private:
 
     Defias::ContentService _defiasContent;
     Defias::ParticipationService _defiasParticipation;
+    Defias::ScoreService _defiasScore;
     Defias::Service _defiasGraph;
 
     TickConfig _ticks;
