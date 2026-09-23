@@ -400,3 +400,4 @@ bool RecoveryService::Handle(FuryEvent const& event)
 
     return true;
 }
+}
