@@ -276,6 +276,48 @@ LivingWorldSignalOutcome LivingWorldAdapter::EmitSignal(
 #endif
 }
 
+bool LivingWorldAdapter::FailManagedRuntime(
+    uint64 runtimeId,
+    std::string_view reason) const
+{
+#if !FURY_HAS_LIVING_WORLD
+    (void)runtimeId;
+    (void)reason;
+    return false;
+#else
+    if (!runtimeId)
+        return false;
+
+    lw::InvasionRuntime const* runtime =
+        sInvasionRuntimeMgr.GetRuntime(runtimeId);
+    if (!runtime)
+        return true;
+
+    bool managed = false;
+    for (auto const& [graphKey, invasionId] : _managedGraphs)
+    {
+        (void)graphKey;
+        if (invasionId == runtime->GetInvasionId())
+        {
+            managed = true;
+            break;
+        }
+    }
+
+    if (!managed)
+        return false;
+
+    std::string const message =
+        reason.empty()
+            ? std::string("FURY recovery")
+            : std::string(reason);
+
+    return sInvasionRuntimeMgr.FailRuntime(
+        runtimeId,
+        message.c_str());
+#endif
+}
+
 std::optional<LivingWorldRuntimeSnapshot>
 LivingWorldAdapter::RuntimeForInvasion(uint32 invasionId) const
 {
