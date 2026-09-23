@@ -35,7 +35,7 @@ App::App()
       _professionOrders(_professionOrderRepository, _events),
       _bestiary(_bestiaryRepository, _events),
       _defiasParticipation(_livingWorld, _actors, _events),
-      _defiasScore(_directorScoreRepository, _directorRepository),
+      _defiasScore(_directorScoreRepository),
       _defiasGraph(_director, _directorRepository, _campaign, _livingWorld, _defiasContent, _events, _actors)
 {
     _eventBus.RegisterConsumer(_chronicle);
