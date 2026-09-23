@@ -35,6 +35,63 @@ std::vector<BestiaryMapping> BestiaryRepository::FindMappings(
     return mappings;
 }
 
+std::vector<BestiaryMapping> BestiaryRepository::FindEventMappings(
+    std::string_view eventType,
+    std::string_view subjectType,
+    uint64 subjectId) const
+{
+    std::vector<BestiaryMapping> mappings;
+
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_BESTIARY_EVENT_MAPPINGS);
+    stmt->SetData(0, std::string(eventType));
+    stmt->SetData(1, std::string(subjectType));
+    stmt->SetData(2, subjectId);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return mappings;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        BestiaryMapping mapping;
+        mapping.entryKey = fields[0].Get<std::string>();
+        mapping.discoveryLevel =
+            static_cast<BestiaryDiscoveryLevel>(fields[1].Get<uint8>());
+        mappings.push_back(std::move(mapping));
+    } while (result->NextRow());
+
+    return mappings;
+}
+
+std::vector<uint32> BestiaryRepository::FindHouseholdAccountsAtLeastLevel(
+    HouseholdId householdId,
+    std::string_view entryKey,
+    BestiaryDiscoveryLevel level) const
+{
+    std::vector<uint32> accounts;
+
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(
+            FURY_SEL_BESTIARY_HOUSEHOLD_ACCOUNTS_AT_LEVEL);
+    stmt->SetData(0, householdId);
+    stmt->SetData(1, std::string(entryKey));
+    stmt->SetData(2, level);
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return accounts;
+
+    do
+    {
+        accounts.push_back(result->Fetch()[0].Get<uint32>());
+    } while (result->NextRow());
+
+    return accounts;
+}
+
 std::optional<BestiaryState> BestiaryRepository::FindState(
     uint32 accountId,
     std::string_view entryKey) const

@@ -505,7 +505,7 @@ Acceptance:
 - outcome is deterministic for recorded component set.
 
 ## T30 Defias Bestiary content
-Status: READY
+Status: IN_PROGRESS
 Depends on: T18, T27
 Commit target: `content(defias): add Bestiary entries`
 
