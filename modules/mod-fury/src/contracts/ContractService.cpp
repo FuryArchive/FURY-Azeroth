@@ -64,7 +64,7 @@ std::vector<ContractBoardEntry> ContractService::ListBoard(
             entry.status = ContractStatus::Available;
         }
 
-        entries.push_back(std::move(entry));
+        entries.push_back(entry);
     }
 
     return entries;
