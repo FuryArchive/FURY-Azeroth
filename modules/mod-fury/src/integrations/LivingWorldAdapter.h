@@ -175,6 +175,10 @@ public:
     [[nodiscard]] std::optional<LivingWorldRuntimeSnapshot>
     RuntimeForInvasion(uint32 invasionId) const;
 
+    [[nodiscard]] bool AbortRuntime(
+        uint64 runtimeId,
+        std::string_view reason) const;
+
     [[nodiscard]] std::optional<LivingWorldEntityMetadata>
     FindEntity(ObjectGuid guid) const;
 
