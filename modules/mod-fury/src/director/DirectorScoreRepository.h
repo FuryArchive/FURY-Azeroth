@@ -20,6 +20,10 @@ public:
     [[nodiscard]] std::optional<uint32> DefinitionTotal(
         std::string_view graphKey) const;
 
+    [[nodiscard]] std::optional<DirectorRunId> ResolveRunForEvent(
+        std::string_view graphKey,
+        FuryEvent const& event) const;
+
     void Award(
         DirectorRunId directorRunId,
         std::string_view graphKey,
