@@ -10,6 +10,8 @@
 #include "Spell.h"
 #include "SpellMgr.h"
 
+#include <optional>
+
 namespace
 {
 uint32 ResolveProfessionSkill(uint32 spellId)
