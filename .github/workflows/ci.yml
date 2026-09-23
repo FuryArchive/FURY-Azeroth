@@ -12,6 +12,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  defias-participation:
+    name: T28 human participation policy gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run human participation resolver gate
+        run: bash scripts/test-t28-participation.sh
+
   defias-contracts:
     name: T27 Defias contracts runtime/replay gate
     runs-on: ubuntu-24.04

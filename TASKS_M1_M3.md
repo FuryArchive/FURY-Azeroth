@@ -463,7 +463,7 @@ Acceptance:
 - no custom client patch required.
 
 ## T27 Six Defias contracts
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T21, T26
 Commit target: `feat(defias): add initial Westfall contracts`
 
@@ -482,7 +482,7 @@ Acceptance:
 - replay-safe.
 
 ## T28 Human participation resolver
-Status: READY
+Status: IN_PROGRESS
 Depends on: T04, T21
 Commit target: `feat(defias): add human participation tracking`
 
@@ -633,4 +633,6 @@ T21–T25 are GREEN. T25 merged through PR #26 / commit `d328e889c403fcd79d84f9c
 
 T26 is GREEN. PR #27 passed FURY CI #133 and Full Runtime #5, including the pinned worldserver build, real FURY DB lifecycle, world-data application, and two worldserver smokes.
 
-T27 is IN_PROGRESS on `agent/m3-t27-defias-contracts`: runtime-qualified Living World kills, replay cutoffs, Director-runtime binding, six contract definitions/objectives and a dedicated CI gate are implemented pending branch acceptance.
+T27 is GREEN through PR #31 / commit `cd22585fe90b93b87d1960143ce4fe968acedc92`; FURY CI #139 passed the six-contract runtime/replay gate, Fast mod-fury compile and regressions.
+
+T28 is IN_PROGRESS on `agent/m3-t28-participation`: UnitScript damage/death tracking, pet-owner normalization, time/radius/group policy and household-scoped runtime kill credit are implemented pending branch acceptance.
