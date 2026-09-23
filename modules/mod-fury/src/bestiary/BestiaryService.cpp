@@ -40,6 +40,7 @@ bool BestiaryService::Handle(FuryEvent const& event)
     }
     else if (event.type == "defias.bestiary.entity.participated" &&
              event.sourceSystem == "fury.defias" &&
+             event.correlationKey == Defias::GraphKey &&
              event.subjectType == "living_world_spawn_group")
     {
         mappings = _repository.FindEventMappings(
