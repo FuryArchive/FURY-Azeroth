@@ -443,13 +443,29 @@ private:
     {
         auto& app = Fury::App::Instance();
         if (!app.IsInitialized() || !app.IsEnabled()) return false;
-        handler->PSendSysMessage("FURY Defias enabled={} content_valid={}",
-            app.DefiasGraph().Enabled(), app.DefiasContent().IsValid());
+        handler->PSendSysMessage(
+            "FURY Defias enabled={} content_valid={} scoring={}",
+            app.DefiasGraph().Enabled(),
+            app.DefiasContent().IsValid(),
+            app.DefiasScore().Enabled());
         for (auto const& run : app.Director().ActiveRuns())
         {
             if (run.graphKey != Fury::Defias::GraphKey) continue;
-            handler->PSendSysMessage("run={} household={} phase={} runtime={} revision={}",
-                run.id, run.householdId, run.phaseKey, run.externalRuntimeId.value_or(0), run.revision);
+
+            uint32 const score =
+                app.DefiasScore().Score(run.id).value_or(0);
+            Fury::Defias::ScoreOutcome const outcome =
+                app.DefiasScore().Outcome(run.id);
+
+            handler->PSendSysMessage(
+                "run={} household={} phase={} runtime={} revision={} score={} outcome={}",
+                run.id,
+                run.householdId,
+                run.phaseKey,
+                run.externalRuntimeId.value_or(0),
+                run.revision,
+                score,
+                Fury::Defias::ScoreOutcomeKey(outcome));
         }
         return true;
     }
