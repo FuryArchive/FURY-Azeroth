@@ -4,6 +4,7 @@
 #include "content/defias/DefiasContracts.h"
 #include "events/FuryEventFactory.h"
 
+#include "Creature.h"
 #include "DBCStructure.h"
 #include "Player.h"
 #include "PlayerScript.h"
