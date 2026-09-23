@@ -12,15 +12,15 @@ INSERT IGNORE INTO `fury_bestiary_event_map`
   (`event_type`, `subject_type`, `subject_id`,
    `entry_key`, `discovery_level`, `enabled`)
 VALUES
-  ('living_world.entity.killed', 'living_world_spawn_group', 100,
+  ('defias.bestiary.entity.participated', 'living_world_spawn_group', 100,
    'classic.westfall.defias.scouts', 2, 1),
-  ('living_world.entity.killed', 'living_world_spawn_group', 101,
+  ('defias.bestiary.entity.participated', 'living_world_spawn_group', 101,
    'classic.westfall.defias.scouts', 2, 1),
-  ('living_world.entity.killed', 'living_world_spawn_group', 102,
+  ('defias.bestiary.entity.participated', 'living_world_spawn_group', 102,
    'classic.westfall.defias.control_teams', 2, 1),
-  ('living_world.entity.killed', 'living_world_spawn_group', 103,
+  ('defias.bestiary.entity.participated', 'living_world_spawn_group', 103,
    'classic.westfall.defias.control_teams', 2, 1),
-  ('living_world.entity.killed', 'living_world_spawn_group', 104,
+  ('defias.bestiary.entity.participated', 'living_world_spawn_group', 104,
    'classic.westfall.defias.control_teams', 2, 1),
-  ('living_world.entity.killed', 'living_world_spawn_group', 105,
+  ('defias.bestiary.entity.participated', 'living_world_spawn_group', 105,
    'classic.westfall.defias.commander', 2, 1);
