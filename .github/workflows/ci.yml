@@ -12,6 +12,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  defias-field-relief:
+    name: T31 adaptive Field Relief profession-order gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install T31 test dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++ default-mysql-client
+      - name: Run adaptive Field Relief gate
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+          MYSQL_DATABASE: acore_fury
+        run: bash scripts/test-t31-field-relief.sh
+
   defias-bestiary:
     name: T30 Defias Bestiary runtime/mastery gate
     runs-on: ubuntu-24.04
@@ -217,6 +247,9 @@ jobs:
 
       - name: Resolve locked upstream source
         run: bash scripts/sync-upstreams.sh
+
+      - name: Audit T31 profession/item ids in pinned upstream
+        run: bash scripts/audit-t31-field-relief-upstream.sh upstream/azerothcore-wotlk
 
       - name: Compile mod-fury only
         env:
