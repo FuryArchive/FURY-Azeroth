@@ -95,6 +95,7 @@ DirectorScoreRepository::ResolveRunForEvent(
         stmt->SetData(1, *event.actor.householdId);
         stmt->SetData(2, event.correlationKey);
         stmt->SetData(3, std::string(graphKey));
+        stmt->SetData(4, event.id);
     }
     else if (event.type == "defias.final_stage.participated" &&
              event.subjectType == "living_world_runtime")
