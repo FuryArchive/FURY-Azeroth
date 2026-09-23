@@ -9,6 +9,7 @@
 #include "Log.h"
 #include "StringFormat.h"
 
+#include <boost/bind/placeholders.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
