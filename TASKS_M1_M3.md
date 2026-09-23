@@ -433,7 +433,7 @@ Acceptance:
 - no Director run starts against invalid content.
 
 ## T25 Defias Director graph
-Status: READY
+Status: IN_PROGRESS
 Depends on: T16, T23, T24
 Commit target: `feat(defias): add Director graph`
 

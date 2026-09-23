@@ -24,6 +24,9 @@ public:
 
     [[nodiscard]] std::vector<DirectorRun> LoadActiveRuns() const;
 
+    [[nodiscard]] std::optional<DirectorRun> FindLatestGraph(
+        HouseholdId householdId, std::string_view graphKey) const;
+
     void InsertRun(
         HouseholdId householdId,
         DirectorGraphDefinition const& graph,

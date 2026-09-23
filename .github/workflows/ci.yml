@@ -12,6 +12,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  defias-graph-golden:
+    name: T25 Defias graph and persistence gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MySQL client
+        run: sudo apt-get update && sudo apt-get install -y default-mysql-client
+      - name: Graph behavior
+        run: |
+          bash scripts/test-t25-defias-graph.sh
+          bash scripts/test-t25-director-replay.sh
+          bash scripts/test-t25-defias-presence.sh
+          bash scripts/test-t25-lw-completion.sh
+      - name: Upgrade and persistence
+        run: bash scripts/test-t25-defias-schema.sh
+
   actor-policy-golden:
     name: M1 actor-policy golden gate
     runs-on: ubuntu-24.04

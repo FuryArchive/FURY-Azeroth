@@ -67,7 +67,15 @@ std::string FuryEventFactory::OccurrenceIdentity(
 FuryEvent FuryEventFactory::PlayerLogin(Player* player)
 {
     FuryEvent event = Base(player, "player.login");
+    event.payloadJson = Acore::StringFormat("{{\"actor_level\":{}}}", player ? player->GetLevel() : 0);
     event.dedupeIdentity = OccurrenceIdentity("login", player);
+    return event;
+}
+
+FuryEvent FuryEventFactory::PlayerLogout(Player* player)
+{
+    FuryEvent event = Base(player, "player.logout");
+    event.dedupeIdentity = OccurrenceIdentity("logout", player);
     return event;
 }
 
@@ -79,9 +87,9 @@ FuryEvent FuryEventFactory::LevelChanged(Player* player, uint8 oldLevel)
     event.subjectType = "level";
     event.subjectId = newLevel;
     event.payloadJson = Acore::StringFormat(
-        "{{\"old_level\":{},\"new_level\":{}}}",
+        "{{\"old_level\":{},\"new_level\":{},\"actor_level\":{}}}",
         oldLevel,
-        newLevel);
+        newLevel, newLevel);
 
     uint64 const guid = player ? player->GetGUID().GetRawValue() : 0;
     event.dedupeIdentity = Acore::StringFormat(
@@ -103,9 +111,9 @@ FuryEvent FuryEventFactory::ZoneChanged(
     event.subjectType = "zone";
     event.subjectId = newZone;
     event.payloadJson = Acore::StringFormat(
-        "{{\"zone_id\":{},\"area_id\":{}}}",
+        "{{\"zone_id\":{},\"area_id\":{},\"actor_level\":{}}}",
         newZone,
-        newArea);
+        newArea, player ? player->GetLevel() : 0);
     event.dedupeIdentity = OccurrenceIdentity("zone", player);
     return event;
 }

@@ -265,6 +265,13 @@ void DatabaseConnection::DoPrepareStatements()
         "WHERE id = ? AND status = 2",
         CONNECTION_SYNCH);
 
+    PrepareStatement(FURY_SEL_DIRECTOR_LATEST_GRAPH,
+        "SELECT id, household_id, graph_key, scope_key, status, phase_key, "
+        "external_runtime_id, started_event_id, last_event_id, "
+        "resolved_event_id, outcome_key, revision "
+        "FROM fury_director_run WHERE household_id = ? AND graph_key = ? "
+        "ORDER BY id DESC LIMIT 1",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_DIRECTOR_GRAPH,
         "SELECT scope_key, display_name, campaign_node_key, enabled "
         "FROM fury_director_graph WHERE graph_key = ?",

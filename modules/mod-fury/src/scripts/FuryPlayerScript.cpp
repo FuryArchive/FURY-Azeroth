@@ -68,6 +68,7 @@ public:
             "FuryPlayerScript",
             {
                 PLAYERHOOK_ON_LOGIN,
+                PLAYERHOOK_ON_LOGOUT,
                 PLAYERHOOK_ON_LEVEL_CHANGED,
                 PLAYERHOOK_ON_UPDATE_ZONE,
                 PLAYERHOOK_ON_PLAYER_COMPLETE_QUEST,
@@ -82,6 +83,11 @@ public:
     void OnPlayerLogin(Player* player) override
     {
         Publish(Fury::FuryEventFactory::PlayerLogin(player));
+    }
+
+    void OnPlayerLogout(Player* player) override
+    {
+        Publish(Fury::FuryEventFactory::PlayerLogout(player));
     }
 
     void OnPlayerLevelChanged(Player* player, uint8 oldLevel) override

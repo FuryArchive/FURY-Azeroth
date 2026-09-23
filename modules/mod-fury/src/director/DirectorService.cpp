@@ -124,7 +124,13 @@ DirectorResult DirectorService::AdvancePhase(
     }
 
     if (run->phaseKey == phaseKey)
+    {
+        // A restart reloads the post-mutation revision. Repair an event append
+        // that failed after the phase row was committed, even at that revision.
+        if (!EmitPhaseEvent(source, *run))
+            return {DirectorOutcome::PersistenceFailed, run};
         return {DirectorOutcome::AlreadyApplied, run};
+    }
 
     _repository.UpdatePhase(
         runId,

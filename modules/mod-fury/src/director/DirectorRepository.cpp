@@ -110,6 +110,17 @@ std::vector<DirectorRun> DirectorRepository::LoadActiveRuns() const
     return runs;
 }
 
+std::optional<DirectorRun> DirectorRepository::FindLatestGraph(
+    HouseholdId householdId, std::string_view graphKey) const
+{
+    auto* stmt = FuryDatabase.GetPreparedStatement(FURY_SEL_DIRECTOR_LATEST_GRAPH);
+    stmt->SetData(0, householdId);
+    stmt->SetData(1, std::string(graphKey));
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result) return std::nullopt;
+    return ReadRun(result->Fetch());
+}
+
 void DirectorRepository::InsertRun(
     HouseholdId householdId,
     DirectorGraphDefinition const& graph,
