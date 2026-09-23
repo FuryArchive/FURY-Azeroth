@@ -14,6 +14,7 @@ class EventStore final
 {
 public:
     [[nodiscard]] std::optional<EventId> Append(FuryEvent const& event) const;
+    [[nodiscard]] std::optional<FuryEvent> Find(EventId eventId) const;
     [[nodiscard]] std::vector<FuryEvent> ReadAfter(
         EventId checkpoint,
         uint32 limit) const;
