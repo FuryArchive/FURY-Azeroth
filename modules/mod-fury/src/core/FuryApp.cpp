@@ -35,12 +35,14 @@ App::App()
       _professionOrders(_professionOrderRepository, _events),
       _bestiary(_bestiaryRepository, _events, _directorRepository),
       _defiasParticipation(_livingWorld, _actors, _events),
+      _defiasFieldRelief(_events),
       _defiasScore(_directorScoreRepository),
       _defiasGraph(_director, _directorRepository, _campaign, _livingWorld, _defiasContent, _events, _actors)
 {
     _eventBus.RegisterConsumer(_chronicle);
     _eventBus.RegisterConsumer(_contracts);
     _eventBus.RegisterConsumer(_professionOrders);
+    _eventBus.RegisterConsumer(_defiasFieldRelief);
     _eventBus.RegisterConsumer(_bestiary);
     _eventBus.RegisterConsumer(_defiasGraph);
     _eventBus.RegisterConsumer(_defiasScore);
