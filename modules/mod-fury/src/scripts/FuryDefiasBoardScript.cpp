@@ -2,6 +2,7 @@
 
 #include "content/defias/DefiasGraph.h"
 #include "content/defias/DefiasContracts.h"
+#include "content/defias/DefiasFieldRelief.h"
 #include "contracts/ContractTypes.h"
 #include "events/FuryEvent.h"
 
@@ -19,6 +20,17 @@ namespace
 {
 inline constexpr char BoardScriptName[] = "fury_westfall_contract_board";
 inline constexpr uint32 BoardActionBase = GOSSIP_ACTION_INFO_DEF + 100;
+
+Fury::Defias::FieldReliefChoice FieldReliefChoiceFor(Player* player)
+{
+    if (!player)
+        return {};
+
+    return Fury::Defias::SelectFieldReliefChoice(
+        player->GetSkillValue(Fury::Defias::FieldReliefAlchemySkill),
+        player->GetSkillValue(Fury::Defias::FieldReliefFirstAidSkill),
+        player->GetSkillValue(Fury::Defias::FieldReliefCookingSkill));
+}
 
 std::optional<Fury::DirectorRun> FindDefiasRun(
     Fury::App& app,
@@ -145,14 +157,35 @@ public:
                 source.payloadJson =
                     "{\"board_key\":\"classic.westfall.contracts\"}";
 
-                if (std::optional<Fury::EventId> eventId =
-                        app.Events().Append(source))
+                bool const fieldRelief =
+                    entries[index].definition.contractKey ==
+                        Fury::Defias::FieldReliefContract;
+                Fury::Defias::FieldReliefChoice const reliefChoice =
+                    fieldRelief
+                        ? FieldReliefChoiceFor(player)
+                        : Fury::Defias::FieldReliefChoice{};
+
+                if (!fieldRelief || reliefChoice)
                 {
-                    source.id = *eventId;
-                    (void)app.Contracts().Accept(
-                        source,
-                        entries[index].definition.contractKey,
-                        context.directorRunId);
+                    if (std::optional<Fury::EventId> eventId =
+                            app.Events().Append(source))
+                    {
+                        source.id = *eventId;
+                        Fury::ContractAcceptResult accepted =
+                            app.Contracts().Accept(
+                                source,
+                                entries[index].definition.contractKey,
+                                context.directorRunId);
+
+                        if (fieldRelief &&
+                            accepted.AcceptedOrExisting())
+                        {
+                            (void)app.ProfessionOrders().Start(
+                                source,
+                                Fury::Defias::FieldReliefOrderKey,
+                                reliefChoice.optionOrdinal);
+                        }
+                    }
                 }
             }
         }
@@ -223,15 +256,38 @@ private:
             for (std::size_t index = 0; index < entries.size(); ++index)
             {
                 Fury::ContractBoardEntry const& entry = entries[index];
+
+                bool const unavailableFieldRelief =
+                    entry.status == Fury::ContractStatus::Available &&
+                    entry.definition.contractKey ==
+                        Fury::Defias::FieldReliefContract &&
+                    !FieldReliefChoiceFor(player);
+
+                std::string label;
+                uint32 action = BoardActionBase +
+                    1 +
+                    static_cast<uint32>(index);
+
+                if (unavailableFieldRelief)
+                {
+                    label =
+                        "[Optional - learn Alchemy, First Aid, or Cooking] " +
+                        entry.definition.title;
+                    action = BoardActionBase;
+                }
+                else
+                {
+                    label =
+                        std::string(StatusPrefix(entry.status)) +
+                        entry.definition.title;
+                }
+
                 AddGossipItemFor(
                     player,
                     0,
-                    std::string(StatusPrefix(entry.status)) +
-                        entry.definition.title,
+                    label,
                     GOSSIP_SENDER_MAIN,
-                    BoardActionBase +
-                        1 +
-                        static_cast<uint32>(index));
+                    action);
             }
         }
 

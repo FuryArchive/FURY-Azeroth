@@ -505,7 +505,7 @@ Acceptance:
 - outcome is deterministic for recorded component set.
 
 ## T30 Defias Bestiary content
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T18, T27
 Commit target: `content(defias): add Bestiary entries`
 
@@ -515,7 +515,7 @@ Acceptance:
 - no mod-hunts dependency yet.
 
 ## T31 Adaptive Field Relief profession order
-Status: READY
+Status: IN_PROGRESS
 Depends on: T17, T27
 Commit target: `content(defias): add Field Relief order`
 
