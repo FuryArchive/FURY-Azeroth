@@ -433,7 +433,7 @@ Acceptance:
 - no Director run starts against invalid content.
 
 ## T25 Defias Director graph
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T16, T23, T24
 Commit target: `feat(defias): add Director graph`
 
@@ -451,7 +451,7 @@ Acceptance:
 - LW start occurs only after configured activation condition.
 
 ## T26 Westfall contract board
-Status: READY
+Status: IN_PROGRESS
 Depends on: T15, T25
 Commit target: `feat(defias): add Westfall contract board`
 
@@ -629,4 +629,6 @@ Gate 0 and **M1 FURY Kernel are GREEN**. PR #7 passed fast module compilation, M
 
 T13–T20 are GREEN and **M2 Campaign Platform is GREEN**. GitHub Actions run #118 passed the dedicated T20 aggregate gate, all M1 regressions, T13–T19 policy/schema scenarios, and Fast mod-fury compile.
 
-Continue with **T21 Living World source audit** using only the exact pinned upstream revision before any M3 bridge/content code.
+T21–T25 are GREEN. T25 merged through PR #26 / commit `d328e889c403fcd79d84f9ca7908068d8a8f2b71`; final FURY CI run #131 passed.
+
+Continue with **T26 Westfall contract board**. Keep it server-side through the pinned AzerothCore GameObject gossip API; T27 owns the six Defias contract definitions/objectives.
