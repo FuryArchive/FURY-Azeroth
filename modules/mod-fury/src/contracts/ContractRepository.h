@@ -15,6 +15,9 @@ public:
     [[nodiscard]] std::optional<ContractDefinition> FindDefinition(
         std::string_view contractKey) const;
 
+    [[nodiscard]] std::vector<ContractDefinition> ListBoardDefinitions(
+        std::string_view boardKey) const;
+
     [[nodiscard]] std::optional<ContractInstance> FindActiveInstance(
         HouseholdId householdId,
         std::string_view contractKey) const;
