@@ -1,7 +1,10 @@
 #include "BestiaryService.h"
 #include "BestiaryPolicy.h"
 
+#include "content/defias/DefiasBestiary.h"
+#include "content/defias/DefiasGraph.h"
 #include "core/FuryKey.h"
+#include "director/DirectorRepository.h"
 #include "events/EventStore.h"
 
 #include "Log.h"
@@ -11,29 +14,44 @@ namespace Fury
 {
 BestiaryService::BestiaryService(
     BestiaryRepository const& repository,
-    EventStore const& events)
+    EventStore const& events,
+    DirectorRepository const& director)
     : _repository(repository),
-      _events(events)
+      _events(events),
+      _director(director)
 {
 }
 
 bool BestiaryService::Handle(FuryEvent const& event)
 {
-    if (event.type != "creature.killed")
+    if (event.type == "director.run.resolved")
+        return ApplyDefiasSuccessMastery(event);
+
+    if (!IsAuthorizedSource(event) || !event.subjectId)
         return true;
 
-    if (!IsAuthorizedSource(event) ||
-        event.subjectType != "creature" ||
-        !event.subjectId)
+    std::vector<BestiaryMapping> mappings;
+
+    if (event.type == "creature.killed" &&
+        event.subjectType == "creature")
+    {
+        mappings = _repository.FindMappings(
+            static_cast<uint32>(*event.subjectId));
+    }
+    else if (event.type == "defias.bestiary.entity.participated" &&
+             event.sourceSystem == "fury.defias" &&
+             event.correlationKey == Defias::GraphKey &&
+             event.subjectType == "living_world_spawn_group")
+    {
+        mappings = _repository.FindEventMappings(
+            event.type,
+            event.subjectType,
+            *event.subjectId);
+    }
+    else
     {
         return true;
     }
-
-    uint32 const creatureEntry =
-        static_cast<uint32>(*event.subjectId);
-
-    std::vector<BestiaryMapping> mappings =
-        _repository.FindMappings(creatureEntry);
 
     for (BestiaryMapping const& mapping : mappings)
     {
@@ -152,6 +170,75 @@ bool BestiaryService::ApplyMappedKill(
     return true;
 }
 
+bool BestiaryService::ApplyDefiasSuccessMastery(
+    FuryEvent const& source) const
+{
+    if (!source.id ||
+        source.sourceSystem != "fury.director" ||
+        source.subjectType != "director_run" ||
+        !source.subjectId ||
+        !source.actor.householdId ||
+        !*source.actor.householdId ||
+        source.correlationKey != Defias::GraphKey)
+    {
+        return true;
+    }
+
+    std::optional<DirectorRun> run =
+        _director.FindRun(*source.subjectId);
+    if (!run ||
+        run->householdId != *source.actor.householdId ||
+        run->graphKey != Defias::GraphKey ||
+        run->status != DirectorRunStatus::Complete ||
+        !run->resolvedEventId ||
+        *run->resolvedEventId != source.id ||
+        !run->outcomeKey ||
+        *run->outcomeKey != "success")
+    {
+        return true;
+    }
+
+    std::vector<uint32> accounts =
+        _repository.FindHouseholdAccountsAtLeastLevel(
+            run->householdId,
+            Defias::CommanderBestiaryEntry,
+            BestiaryDiscoveryLevel::Studied);
+
+    for (uint32 accountId : accounts)
+    {
+        _repository.ApplyLevel(
+            accountId,
+            Defias::CommanderBestiaryEntry,
+            BestiaryDiscoveryLevel::Mastered,
+            source.id);
+
+        std::optional<BestiaryState> state =
+            _repository.FindState(
+                accountId,
+                Defias::CommanderBestiaryEntry);
+
+        if (!state ||
+            state->lastEventId < source.id ||
+            state->discoveryLevel !=
+                BestiaryDiscoveryLevel::Mastered)
+        {
+            LOG_ERROR(
+                "server.loading",
+                "[FURY] Defias commander mastery verification failed "
+                "(account={}, run={}, event={}).",
+                accountId,
+                run->id,
+                source.id);
+            return false;
+        }
+
+        if (!EmitAdvancedEvent(source, *state))
+            return false;
+    }
+
+    return true;
+}
+
 bool BestiaryService::EmitAdvancedEvent(
     FuryEvent const& source,
     BestiaryState const& state) const
@@ -159,6 +246,13 @@ bool BestiaryService::EmitAdvancedEvent(
     FuryEvent event;
     event.type = "bestiary.entry.advanced";
     event.actor = source.actor;
+    if (event.actor.accountId != state.accountId)
+    {
+        event.actor.kind = ActorKind::System;
+        event.actor.characterGuid = ObjectGuid::Empty;
+        event.actor.accountId = state.accountId;
+        event.actor.isEligibleForPersistentProgression = false;
+    }
     event.mapId = source.mapId;
     event.zoneId = source.zoneId;
     event.areaId = source.areaId;

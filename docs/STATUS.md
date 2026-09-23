@@ -159,4 +159,6 @@ T27 is GREEN through PR #31 / commit `cd22585fe90b93b87d1960143ce4fe968acedc92`.
 
 T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`. FURY CI **#141** passed the human participation policy gate, Fast mod-fury compile, and the full regression set.
 
-T29 is **IN_PROGRESS** on `agent/m3-t29-participation-score`. It adds a generic Director score ledger, the accepted 100-point Defias model, immutable replay-safe component awards, configurable 70/30 threshold policy, and human final-stage participation as the seventh score component.
+T29 is **GREEN** through PR #33 / merge commit `cb3e4b6b1929a2949f38b110eee4e43dde075c08`. FURY CI **#159** and Full Runtime **#13** passed, including exact event-to-run score attribution, pinned worldserver build, real FURY database lifecycle, and two worldserver smokes.
+
+T30 Defias Bestiary is **IN_PROGRESS** on `agent/m3-t30-defias-bestiary-r2`. Runtime groups 100–105 map through per-account Human participation events only; ordinary Westfall creature entries cannot advance the Defias Bestiary. Captain Garrick Vane reaches Mastered only from the canonical successful Director resolution for accounts that personally reached Studied.

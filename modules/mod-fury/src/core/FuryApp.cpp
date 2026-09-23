@@ -33,7 +33,7 @@ App::App()
       _director(_directorRepository, _events),
       _directorReconciliation(_directorRepository),
       _professionOrders(_professionOrderRepository, _events),
-      _bestiary(_bestiaryRepository, _events),
+      _bestiary(_bestiaryRepository, _events, _directorRepository),
       _defiasParticipation(_livingWorld, _actors, _events),
       _defiasScore(_directorScoreRepository),
       _defiasGraph(_director, _directorRepository, _campaign, _livingWorld, _defiasContent, _events, _actors)

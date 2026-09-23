@@ -42,7 +42,10 @@ for table in fury_bestiary_entry fury_bestiary_creature_map fury_bestiary_state;
 done
 
 echo "[FURY] T17 -> T18 migration path"
-sql "DROP TABLE fury_bestiary_state;
+# T30 adds an event-map FK to fury_bestiary_entry. Remove the newer extension
+# before simulating the historical T17 -> T18 migration boundary.
+sql "DROP TABLE IF EXISTS fury_bestiary_event_map;
+     DROP TABLE fury_bestiary_state;
      DROP TABLE fury_bestiary_creature_map;
      DROP TABLE fury_bestiary_entry;"
 "${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/updates/2026_09_22_06_bestiary.sql"

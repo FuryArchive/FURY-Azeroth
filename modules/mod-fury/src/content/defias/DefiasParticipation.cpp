@@ -211,6 +211,65 @@ void ParticipationService::ObserveDamage(
         observation;
 }
 
+bool ParticipationService::EmitBestiaryParticipation(
+    Player* player,
+    Creature* creature,
+    LivingWorldEntityMetadata const& metadata,
+    ParticipationCreditKind kind)
+{
+    if (!player ||
+        !creature ||
+        kind == ParticipationCreditKind::None)
+    {
+        return true;
+    }
+
+    ActorContext actor = _actors.Resolve(player);
+    if (actor.kind != ActorKind::Human ||
+        !actor.accountId ||
+        !actor.householdId ||
+        !*actor.householdId)
+    {
+        return true;
+    }
+
+    uint64 const creatureGuid =
+        creature->GetGUID().GetRawValue();
+
+    FuryEvent event;
+    event.type = "defias.bestiary.entity.participated";
+    event.actor = actor;
+    event.mapId = player->GetMapId();
+    event.zoneId = player->GetZoneId();
+    event.areaId = player->GetAreaId();
+    event.subjectType = "living_world_spawn_group";
+    event.subjectId = metadata.spawnGroupId;
+    event.sourceSystem = "fury.defias";
+    event.correlationKey = GraphKey;
+    event.dedupeIdentity = Acore::StringFormat(
+        "defias:bestiary-participation:v1:{}:{}:{}:{}",
+        metadata.runtimeId,
+        metadata.runtimeGroupId,
+        creatureGuid,
+        actor.accountId);
+    event.payloadJson = Acore::StringFormat(
+        "{{\"runtime_id\":{},\"runtime_group_id\":{},"
+        "\"spawn_group_id\":{},\"member_id\":{},"
+        "\"creature_guid\":{},\"account_id\":{},"
+        "\"credit_kind\":\"{}\"}}",
+        metadata.runtimeId,
+        metadata.runtimeGroupId,
+        metadata.spawnGroupId,
+        metadata.memberId,
+        creatureGuid,
+        actor.accountId,
+        kind == ParticipationCreditKind::Direct
+            ? "direct"
+            : "group_share");
+
+    return _events.Append(event).has_value();
+}
+
 void ParticipationService::AddCredit(
     std::unordered_map<HouseholdId, HouseholdCredit>& credits,
     Player* player,
@@ -283,6 +342,7 @@ void ParticipationService::ObserveDeath(Unit* victim, Unit* killer)
 
     auto const now = std::chrono::steady_clock::now();
     std::unordered_map<HouseholdId, HouseholdCredit> credits;
+    std::unordered_map<uint32, HouseholdCredit> individualCredits;
     std::vector<std::pair<Player*, uint32>> directPlayers;
 
     for (auto const& [guid, observation] :
@@ -324,6 +384,11 @@ void ParticipationService::ObserveDeath(Unit* victim, Unit* killer)
 
         AddCredit(
             credits,
+            player,
+            kind,
+            candidate.secondsSinceAnchorAction);
+        AddIndividualCredit(
+            individualCredits,
             player,
             kind,
             candidate.secondsSinceAnchorAction);
@@ -377,12 +442,20 @@ void ParticipationService::ObserveDeath(Unit* victim, Unit* killer)
                     member->GetDistance(creature);
                 candidate.linkedToDirectGroup = true;
 
+                ParticipationCreditKind kind =
+                    ResolveParticipationCredit(
+                        candidate,
+                        _rules);
+
                 AddCredit(
                     credits,
                     member,
-                    ResolveParticipationCredit(
-                        candidate,
-                        _rules),
+                    kind,
+                    age);
+                AddIndividualCredit(
+                    individualCredits,
+                    member,
+                    kind,
                     age);
             }
         }
@@ -405,6 +478,29 @@ void ParticipationService::ObserveDeath(Unit* victim, Unit* killer)
         {
             finalBlowActorKind =
                 _actors.Resolve(killerPlayer).kind;
+        }
+    }
+
+    for (auto const& [accountId, credit] : individualCredits)
+    {
+        (void)accountId;
+
+        if (!credit.player)
+            continue;
+
+        if (!EmitBestiaryParticipation(
+                credit.player,
+                creature,
+                metadata,
+                credit.kind))
+        {
+            LOG_ERROR(
+                "server.loading",
+                "[FURY] failed to persist Defias Bestiary participation "
+                "(account={}, runtime={}, creature={}).",
+                accountId,
+                metadata.runtimeId,
+                creatureGuid);
         }
     }
 
@@ -446,6 +542,38 @@ void ParticipationService::ObserveDeath(Unit* victim, Unit* killer)
                 householdId,
                 metadata.runtimeId);
         }
+    }
+}
+
+void ParticipationService::AddIndividualCredit(
+    std::unordered_map<uint32, HouseholdCredit>& credits,
+    Player* player,
+    ParticipationCreditKind kind,
+    uint32 secondsSinceAnchorAction) const
+{
+    if (!player || kind == ParticipationCreditKind::None)
+        return;
+
+    ActorContext actor = _actors.Resolve(player);
+    if (actor.kind != ActorKind::Human || !actor.accountId)
+        return;
+
+    HouseholdCredit& credit = credits[actor.accountId];
+
+    bool const betterKind =
+        BetterCredit(credit.kind, kind) != credit.kind;
+
+    bool const sameKindEarlier =
+        credit.kind == kind &&
+        (!credit.player ||
+         player->GetGUID().GetRawValue() <
+             credit.player->GetGUID().GetRawValue());
+
+    if (!credit.player || betterKind || sameKindEarlier)
+    {
+        credit.player = player;
+        credit.kind = kind;
+        credit.secondsSinceAnchorAction = secondsSinceAnchorAction;
     }
 }
 

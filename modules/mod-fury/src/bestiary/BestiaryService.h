@@ -6,6 +6,7 @@
 
 namespace Fury
 {
+class DirectorRepository;
 class EventStore;
 
 class BestiaryService final : public EventConsumer
@@ -13,7 +14,8 @@ class BestiaryService final : public EventConsumer
 public:
     BestiaryService(
         BestiaryRepository const& repository,
-        EventStore const& events);
+        EventStore const& events,
+        DirectorRepository const& director);
 
     [[nodiscard]] std::string_view Key() const override
     {
@@ -39,6 +41,9 @@ private:
         FuryEvent const& source,
         BestiaryMapping const& mapping) const;
 
+    [[nodiscard]] bool ApplyDefiasSuccessMastery(
+        FuryEvent const& source) const;
+
     [[nodiscard]] bool EmitAdvancedEvent(
         FuryEvent const& source,
         BestiaryState const& state) const;
@@ -47,6 +52,7 @@ private:
 
     BestiaryRepository const& _repository;
     EventStore const& _events;
+    DirectorRepository const& _director;
 };
 }
 
