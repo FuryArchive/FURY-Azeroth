@@ -28,7 +28,9 @@ Date: 2026-09-23
 - T22 Living World external bridge patch: GREEN.
 - T23 FURY LivingWorldAdapter: GREEN.
 - T24 Defias content validation/random-start overlay: GREEN.
-- M3 Defias Resurgence vertical slice: IN_PROGRESS — T25 Defias Director graph is next.
+- T25 Defias Director graph: GREEN.
+- T26 Westfall contract board: GREEN.
+- M3 Defias Resurgence vertical slice: IN_PROGRESS — T27 Six Defias contracts is next.
 
 ## Repository baseline
 
@@ -146,4 +148,10 @@ T23 is GREEN through PR #24 / commit `41de42d2b7410fc2b3dfe449e2b42c1238db1d88`.
 
 T24 is GREEN through PR #25 / commit `106f157c7676d740f868a11b4a4412c80b743119`. Fast CI run #126 passed the exact Defias content contract gate, MySQL overlay idempotency/isolation check, Fast mod-fury compile, and Living World/M2 regressions.
 
-Begin **T25 Defias Director graph** next.
+T25 is GREEN through PR #26 / commit `d328e889c403fcd79d84f9ca7908068d8a8f2b71`. Final FURY CI run **#131** passed the Defias graph/persistence suite, replay/presence/Living World terminal-delivery regressions, Fast mod-fury compile, and existing regression gates.
+
+T26 is GREEN through PR #27. FURY CI **#133** passed the T26 policy/MySQL gate, Fast mod-fury compile and all active regressions. Full Runtime **#5** also passed the pinned worldserver build, real FURY database create/populate/update/restart lifecycle and the runtime smoke sequence.
+
+The Westfall board is a server-side AzerothCore GameObject gossip surface at Sentinel Hill. It uses the existing Contracts service as the only acceptance authority and requires no addon or custom client patch.
+
+Begin **T27 Six Defias contracts** next; use only runtime-qualified Living World entity metadata for invasion kill objectives.

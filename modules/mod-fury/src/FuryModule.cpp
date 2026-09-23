@@ -5,6 +5,7 @@
 void AddFuryDatabaseScripts();
 void AddFuryPlayerScripts();
 void AddFuryCommandScripts();
+void AddFuryGameObjectScripts();
 
 namespace
 {
@@ -44,5 +45,6 @@ void AddFuryScripts()
     AddFuryDatabaseScripts();
     AddFuryPlayerScripts();
     AddFuryCommandScripts();
+    AddFuryGameObjectScripts();
     new FuryWorldScript();
 }

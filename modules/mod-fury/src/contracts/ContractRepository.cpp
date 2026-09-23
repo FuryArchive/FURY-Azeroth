@@ -42,6 +42,47 @@ std::optional<ContractDefinition> ContractRepository::FindDefinition(
     return definition;
 }
 
+std::vector<ContractDefinition> ContractRepository::ListBoardDefinitions(
+    std::string_view boardKey) const
+{
+    std::vector<ContractDefinition> definitions;
+
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_SEL_CONTRACT_BOARD_DEFINITIONS);
+    stmt->SetData(0, std::string(boardKey));
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return definitions;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        ContractDefinition definition;
+        definition.contractKey = fields[0].Get<std::string>();
+        definition.boardKey = std::string(boardKey);
+        definition.title = fields[1].Get<std::string>();
+
+        if (!fields[2].IsNull())
+            definition.campaignNodeKey = fields[2].Get<std::string>();
+
+        if (!fields[3].IsNull())
+            definition.directorPhase = fields[3].Get<std::string>();
+
+        definition.repeatPolicy =
+            static_cast<ContractRepeatPolicy>(fields[4].Get<uint8>());
+
+        if (!fields[5].IsNull())
+            definition.rewardKey = fields[5].Get<std::string>();
+
+        definition.enabled = fields[6].Get<uint8>() != 0;
+        definitions.push_back(std::move(definition));
+    } while (result->NextRow());
+
+    return definitions;
+}
+
 std::optional<ContractInstance> ContractRepository::FindActiveInstance(
     HouseholdId householdId,
     std::string_view contractKey) const
