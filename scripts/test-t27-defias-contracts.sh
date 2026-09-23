@@ -192,6 +192,36 @@ runtime_matches="$(sql "SELECT COUNT(*)
          OR d.external_runtime_id = 77);")"
 assert_eq "1" "${runtime_matches}"   "post-acceptance runtime group kill matches the intended objective"
 
+sql "INSERT INTO fury_event
+  (event_type, actor_kind, household_id, subject_type, subject_id, source_system, dedupe_key, payload)
+  VALUES
+  ('living_world.entity.killed', 1, ${household_id},
+   'living_world_spawn_group', 100, 'living_world',
+   UNHEX(SHA2('t27-wrong-runtime-kill',256)),
+   JSON_OBJECT('runtime_id', 88, 'spawn_group_id', 100));"
+wrong_runtime_event="$(sql "SELECT id FROM fury_event WHERE dedupe_key=UNHEX(SHA2('t27-wrong-runtime-kill',256));")"
+
+wrong_runtime_matches="$(sql "SELECT COUNT(*)
+  FROM fury_contract_objective o FORCE INDEX (ix_fury_contract_objective_match)
+  JOIN fury_contract_instance i
+    ON i.contract_key=o.contract_key
+   AND i.household_id=${household_id}
+   AND i.status=2
+  JOIN fury_contract_progress p
+    ON p.instance_id=i.id
+   AND p.objective_ordinal=o.ordinal
+  LEFT JOIN fury_director_run d
+    ON d.id=i.director_run_id
+  WHERE o.event_type='living_world.entity.killed'
+    AND (o.subject_type IS NULL OR o.subject_type='living_world_spawn_group')
+    AND (o.subject_id IS NULL OR o.subject_id=100)
+    AND i.accepted_event_id <= ${wrong_runtime_event}
+    AND (i.director_run_id IS NULL
+         OR o.event_type <> 'living_world.entity.killed'
+         OR d.external_runtime_id = 88);")"
+assert_eq "0" "${wrong_runtime_matches}"   "runtime kill from a different external runtime cannot progress the contract"
+
 grep -Fq '"AND i.accepted_event_id <= ?"'   "${ROOT}/modules/mod-fury/src/database/FuryDatabase.cpp"
+grep -Fq "JSON_EXTRACT(?, '$.runtime_id')"   "${ROOT}/modules/mod-fury/src/database/FuryDatabase.cpp"
 
 echo "[FURY][PASS] T27 Defias contract schema/replay gate passed"
