@@ -73,3 +73,22 @@ Additional regressions: `test-t25-director-replay.sh` exercises the production
 DirectorService with external persistence/append failure injection;
 `test-t25-defias-presence.sh` tests the production session timer;
 `test-t25-lw-completion.sh` tests the patched optional completion observer.
+
+## Optional configuration overrides
+
+Defaults below are compiled into the content service. Add overrides to your
+server mod_fury.conf when tuning; the global config template is unchanged so
+ordinary domain tuning does not retrigger full worldserver builds.
+
+```ini
+# T25 Defias graph. Start requires a human >= MinimumLevel in Westfall.
+# Activation: contract, presence, or contract_or_presence.
+# Presence counts continuously observed online time; restarts reset only this
+# unqualified timer, never the durable run or a queued activation decision.
+Fury.Defias.Enable = 1
+Fury.Defias.MinimumLevel = 10
+Fury.Defias.Activation = "contract_or_presence"
+Fury.Defias.PresenceSeconds = 120
+# Explicit key reserved for T27; no unrelated contract can activate Defias.
+Fury.Defias.ActivationContract = "classic.westfall.defias.scout_report"
+```

@@ -81,6 +81,8 @@ int main()
     Port recovery; Graph repair(recovery); recovery.failStartEmit = true;
     assert(!repair.Enter(e, 10)); recovery.failStartEmit = false;
     assert(repair.Enter(e, 10)); assert(recovery.startEmits == 1);
+    recovery.disabled = true;
+    assert(repair.Enter(e, 10)); recovery.disabled = false;
     recovery.failPhaseEmit = true;
     assert(!repair.Activate(e, 1)); recovery.failPhaseEmit = false;
     assert(repair.Activate(e, 1)); assert(recovery.phaseEmits == 1);

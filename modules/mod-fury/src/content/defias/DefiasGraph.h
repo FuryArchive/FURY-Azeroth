@@ -46,7 +46,10 @@ public:
         {
             // Retry the original start's event emission after row persistence.
             if (Active(*existing) && existing->startedEventId == source.id)
-                return _port.Start(source).Accepted();
+            {
+                auto result = _port.Start(source);
+                return result.Accepted() || result.outcome == DirectorOutcome::GraphDisabled;
+            }
             return true;
         }
         if (_port.CampaignComplete(household)) return true;
