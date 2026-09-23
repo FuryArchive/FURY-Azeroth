@@ -221,7 +221,7 @@ wrong_runtime_matches="$(sql "SELECT COUNT(*)
          OR d.external_runtime_id = 88);")"
 assert_eq "0" "${wrong_runtime_matches}"   "runtime kill from a different external runtime cannot progress the contract"
 
-grep -Fq '"AND i.accepted_event_id <= ?"'   "${ROOT}/modules/mod-fury/src/database/FuryDatabase.cpp"
+grep -Fq 'AND i.accepted_event_id <= ?'   "${ROOT}/modules/mod-fury/src/database/FuryDatabase.cpp"
 grep -Fq "JSON_EXTRACT(?, '$.runtime_id')"   "${ROOT}/modules/mod-fury/src/database/FuryDatabase.cpp"
 
 echo "[FURY][PASS] T27 Defias contract schema/replay gate passed"
