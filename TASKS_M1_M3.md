@@ -505,7 +505,7 @@ Acceptance:
 - outcome is deterministic for recorded component set.
 
 ## T30 Defias Bestiary content
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T18, T27
 Commit target: `content(defias): add Bestiary entries`
 
@@ -515,7 +515,7 @@ Acceptance:
 - no mod-hunts dependency yet.
 
 ## T31 Adaptive Field Relief profession order
-Status: READY
+Status: IN_PROGRESS
 Depends on: T17, T27
 Commit target: `content(defias): add Field Relief order`
 
@@ -639,4 +639,6 @@ T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`;
 
 T29 is GREEN through PR #33 / merge commit `cb3e4b6b1929a2949f38b110eee4e43dde075c08`. FURY CI #159 and Full Runtime #13 passed, including the exact-run score attribution fixes, pinned worldserver build, real FURY DB lifecycle, and two worldserver smokes.
 
-T30 is IN_PROGRESS on `agent/m3-t30-defias-bestiary-r2`: runtime-only Defias Bestiary mappings, personal Human participation credit, and success-gated commander Mastered projection are implemented pending CI.
+T30 is GREEN through PR #34 / merge commit `e0f90103e60667819bcfe8362f508c5d4094cbc0`. FURY CI #161 passed the Defias Bestiary runtime/mastery gate, Fast mod-fury compile, and all existing regressions.
+
+T31 is IN_PROGRESS on `agent/m3-t31-field-relief`: seven starter-tier profession paths, player-adaptive board selection, generic ProfessionOrder progression, and the stable Field Relief completion bridge are implemented pending pinned-content audit and CI.
