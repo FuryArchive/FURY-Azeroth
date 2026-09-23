@@ -2,6 +2,9 @@
 #define MOD_FURY_DEFIAS_RESOLUTION_SERVICE_H
 
 #include "events/EventConsumer.h"
+#include "director/DirectorTypes.h"
+
+#include <string_view>
 
 namespace Fury
 {
