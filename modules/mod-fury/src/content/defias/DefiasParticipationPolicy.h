@@ -15,8 +15,8 @@ struct ParticipationRules
 enum class ParticipationCreditKind : uint8
 {
     None = 0,
-    Direct = 1,
-    GroupShare = 2
+    GroupShare = 1,
+    Direct = 2
 };
 
 struct ParticipationCandidate
