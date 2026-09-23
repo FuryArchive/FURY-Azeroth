@@ -358,6 +358,7 @@ void DatabaseConnection::DoPrepareStatements()
         "JOIN fury_director_run r ON r.id = i.director_run_id "
         "WHERE i.id = ? AND i.household_id = ? "
         "AND i.contract_key = ? AND r.graph_key = ? "
+        "AND i.completed_event_id = ? "
         "LIMIT 1",
         CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_DIRECTOR_SCORE_RUN_FOR_RUNTIME,
