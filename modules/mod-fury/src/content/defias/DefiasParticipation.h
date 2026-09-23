@@ -7,7 +7,9 @@
 #include "ObjectGuid.h"
 
 #include <chrono>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 class Creature;
 class Player;
@@ -19,6 +21,7 @@ class ActorResolver;
 class EventStore;
 class LivingWorldAdapter;
 struct LivingWorldEntityMetadata;
+struct LivingWorldRuntimeSnapshot;
 }
 
 namespace Fury::Defias
@@ -66,7 +69,13 @@ private:
 
     [[nodiscard]] bool ResolveRuntimeTarget(
         Creature* creature,
-        LivingWorldEntityMetadata& metadata) const;
+        LivingWorldEntityMetadata& metadata,
+        LivingWorldRuntimeSnapshot* runtime = nullptr) const;
+
+    bool EmitFinalStagePresence(
+        Player* player,
+        LivingWorldEntityMetadata const& metadata,
+        LivingWorldRuntimeSnapshot const& runtime);
 
     void AddCredit(
         std::unordered_map<HouseholdId, HouseholdCredit>& credits,
@@ -81,6 +90,7 @@ private:
     EventStore const& _events;
     ParticipationRules _rules;
     std::unordered_map<uint64, Encounter> _encounters;
+    std::unordered_set<std::string> _finalStagePresence;
 };
 }
 
