@@ -38,8 +38,8 @@ bool BestiaryService::Handle(FuryEvent const& event)
         mappings = _repository.FindMappings(
             static_cast<uint32>(*event.subjectId));
     }
-    else if (event.type == "living_world.entity.killed" &&
-             event.sourceSystem == "living_world" &&
+    else if (event.type == "defias.bestiary.entity.participated" &&
+             event.sourceSystem == "fury.defias" &&
              event.subjectType == "living_world_spawn_group")
     {
         mappings = _repository.FindEventMappings(
