@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
-  "generated_at": "2026-09-22",
-  "compatibility_status": "PINNED_NOT_YET_BUILD_VERIFIED",
+  "schema_version": 2,
+  "generated_at": "2026-09-24",
+  "compatibility_status": "SELECTED_STACK_PINNED_COMPATIBILITY_IN_PROGRESS",
   "core": {
     "repository": "mod-playerbots/azerothcore-wotlk",
     "branch": "Playerbot",
@@ -12,29 +12,243 @@
       "repository": "mod-playerbots/mod-playerbots",
       "branch": "master",
       "commit": "7bae1b5c58c76a0aa20381155edc08096d1485b2",
+      "directory": "mod-playerbots",
+      "tier": "baseline",
       "required": true
     },
     "individual_progression": {
       "repository": "ZhengPeiRu21/mod-individual-progression",
       "branch": "master",
       "commit": "977e2005bacf97f35e506eb27b8af6b2ea1136af",
+      "directory": "mod-individual-progression",
+      "tier": "baseline",
       "required": true
     },
     "living_world": {
       "repository": "Hisha/mod-living-world",
       "branch": "main",
       "commit": "116926ef9ce42ee0bba223c1e406cf62cedd9904",
+      "directory": "mod-living-world",
+      "tier": "baseline",
       "required": true,
       "patches": [
         "vendor/patches/mod-living-world/0001-fury-bridge.patch"
       ]
+    },
+    "autobalance": {
+      "repository": "azerothcore/mod-autobalance",
+      "branch": "master",
+      "commit": "73d4ad3c379fbfc35c63b5b9b44fba1f7d9e213d",
+      "directory": "mod-autobalance",
+      "tier": "selected",
+      "required": true,
+      "role": "two-player instance scaling"
+    },
+    "ah_bot": {
+      "repository": "azerothcore/mod-ah-bot",
+      "branch": "master",
+      "commit": "c11d8318cbd8714a9980f9464f78e07d3d48a70a",
+      "directory": "mod-ah-bot",
+      "tier": "selected",
+      "required": true,
+      "role": "private-server auction economy"
+    },
+    "progression_system": {
+      "repository": "azerothcore/mod-progression-system",
+      "branch": "main",
+      "commit": "ae6a53c2c51696627ace1b3624b4e267f7f827fa",
+      "directory": "mod-progression-system",
+      "tier": "selected",
+      "required": true,
+      "role": "staged Classic-TBC-WotLK execution layer"
+    },
+    "zone_difficulty": {
+      "repository": "azerothcore/mod-zone-difficulty",
+      "branch": "master",
+      "commit": "f644224e8a52d99af38cd9aaa79bc7e937413f7e",
+      "directory": "mod-zone-difficulty",
+      "tier": "selected",
+      "required": true,
+      "role": "per-zone difficulty controls; built-in mythic mode must remain disabled"
+    },
+    "rdf_expansion": {
+      "repository": "azerothcore/mod-rdf-expansion",
+      "branch": "master",
+      "commit": "c7a91c5973cda4529495b52b89375913f98726d6",
+      "directory": "mod-rdf-expansion",
+      "tier": "selected",
+      "required": true,
+      "role": "Classic/TBC RDF access for later-era characters"
+    },
+    "dungeon_clear": {
+      "repository": "jrad7/mod-dungeon-clear",
+      "branch": "master",
+      "commit": "3fb3566beccd4f823dd10edf927ef2587e2923f5",
+      "directory": "mod-dungeon-clear",
+      "tier": "selected",
+      "required": true,
+      "role": "playerbot-led dungeon traversal and scripted-event handling"
+    },
+    "aoe_loot": {
+      "repository": "azerothcore/mod-aoe-loot",
+      "branch": "master",
+      "commit": "3d1466e122f2d43addb10e64b35e01025a214334",
+      "directory": "mod-aoe-loot",
+      "tier": "selected",
+      "required": true,
+      "role": "loot quality-of-life"
+    },
+    "account_achievements": {
+      "repository": "azerothcore/mod-account-achievements",
+      "branch": "master",
+      "commit": "bfbe3677635feeef823057964e028e023633115a",
+      "directory": "mod-account-achievements",
+      "tier": "selected",
+      "required": true,
+      "role": "account-wide achievements"
+    },
+    "war_effort": {
+      "repository": "azerothcore/mod-war-effort",
+      "branch": "master",
+      "commit": "512a2dd97e6589482148ed870dc67e7292a8c5ac",
+      "directory": "mod-war-effort",
+      "tier": "selected",
+      "required": true,
+      "role": "Ahn'Qiraj war effort / Classic campaign event"
+    },
+    "dungeon_master": {
+      "repository": "trauntrow/mod-dungeon-master",
+      "branch": "main",
+      "commit": "612eaf804cd7fc4af74fde66d376a571a5550077",
+      "directory": "mod-dungeon-master",
+      "tier": "selected",
+      "required": true,
+      "role": "procedural dungeon expeditions; FURY must own persistent rewards"
+    },
+    "warband_camp": {
+      "repository": "Ildourol/mod-warband-camp",
+      "branch": "main",
+      "commit": "7c4820e4388e762f5939f1e6996250832a696b9f",
+      "directory": "mod-warband-camp",
+      "tier": "selected",
+      "required": true,
+      "role": "account camp/housing and future Camping integration"
+    },
+    "nemesis_system": {
+      "repository": "Old-Man-Warcraft/mod-nemesis-system",
+      "branch": "main",
+      "commit": "8b714e58f6643058c214062ae40fd2be6746f7f9",
+      "directory": "mod-nemesis-system",
+      "tier": "selected",
+      "required": true,
+      "role": "persistent emergent nemesis enemies"
+    },
+    "challenge_modes": {
+      "repository": "ZhengPeiRu21/mod-challenge-modes",
+      "branch": "master",
+      "commit": "1930525b9530d329cb9fe0504a3c9b5b40a12261",
+      "directory": "mod-challenge-modes",
+      "tier": "selected",
+      "required": false,
+      "role": "optional per-character challenge rules"
+    },
+    "quest_radar": {
+      "repository": "warblups/mod-quest-radar",
+      "branch": "master",
+      "commit": "f7ce763e48d1c7db1afcd3611f13cd729c9c1b88",
+      "directory": "mod-quest-radar",
+      "tier": "selected",
+      "required": true,
+      "role": "quest objective QoL; optional bundled client addon"
+    },
+    "llm_chatter": {
+      "repository": "Hokken/mod-llm-chatter",
+      "branch": "master",
+      "commit": "911cde3ca86454b4d925215fdbeb061ea01292f4",
+      "directory": "mod-llm-chatter",
+      "tier": "selected",
+      "required": true,
+      "role": "local/Ollama-backed playerbot roleplay chatter"
+    }
+  },
+  "integrations": {
+    "solo_collections_platform": {
+      "repository": "haha2345/SoloCollectionsPlatform",
+      "branch": "main",
+      "commit": "7b62e8b806f38f383c9eff75e76163c55e78ad44",
+      "directory": "SoloCollectionsPlatform",
+      "kind": "workspace",
+      "selected": true,
+      "requires_client_component": true,
+      "note": "Use the platform's mod-solo-collections backend plus matched SoloCollections addon; do not stack legacy mod-transmog/account-mounts."
+    },
+    "worgoblin": {
+      "repository": "araxiaonline/mod-worgoblin",
+      "branch": "araxia-main",
+      "commit": "9e160d5a7badf534181f94c225fb29fa86d8f852",
+      "directory": "mod-worgoblin",
+      "kind": "patched_module",
+      "selected": true,
+      "requires_core_patch": true,
+      "requires_client_patch": true,
+      "note": "Must be reconciled with Playerbots core and Project Reforged client assets before activation."
+    },
+    "delves": {
+      "repository": "araxiaonline/Delves",
+      "branch": "main",
+      "commit": "aaea411c6ea1831e19e284ed4e4445f83f796272",
+      "directory": "Delves",
+      "kind": "content_bundle",
+      "selected": true,
+      "requires_client_patch": true,
+      "note": "Late-game side-content candidate with custom maps/assets; keep gated until client/content audit."
+    },
+    "mythic_plus_extended": {
+      "repository": "Ildourol/MythicPlus-extended",
+      "branch": "master",
+      "commit": "d6b67c5d06f271f66fa42b188162e01262b3a4ed",
+      "directory": "MythicPlus-extended",
+      "kind": "eluna_aio_content",
+      "selected": true,
+      "requires_client_patch": true,
+      "requires": [
+        "standard_eluna",
+        "aio"
+      ],
+      "note": "Primary Mythic+ candidate. Do not enable competing mythic modes from zone-difficulty or Dungeon Master as the canonical M+ system."
+    },
+    "aio": {
+      "repository": "Rochet2/AIO",
+      "branch": "master",
+      "commit": "087e279cdf90ff5d4343dc1569e9d3c3c5cc8548",
+      "directory": "AIO",
+      "kind": "lua_bridge",
+      "selected": true
+    },
+    "standard_eluna": {
+      "repository": "ElunaLuaEngine/ElunaAzerothcore",
+      "branch": "master",
+      "commit": "ca08cb85a10a67fdd064a01df798953a85157af2",
+      "directory": "ElunaAzerothcore",
+      "kind": "core_fork_reference",
+      "selected": true,
+      "note": "MythicPlus Extended targets standard Eluna. This must be merged/reconciled with the pinned Playerbots AzerothCore fork; stock mod-ale is not script-compatible."
+    },
+    "ale_reference": {
+      "repository": "azerothcore/mod-ale",
+      "branch": "master",
+      "commit": "bd74eae623ca63154d3eb49e1d187e872ef13370",
+      "directory": "mod-ale",
+      "kind": "reference_only",
+      "selected": false,
+      "note": "Not selected for MythicPlus Extended because ALE explicitly diverges from standard Eluna script compatibility."
     }
   },
   "deferred": {
     "hunts": {
       "repository": "Hisha/mod-hunts",
       "milestone": "M4",
-      "reason": "Keep M3 focused on proving the FURY kernel and Living World integration before adding another external gameplay runtime."
+      "reason": "Keep the existing Hunts adapter deferred until the selected module stack is compatibility-green."
     }
   }
 }
