@@ -34,7 +34,7 @@ assert_eq() {
     exit 1
   fi
 
-  echo "[FURY][PASS] ${label}"
+  echo "[FURY][PASS] ${label}" >&2
 }
 
 GRAPH="classic.westfall.defias_resurgence.v1"
