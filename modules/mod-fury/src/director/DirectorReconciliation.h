@@ -31,7 +31,8 @@ enum class DirectorReconcileAction : uint8
     RestartMissingRuntime = 4,
     ResolveFromExternal = 5,
     FailFromExternal = 6,
-    RuntimeConflict = 7
+    RuntimeConflict = 7,
+    AdoptReplacementRuntime = 8
 };
 
 struct DirectorReconcileDecision
@@ -88,8 +89,16 @@ public:
         if (state == ExternalRuntimeState::Missing)
             return DirectorReconcileAction::RestartMissingRuntime;
 
-        if (actualRuntimeId == 0 || actualRuntimeId != expectedRuntimeId)
+        if (actualRuntimeId == 0)
             return DirectorReconcileAction::RuntimeConflict;
+
+        if (actualRuntimeId != expectedRuntimeId)
+        {
+            if (state == ExternalRuntimeState::Active)
+                return DirectorReconcileAction::AdoptReplacementRuntime;
+
+            return DirectorReconcileAction::RuntimeConflict;
+        }
 
         switch (state)
         {
