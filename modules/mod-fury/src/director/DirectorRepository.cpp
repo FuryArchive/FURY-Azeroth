@@ -190,6 +190,20 @@ void DirectorRepository::Resolve(
     FuryDatabase.Execute(stmt);
 }
 
+void DirectorRepository::BindTerminalEvent(
+    DirectorRunId runId,
+    HouseholdId householdId,
+    EventId terminalEventId) const
+{
+    DatabasePreparedStatement* stmt =
+        FuryDatabase.GetPreparedStatement(FURY_UPD_DIRECTOR_TERMINAL_EVENT);
+    stmt->SetData(0, terminalEventId);
+    stmt->SetData(1, terminalEventId);
+    stmt->SetData(2, runId);
+    stmt->SetData(3, householdId);
+    FuryDatabase.Execute(stmt);
+}
+
 void DirectorRepository::Abort(
     DirectorRunId runId,
     HouseholdId householdId,
