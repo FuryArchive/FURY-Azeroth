@@ -93,10 +93,19 @@ sql "INSERT INTO fury_event
    'fury.contract_board', UNHEX(SHA2('t27-accept',256)), JSON_OBJECT());"
 accept_event="$(sql "SELECT id FROM fury_event WHERE dedupe_key=UNHEX(SHA2('t27-accept',256));")"
 
-sql "INSERT INTO fury_contract_instance
-  (household_id, contract_key, status, accepted_event_id)
+sql "INSERT INTO fury_director_run
+  (household_id, graph_key, scope_key, status, phase_key,
+   external_runtime_id, started_event_id, last_event_id)
   VALUES
-  (${household_id}, 'classic.westfall.defias.break_scouts', 2, ${accept_event});"
+  (${household_id}, 'classic.westfall.defias_resurgence.v1',
+   'classic.westfall', 2, 'invasion', 77, ${accept_event}, ${accept_event});"
+director_run_id="$(sql "SELECT id FROM fury_director_run WHERE household_id=${household_id} AND graph_key='classic.westfall.defias_resurgence.v1';")"
+
+sql "INSERT INTO fury_contract_instance
+  (household_id, contract_key, director_run_id, status, accepted_event_id)
+  VALUES
+  (${household_id}, 'classic.westfall.defias.break_scouts',
+   ${director_run_id}, 2, ${accept_event});"
 instance_id="$(sql "SELECT id FROM fury_contract_instance WHERE household_id=${household_id} AND contract_key='classic.westfall.defias.break_scouts' AND status=2;")"
 
 sql "INSERT INTO fury_contract_progress
@@ -114,10 +123,15 @@ old_matches="$(sql "SELECT COUNT(*)
   JOIN fury_contract_progress p
     ON p.instance_id=i.id
    AND p.objective_ordinal=o.ordinal
+  LEFT JOIN fury_director_run d
+    ON d.id=i.director_run_id
   WHERE o.event_type='living_world.entity.killed'
     AND (o.subject_type IS NULL OR o.subject_type='living_world_spawn_group')
     AND (o.subject_id IS NULL OR o.subject_id=100)
-    AND i.accepted_event_id <= ${old_event};")"
+    AND i.accepted_event_id <= ${old_event}
+    AND (i.director_run_id IS NULL
+         OR o.event_type <> 'living_world.entity.killed'
+         OR d.external_runtime_id = 77);")"
 assert_eq "0" "${old_matches}"   "pre-acceptance runtime kill cannot progress a contract during replay"
 
 sql "INSERT INTO fury_event
@@ -138,10 +152,15 @@ ordinary_matches="$(sql "SELECT COUNT(*)
   JOIN fury_contract_progress p
     ON p.instance_id=i.id
    AND p.objective_ordinal=o.ordinal
+  LEFT JOIN fury_director_run d
+    ON d.id=i.director_run_id
   WHERE o.event_type='creature.killed'
     AND (o.subject_type IS NULL OR o.subject_type='creature')
     AND (o.subject_id IS NULL OR o.subject_id=449)
-    AND i.accepted_event_id <= ${ordinary_event};")"
+    AND i.accepted_event_id <= ${ordinary_event}
+    AND (i.director_run_id IS NULL
+         OR o.event_type <> 'living_world.entity.killed'
+         OR d.external_runtime_id = 77);")"
 assert_eq "0" "${ordinary_matches}"   "ordinary Westfall Defias kill cannot match runtime objectives"
 
 sql "INSERT INTO fury_event
@@ -162,10 +181,15 @@ runtime_matches="$(sql "SELECT COUNT(*)
   JOIN fury_contract_progress p
     ON p.instance_id=i.id
    AND p.objective_ordinal=o.ordinal
+  LEFT JOIN fury_director_run d
+    ON d.id=i.director_run_id
   WHERE o.event_type='living_world.entity.killed'
     AND (o.subject_type IS NULL OR o.subject_type='living_world_spawn_group')
     AND (o.subject_id IS NULL OR o.subject_id=100)
-    AND i.accepted_event_id <= ${runtime_event};")"
+    AND i.accepted_event_id <= ${runtime_event}
+    AND (i.director_run_id IS NULL
+         OR o.event_type <> 'living_world.entity.killed'
+         OR d.external_runtime_id = 77);")"
 assert_eq "1" "${runtime_matches}"   "post-acceptance runtime group kill matches the intended objective"
 
 grep -Fq '"AND i.accepted_event_id <= ?"'   "${ROOT}/modules/mod-fury/src/database/FuryDatabase.cpp"
