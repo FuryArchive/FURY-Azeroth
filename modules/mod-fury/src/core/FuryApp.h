@@ -33,6 +33,7 @@
 #include "bestiary/BestiaryService.h"
 #include "content/defias/DefiasContent.h"
 #include "content/defias/DefiasParticipation.h"
+#include "content/defias/DefiasFieldReliefService.h"
 #include "content/defias/DefiasScoreService.h"
 #include "content/defias/DefiasService.h"
 
@@ -149,6 +150,7 @@ private:
 
     Defias::ContentService _defiasContent;
     Defias::ParticipationService _defiasParticipation;
+    Defias::FieldReliefService _defiasFieldRelief;
     Defias::ScoreService _defiasScore;
     Defias::Service _defiasGraph;
 
