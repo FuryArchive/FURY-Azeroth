@@ -23,10 +23,13 @@ public:
     static FuryEvent QuestCompleted(Player* player, Quest const* quest);
     static FuryEvent CreatureKilled(Player* player, Creature* creature, bool viaPet);
     static FuryEvent LivingWorldEntityKilled(
-        Player* player,
+        Player* creditedPlayer,
         Creature* creature,
-        bool viaPet,
-        LivingWorldEntityMetadata const& metadata);
+        LivingWorldEntityMetadata const& metadata,
+        ObjectGuid killerGuid,
+        ActorKind finalBlowActorKind,
+        bool directCredit,
+        uint32 directParticipantCount);
     static FuryEvent ItemLooted(
         Player* player,
         Item* item,
