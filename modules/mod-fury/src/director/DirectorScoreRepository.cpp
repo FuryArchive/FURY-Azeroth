@@ -4,6 +4,7 @@
 #include "DatabaseEnv.h"
 
 #include <string>
+#include <utility>
 
 namespace Fury
 {
