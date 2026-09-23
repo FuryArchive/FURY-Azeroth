@@ -1,6 +1,7 @@
 #include "core/FuryApp.h"
 
 #include "content/defias/DefiasGraph.h"
+#include "content/defias/DefiasContracts.h"
 #include "contracts/ContractTypes.h"
 #include "events/FuryEvent.h"
 
@@ -16,7 +17,6 @@
 
 namespace
 {
-inline constexpr char BoardKey[] = "classic.westfall.contracts";
 inline constexpr char BoardScriptName[] = "fury_westfall_contract_board";
 inline constexpr uint32 BoardActionBase = GOSSIP_ACTION_INFO_DEF + 100;
 
@@ -115,7 +115,7 @@ public:
         Fury::ActorContext actor = app.Actors().Resolve(player);
         Fury::ContractBoardContext context = BuildContext(app, actor);
         std::vector<Fury::ContractBoardEntry> entries =
-            app.Contracts().ListBoard(BoardKey, context);
+            app.Contracts().ListBoard(Fury::Defias::ContractBoardKey, context);
 
         if (action > BoardActionBase)
         {
@@ -207,7 +207,7 @@ private:
 
         Fury::ContractBoardContext context = BuildContext(app, actor);
         std::vector<Fury::ContractBoardEntry> entries =
-            app.Contracts().ListBoard(BoardKey, context);
+            app.Contracts().ListBoard(Fury::Defias::ContractBoardKey, context);
 
         if (entries.empty())
         {
