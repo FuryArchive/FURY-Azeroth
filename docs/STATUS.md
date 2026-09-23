@@ -161,4 +161,6 @@ T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`.
 
 T29 is **GREEN** through PR #33 / merge commit `cb3e4b6b1929a2949f38b110eee4e43dde075c08`. FURY CI **#159** and Full Runtime **#13** passed, including exact event-to-run score attribution, pinned worldserver build, real FURY database lifecycle, and two worldserver smokes.
 
-T30 Defias Bestiary is **IN_PROGRESS** on `agent/m3-t30-defias-bestiary-r2`. Runtime groups 100–105 map through per-account Human participation events only; ordinary Westfall creature entries cannot advance the Defias Bestiary. Captain Garrick Vane reaches Mastered only from the canonical successful Director resolution for accounts that personally reached Studied.
+T30 Defias Bestiary is **GREEN** through PR #34 / merge commit `e0f90103e60667819bcfe8362f508c5d4094cbc0`. FURY CI **#161** passed the runtime/mastery gate, Fast mod-fury compile, and regressions.
+
+T31 Field Relief is **IN_PROGRESS** on `agent/m3-t31-field-relief`. The contract selects one of seven starter-tier profession paths from the interacting Human, uses the generic replay-safe ProfessionOrder engine, and bridges canonical order completion into the existing `defias.field_relief.completed` contract signal.
