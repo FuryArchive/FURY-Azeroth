@@ -3,17 +3,13 @@
 #include "DefiasGraph.h"
 #include "Config.h"
 #include "Log.h"
-#include "director/DirectorRepository.h"
-
 #include <algorithm>
 
 namespace Fury::Defias
 {
 ScoreService::ScoreService(
-    DirectorScoreRepository const& scores,
-    DirectorRepository const& director)
-    : _scores(scores),
-      _director(director)
+    DirectorScoreRepository const& scores)
+    : _scores(scores)
 {
 }
 
@@ -87,12 +83,12 @@ bool ScoreService::Handle(FuryEvent const& event)
         return true;
     }
 
-    std::optional<DirectorRun> run =
-        _director.FindLatestGraph(
-            *event.actor.householdId,
-            GraphKey);
+    std::optional<DirectorRunId> runId =
+        _scores.ResolveRunForEvent(
+            GraphKey,
+            event);
 
-    if (!run)
+    if (!runId)
         return true;
 
     std::vector<DirectorScoreComponent> components =
@@ -104,14 +100,14 @@ bool ScoreService::Handle(FuryEvent const& event)
          components)
     {
         _scores.Award(
-            run->id,
+            *runId,
             GraphKey,
             component,
             event.id);
 
         std::optional<DirectorScoreAward> persisted =
             _scores.FindAward(
-                run->id,
+                *runId,
                 component.componentKey);
 
         if (!persisted)
@@ -120,7 +116,7 @@ bool ScoreService::Handle(FuryEvent const& event)
                 "server.loading",
                 "[FURY] Defias score award failed "
                 "(run={}, component={}, event={}).",
-                run->id,
+                *runId,
                 component.componentKey,
                 event.id);
             return false;
