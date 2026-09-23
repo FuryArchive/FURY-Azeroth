@@ -62,8 +62,8 @@ int main()
         DirectorReconciliationService::EvaluateRuntime(
             42,
             ExternalRuntimeState::Missing,
-            0) == DirectorReconcileAction::RestartMissingRuntime,
-        "bound run + missing runtime requests restart");
+            0) == DirectorReconcileAction::AbortMissingRuntime,
+        "bound run + missing runtime requests safe abort");
 
     Require(
         DirectorReconciliationService::EvaluateRuntime(
