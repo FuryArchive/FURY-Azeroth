@@ -30,7 +30,8 @@ Date: 2026-09-23
 - T24 Defias content validation/random-start overlay: GREEN.
 - T25 Defias Director graph: GREEN.
 - T26 Westfall contract board: GREEN.
-- T27 Six Defias contracts: IN_PROGRESS.
+- T27 Six Defias contracts: GREEN.
+- T28 Human participation resolver: IN_PROGRESS.
 - M3 Defias Resurgence vertical slice: IN_PROGRESS.
 
 ## Repository baseline
@@ -153,4 +154,6 @@ T25 is GREEN through PR #26 / commit `d328e889c403fcd79d84f9ca7908068d8a8f2b71`.
 
 T26 is GREEN through PR #27. FURY CI **#133** and Full Runtime **#5** passed, including the pinned worldserver build, real FURY database lifecycle, world-data application and worldserver smoke.
 
-T27 is **IN_PROGRESS** on `agent/m3-t27-defias-contracts`. The branch adds the six initial Defias contracts, runtime-qualified kill events from verified Living World entity metadata, pre-acceptance replay rejection, Director-runtime binding, SQL content validation and a dedicated CI gate.
+T27 is GREEN through PR #31 / commit `cd22585fe90b93b87d1960143ce4fe968acedc92`. FURY CI **#139** passed the dedicated Defias contract runtime/replay gate, Fast mod-fury compile, and the existing M1/M2/Living World/Defias regression gates.
+
+T28 is **IN_PROGRESS** on `agent/m3-t28-participation`. It replaces runtime last-hit authorship with UnitScript encounter participation, human pet-owner normalization, configurable time/radius/group policy, and one household-scoped durable kill credit per physical runtime entity.
