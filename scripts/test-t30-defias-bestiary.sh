@@ -45,7 +45,7 @@ assert_eq "3" "$(sql "SELECT COUNT(*) FROM fury_bestiary_entry
   WHERE entry_key LIKE 'classic.westfall.defias.%';")"   "three Defias Bestiary entries are seeded"
 
 assert_eq "6" "$(sql "SELECT COUNT(*) FROM fury_bestiary_event_map
-  WHERE event_type='living_world.entity.killed'
+  WHERE event_type='defias.bestiary.entity.participated'
     AND subject_type='living_world_spawn_group'
     AND subject_id BETWEEN 100 AND 105
     AND entry_key LIKE 'classic.westfall.defias.%'
@@ -70,8 +70,8 @@ sql "INSERT INTO fury_event
    subject_type, subject_id, source_system, correlation_key,
    dedupe_key, payload)
   VALUES
-  ('living_world.entity.killed', 1, 1001, ${household_id},
-   'living_world_spawn_group', 105, 'living_world', 'runtime:77',
+  ('defias.bestiary.entity.participated', 1, 1001, ${household_id},
+   'living_world_spawn_group', 105, 'fury.defias', '${GRAPH}',
    UNHEX(SHA2('t30-commander-runtime-kill',256)),
    JSON_OBJECT('runtime_id',77,'spawn_group_id',105));"
 kill_event="$(sql "SELECT id FROM fury_event
@@ -83,7 +83,7 @@ sql "INSERT INTO fury_bestiary_state
   SELECT 1001, m.entry_key, m.discovery_level, 1,
          ${kill_event}, ${kill_event}, 0
   FROM fury_bestiary_event_map m
-  WHERE m.event_type='living_world.entity.killed'
+  WHERE m.event_type='defias.bestiary.entity.participated'
     AND m.subject_type='living_world_spawn_group'
     AND m.subject_id=105
     AND m.entry_key='${COMMANDER}'
@@ -175,8 +175,9 @@ assert_eq "6" "$(sql "SELECT COUNT(*) FROM fury_bestiary_event_map
   WHERE entry_key LIKE 'classic.westfall.defias.%';")"   "Defias Bestiary migration is idempotent"
 
 SERVICE="${ROOT}/modules/mod-fury/src/bestiary/BestiaryService.cpp"
-grep -Fq 'living_world.entity.killed' "${SERVICE}"
-grep -Fq 'event.sourceSystem == "living_world"' "${SERVICE}"
+grep -Fq 'defias.bestiary.entity.participated' "${SERVICE}"
+grep -Fq 'event.sourceSystem == "fury.defias"' "${SERVICE}"
+grep -Fq 'defias.bestiary.entity.participated' "${ROOT}/modules/mod-fury/src/content/defias/DefiasParticipation.cpp"
 grep -Fq 'director.run.resolved' "${SERVICE}"
 grep -Fq '*run->outcomeKey != "success"' "${SERVICE}"
 grep -Fq 'FindHouseholdAccountsAtLeastLevel' "${SERVICE}"
