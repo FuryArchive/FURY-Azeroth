@@ -1,4 +1,5 @@
 #include "DefiasService.h"
+#include "DefiasContracts.h"
 #include "actors/ActorResolver.h"
 #include "campaign/CampaignService.h"
 #include "director/DirectorService.h"
@@ -49,7 +50,8 @@ void Service::Initialize()
     _contractActivation = mode == "contract" || mode == "contract_or_presence";
     _presenceActivation = mode == "presence" || mode == "contract_or_presence";
     _activationContract = sConfigMgr->GetOption<std::string>(
-        "Fury.Defias.ActivationContract", "classic.westfall.defias.scout_report");
+        "Fury.Defias.ActivationContract",
+        std::string(ReconRoadsContract));
     if ((!_contractActivation && !_presenceActivation) ||
         !_livingWorld.ManageGraph(GraphKey, InvasionId))
     {

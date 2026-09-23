@@ -46,7 +46,8 @@ grep -Fq 'OnGossipHello' "${SCRIPT}"
 grep -Fq 'OnGossipSelect' "${SCRIPT}"
 grep -Fq 'AddGossipItemFor' "${SCRIPT}"
 grep -Fq 'fury_westfall_contract_board' "${SCRIPT}"
-grep -Fq 'classic.westfall.contracts' "${SCRIPT}"
+grep -Fq 'ContractBoardKey' "${SCRIPT}"
+grep -Fq 'classic.westfall.contracts' "${ROOT}/modules/mod-fury/src/content/defias/DefiasContracts.h"
 
 if grep -Eiq 'SendAddonMessage|addon channel|custom client patch' "${SCRIPT}"; then
   echo "[FURY][FAIL] T26 board script introduced a client dependency" >&2
