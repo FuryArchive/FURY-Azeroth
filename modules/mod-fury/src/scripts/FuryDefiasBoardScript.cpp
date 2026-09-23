@@ -2,6 +2,7 @@
 
 #include "content/defias/DefiasGraph.h"
 #include "content/defias/DefiasContracts.h"
+#include "content/defias/DefiasFieldRelief.h"
 #include "contracts/ContractTypes.h"
 #include "events/FuryEvent.h"
 
@@ -60,6 +61,33 @@ Fury::ContractBoardContext BuildContext(
     return context;
 }
 
+std::vector<Fury::ContractBoardEntry> BoardEntriesForPlayer(
+    Fury::App& app,
+    Fury::ActorContext const& actor,
+    Player const* player)
+{
+    Fury::ContractBoardContext context = BuildContext(app, actor);
+    std::vector<Fury::ContractBoardEntry> raw =
+        app.Contracts().ListBoard(Fury::Defias::ContractBoardKey, context);
+
+    std::vector<Fury::ContractBoardEntry> entries;
+    entries.reserve(raw.size());
+
+    for (Fury::ContractBoardEntry const& entry : raw)
+    {
+        if (entry.status == Fury::ContractStatus::Available &&
+            entry.definition.contractKey == Fury::Defias::FieldReliefContract &&
+            !Fury::Defias::SelectFieldReliefOption(player))
+        {
+            continue;
+        }
+
+        entries.push_back(entry);
+    }
+
+    return entries;
+}
+
 char const* StatusPrefix(Fury::ContractStatus status)
 {
     switch (status)
@@ -115,7 +143,7 @@ public:
         Fury::ActorContext actor = app.Actors().Resolve(player);
         Fury::ContractBoardContext context = BuildContext(app, actor);
         std::vector<Fury::ContractBoardEntry> entries =
-            app.Contracts().ListBoard(Fury::Defias::ContractBoardKey, context);
+            BoardEntriesForPlayer(app, actor, player);
 
         if (action > BoardActionBase)
         {
@@ -145,14 +173,39 @@ public:
                 source.payloadJson =
                     "{\"board_key\":\"classic.westfall.contracts\"}";
 
+                std::optional<Fury::Defias::FieldReliefOption>
+                    fieldReliefOption;
+
+                if (entries[index].definition.contractKey ==
+                    Fury::Defias::FieldReliefContract)
+                {
+                    fieldReliefOption =
+                        Fury::Defias::SelectFieldReliefOption(player);
+                    if (!fieldReliefOption)
+                    {
+                        Render(player, go);
+                        return true;
+                    }
+                }
+
                 if (std::optional<Fury::EventId> eventId =
                         app.Events().Append(source))
                 {
                     source.id = *eventId;
-                    (void)app.Contracts().Accept(
-                        source,
-                        entries[index].definition.contractKey,
-                        context.directorRunId);
+                    Fury::ContractAcceptResult result =
+                        app.Contracts().Accept(
+                            source,
+                            entries[index].definition.contractKey,
+                            context.directorRunId);
+
+                    if (result.AcceptedOrExisting() &&
+                        fieldReliefOption)
+                    {
+                        (void)app.ProfessionOrders().Start(
+                            source,
+                            Fury::Defias::FieldReliefOrderKey,
+                            fieldReliefOption->ordinal);
+                    }
                 }
             }
         }
@@ -205,9 +258,8 @@ private:
             return;
         }
 
-        Fury::ContractBoardContext context = BuildContext(app, actor);
         std::vector<Fury::ContractBoardEntry> entries =
-            app.Contracts().ListBoard(Fury::Defias::ContractBoardKey, context);
+            BoardEntriesForPlayer(app, actor, player);
 
         if (entries.empty())
         {
@@ -223,11 +275,26 @@ private:
             for (std::size_t index = 0; index < entries.size(); ++index)
             {
                 Fury::ContractBoardEntry const& entry = entries[index];
+                std::string label =
+                    std::string(StatusPrefix(entry.status)) +
+                    entry.definition.title;
+
+                if (entry.status == Fury::ContractStatus::Available &&
+                    entry.definition.contractKey ==
+                        Fury::Defias::FieldReliefContract)
+                {
+                    if (std::optional<Fury::Defias::FieldReliefOption> option =
+                            Fury::Defias::SelectFieldReliefOption(player))
+                    {
+                        label += " - ";
+                        label += option->label;
+                    }
+                }
+
                 AddGossipItemFor(
                     player,
                     0,
-                    std::string(StatusPrefix(entry.status)) +
-                        entry.definition.title,
+                    label,
                     GOSSIP_SENDER_MAIN,
                     BoardActionBase +
                         1 +
