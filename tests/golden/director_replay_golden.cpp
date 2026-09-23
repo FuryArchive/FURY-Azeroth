@@ -27,6 +27,8 @@ void DirectorRepository::UpdatePhase(DirectorRunId, HouseholdId, uint64, std::st
 { saved->phaseKey = phase; saved->lastEventId = event; ++saved->revision; }
 void DirectorRepository::AttachRuntime(DirectorRunId, HouseholdId, uint64, uint64 runtime, EventId event) const
 { saved->externalRuntimeId = runtime; saved->lastEventId = event; ++saved->revision; }
+void DirectorRepository::RecoverRuntime(DirectorRunId, HouseholdId, uint64, uint64, uint64 runtime, EventId event) const
+{ saved->externalRuntimeId = runtime; saved->lastEventId = event; ++saved->revision; }
 void DirectorRepository::Resolve(DirectorRunId, HouseholdId, uint64, std::string_view outcome, EventId event) const
 { saved->status = DirectorRunStatus::Complete; saved->outcomeKey = outcome; saved->lastEventId = event; ++saved->revision; }
 void DirectorRepository::BindTerminalEvent(DirectorRunId, HouseholdId, EventId event) const
@@ -55,5 +57,11 @@ int main()
     assert(!service.AttachRuntime(source,1,saved->revision,42).Accepted()); assert(saved->externalRuntimeId==42);
     failAppend=false;
     assert(service.AttachRuntime(source,1,saved->revision,42).Accepted()); assert(emissions["director.runtime.attached"]==1);
-    std::cout << "[FURY][PASS] production Director retries events after persisted mutations\n";
+    source.id=3; auto beforeRecovery=saved->revision;
+    assert(service.RecoverRuntime(source,1,beforeRecovery,42,99).Accepted());
+    assert(saved->externalRuntimeId==99);
+    assert(emissions["director.runtime.recovered"]==1);
+    assert(service.RecoverRuntime(source,1,beforeRecovery,42,99).Accepted());
+    assert(emissions["director.runtime.recovered"]==1);
+    std::cout << "[FURY][PASS] production Director retries events after persisted mutations and runtime recovery\n";
 }
