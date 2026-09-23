@@ -34,8 +34,34 @@ bool ChronicleService::Handle(FuryEvent const& event)
         category = "contract";
         title = "Contract completed";
     }
+    else if (event.type == "defias.resolution.success")
+    {
+        entryKey = "classic.westfall.defias.resolution.success";
+        category = "world";
+        title = "Westfall defended";
+    }
+    else if (event.type == "defias.resolution.partial")
+    {
+        entryKey = "classic.westfall.defias.resolution.partial";
+        category = "world";
+        title = "Westfall bloodied";
+    }
+    else if (event.type == "defias.resolution.ignored")
+    {
+        entryKey = "classic.westfall.defias.resolution.ignored";
+        category = "world";
+        title = "Westfall crisis ignored";
+    }
     else if (event.type == "director.run.resolved")
     {
+        // Defias emits a richer player-facing outcome event in T32. Avoid
+        // recording both the generic Director entry and the specific result.
+        if (event.correlationKey ==
+            "classic.westfall.defias_resurgence.v1")
+        {
+            return true;
+        }
+
         entryKey = event.correlationKey.empty()
             ? "director.resolved"
             : event.correlationKey;
