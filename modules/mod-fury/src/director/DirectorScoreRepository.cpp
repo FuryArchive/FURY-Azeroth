@@ -71,6 +71,52 @@ DirectorScoreRepository::DefinitionTotal(
     return result->Fetch()[0].Get<uint32>();
 }
 
+std::optional<DirectorRunId>
+DirectorScoreRepository::ResolveRunForEvent(
+    std::string_view graphKey,
+    FuryEvent const& event) const
+{
+    if (!event.actor.householdId ||
+        !*event.actor.householdId ||
+        !event.subjectId)
+    {
+        return std::nullopt;
+    }
+
+    DatabasePreparedStatement* stmt = nullptr;
+
+    if (event.type == "contract.completed" &&
+        event.subjectType == "contract_instance" &&
+        !event.correlationKey.empty())
+    {
+        stmt = FuryDatabase.GetPreparedStatement(
+            FURY_SEL_DIRECTOR_SCORE_RUN_FOR_CONTRACT);
+        stmt->SetData(0, *event.subjectId);
+        stmt->SetData(1, *event.actor.householdId);
+        stmt->SetData(2, event.correlationKey);
+        stmt->SetData(3, std::string(graphKey));
+    }
+    else if (event.type == "defias.final_stage.participated" &&
+             event.subjectType == "living_world_runtime")
+    {
+        stmt = FuryDatabase.GetPreparedStatement(
+            FURY_SEL_DIRECTOR_SCORE_RUN_FOR_RUNTIME);
+        stmt->SetData(0, *event.actor.householdId);
+        stmt->SetData(1, std::string(graphKey));
+        stmt->SetData(2, *event.subjectId);
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    PreparedQueryResult result = FuryDatabase.Query(stmt);
+    if (!result)
+        return std::nullopt;
+
+    return result->Fetch()[0].Get<DirectorRunId>();
+}
+
 void DirectorScoreRepository::Award(
     DirectorRunId directorRunId,
     std::string_view graphKey,
