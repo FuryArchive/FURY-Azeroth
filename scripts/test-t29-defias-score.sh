@@ -91,14 +91,52 @@ make_event() {
 start_event="$(make_event t29-run-start golden.start "${GRAPH}")"
 
 sql "INSERT INTO fury_director_run
-  (household_id, graph_key, scope_key, status, phase_key, started_event_id, last_event_id)
+  (household_id, graph_key, scope_key, status, phase_key, external_runtime_id,
+   started_event_id, last_event_id)
   VALUES
-  (${household_id}, '${GRAPH}', 'classic.westfall', 2, 'invasion',
+  (${household_id}, '${GRAPH}', 'classic.westfall', 2, 'invasion', 77,
    ${start_event}, ${start_event});"
 run_id="$(sql "SELECT id FROM fury_director_run WHERE household_id=${household_id} AND graph_key='${GRAPH}' ORDER BY id DESC LIMIT 1;")"
 
+accept_event="$(make_event t29-contract-accept contract.board.accept.requested classic.westfall.defias.scout_report)"
+sql "INSERT INTO fury_contract_instance
+  (household_id, contract_key, director_run_id, status, accepted_event_id)
+  VALUES
+  (${household_id}, 'classic.westfall.defias.scout_report',
+   ${run_id}, 3, ${accept_event});"
+instance_id="$(sql "SELECT id FROM fury_contract_instance WHERE household_id=${household_id} AND contract_key='classic.westfall.defias.scout_report' ORDER BY id DESC LIMIT 1;")"
+
 recon_event="$(make_event t29-recon-complete contract.completed classic.westfall.defias.scout_report)"
 recon_event_2="$(make_event t29-recon-complete-duplicate contract.completed classic.westfall.defias.scout_report)"
+sql "UPDATE fury_event SET subject_type='contract_instance', subject_id=${instance_id} WHERE id IN (${recon_event},${recon_event_2});"
+
+resolved_contract_run="$(sql "SELECT i.director_run_id
+  FROM fury_contract_instance i
+  JOIN fury_director_run r ON r.id=i.director_run_id
+  WHERE i.id=${instance_id}
+    AND i.household_id=${household_id}
+    AND i.contract_key='classic.westfall.defias.scout_report'
+    AND r.graph_key='${GRAPH}'
+  LIMIT 1;")"
+assert_eq "${run_id}" "${resolved_contract_run}"   "contract completion resolves its attached Director run"
+
+wrong_contract_run_count="$(sql "SELECT COUNT(*)
+  FROM fury_contract_instance i
+  JOIN fury_director_run r ON r.id=i.director_run_id
+  WHERE i.id=999999999
+    AND i.household_id=${household_id}
+    AND i.contract_key='classic.westfall.defias.scout_report'
+    AND r.graph_key='${GRAPH}';")"
+assert_eq "0" "${wrong_contract_run_count}"   "unknown contract instance cannot resolve a score run"
+
+final_stage_event="$(make_event t29-final-stage defias.final_stage.participated "${GRAPH}")"
+sql "UPDATE fury_event SET subject_type='living_world_runtime', subject_id=77 WHERE id=${final_stage_event};"
+resolved_runtime_run="$(sql "SELECT id FROM fury_director_run
+  WHERE household_id=${household_id}
+    AND graph_key='${GRAPH}'
+    AND external_runtime_id=77
+  LIMIT 1;")"
+assert_eq "${run_id}" "${resolved_runtime_run}"   "final-stage event resolves only the attached external runtime"
 
 award_component() {
   local component="$1"
@@ -135,8 +173,22 @@ assert_eq "7" "$(sql "SELECT COUNT(*) FROM fury_director_score_component WHERE g
 assert_eq "1" "$(sql "SELECT COUNT(*) FROM fury_director_score_award WHERE director_run_id=${run_id};")"   "score migration preserves runtime awards"
 
 PARTICIPATION="${ROOT}/modules/mod-fury/src/content/defias/DefiasParticipation.cpp"
+SCORE_SERVICE="${ROOT}/modules/mod-fury/src/content/defias/DefiasScoreService.cpp"
+DATABASE="${ROOT}/modules/mod-fury/src/database/FuryDatabase.cpp"
+CONFIG="${ROOT}/modules/mod-fury/conf/mod_fury.conf.dist"
+
 grep -Fq 'defias.final_stage.participated' "${PARTICIPATION}"
 grep -Fq 'runtime.stageId != 1006' "${PARTICIPATION}"
 grep -Fq 'defias:final-stage-participation:v1:' "${PARTICIPATION}"
+
+grep -Fq 'ResolveRunForEvent' "${SCORE_SERVICE}"
+if grep -Fq 'FindLatestGraph' "${SCORE_SERVICE}"; then
+  echo "[FURY][FAIL] score consumer still uses latest-run attribution" >&2
+  exit 1
+fi
+grep -Fq 'FURY_SEL_DIRECTOR_SCORE_RUN_FOR_CONTRACT' "${DATABASE}"
+grep -Fq 'FURY_SEL_DIRECTOR_SCORE_RUN_FOR_RUNTIME' "${DATABASE}"
+grep -Fq 'Fury.Defias.Score.PartialThreshold = 30' "${CONFIG}"
+grep -Fq 'Fury.Defias.Score.SuccessThreshold = 70' "${CONFIG}"
 
 echo "[FURY][PASS] T29 Defias score schema/replay gate passed"
