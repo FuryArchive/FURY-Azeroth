@@ -2,6 +2,7 @@
 
 #include "DefiasContent.h"
 #include "DefiasContracts.h"
+#include "DefiasGraph.h"
 #include "actors/ActorResolver.h"
 #include "events/EventStore.h"
 #include "events/FuryEventFactory.h"
@@ -13,6 +14,7 @@
 #include "Log.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
+#include "StringFormat.h"
 #include "Unit.h"
 
 #include <algorithm>
@@ -64,11 +66,13 @@ void ParticipationService::Initialize()
 void ParticipationService::Reset()
 {
     _encounters.clear();
+    _finalStagePresence.clear();
 }
 
 bool ParticipationService::ResolveRuntimeTarget(
     Creature* creature,
-    LivingWorldEntityMetadata& metadata) const
+    LivingWorldEntityMetadata& metadata,
+    LivingWorldRuntimeSnapshot* runtimeOut) const
 {
     if (!creature)
         return false;
@@ -93,7 +97,63 @@ bool ParticipationService::ResolveRuntimeTarget(
     }
 
     metadata = *found;
+    if (runtimeOut)
+        *runtimeOut = *runtime;
     return true;
+}
+
+bool ParticipationService::EmitFinalStagePresence(
+    Player* player,
+    LivingWorldEntityMetadata const& metadata,
+    LivingWorldRuntimeSnapshot const& runtime)
+{
+    if (!player ||
+        runtime.stageId != 1006 ||
+        !runtime.runtimeId)
+    {
+        return true;
+    }
+
+    ActorContext actor = _actors.Resolve(player);
+    if (actor.kind != ActorKind::Human ||
+        !actor.householdId ||
+        !*actor.householdId)
+    {
+        return true;
+    }
+
+    std::string const identity = Acore::StringFormat(
+        "defias:final-stage-participation:v1:{}:{}",
+        runtime.runtimeId,
+        *actor.householdId);
+
+    if (!_finalStagePresence.insert(identity).second)
+        return true;
+
+    FuryEvent event;
+    event.type = "defias.final_stage.participated";
+    event.actor = actor;
+    event.mapId = player->GetMapId();
+    event.zoneId = player->GetZoneId();
+    event.areaId = player->GetAreaId();
+    event.subjectType = "living_world_runtime";
+    event.subjectId = runtime.runtimeId;
+    event.sourceSystem = "fury.defias";
+    event.correlationKey = GraphKey;
+    event.dedupeIdentity = identity;
+    event.payloadJson = Acore::StringFormat(
+        "{{\"runtime_id\":{},\"stage_id\":{},"
+        "\"spawn_group_id\":{},\"credited_player_guid\":{}}}",
+        runtime.runtimeId,
+        runtime.stageId,
+        metadata.spawnGroupId,
+        player->GetGUID().GetRawValue());
+
+    if (_events.Append(event))
+        return true;
+
+    _finalStagePresence.erase(identity);
+    return false;
 }
 
 void ParticipationService::ObserveDamage(
@@ -197,7 +257,11 @@ void ParticipationService::ObserveDeath(Unit* victim, Unit* killer)
         return;
 
     LivingWorldEntityMetadata metadata;
-    if (!ResolveRuntimeTarget(creature, metadata))
+    LivingWorldRuntimeSnapshot runtime;
+    if (!ResolveRuntimeTarget(
+            creature,
+            metadata,
+            &runtime))
     {
         _encounters.erase(creature->GetGUID().GetRawValue());
         return;
@@ -368,6 +432,19 @@ void ParticipationService::ObserveDeath(Unit* victim, Unit* killer)
                 householdId,
                 metadata.runtimeId,
                 creatureGuid);
+        }
+
+        if (!EmitFinalStagePresence(
+                credit.player,
+                metadata,
+                runtime))
+        {
+            LOG_ERROR(
+                "server.loading",
+                "[FURY] failed to persist final-stage participation "
+                "(household={}, runtime={}).",
+                householdId,
+                metadata.runtimeId);
         }
     }
 }

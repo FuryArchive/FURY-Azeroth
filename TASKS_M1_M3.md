@@ -482,7 +482,7 @@ Acceptance:
 - replay-safe.
 
 ## T28 Human participation resolver
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T04, T21
 Commit target: `feat(defias): add human participation tracking`
 
@@ -493,7 +493,7 @@ Acceptance:
 - radius/time/group rules are configurable/tested.
 
 ## T29 Participation score/outcome policy
-Status: READY
+Status: IN_PROGRESS
 Depends on: T27, T28
 Commit target: `feat(defias): add participation scoring`
 
@@ -635,4 +635,6 @@ T26 is GREEN. PR #27 passed FURY CI #133 and Full Runtime #5, including the pinn
 
 T27 is GREEN through PR #31 / commit `cd22585fe90b93b87d1960143ce4fe968acedc92`; FURY CI #139 passed the six-contract runtime/replay gate, Fast mod-fury compile and regressions.
 
-T28 is IN_PROGRESS on `agent/m3-t28-participation`: UnitScript damage/death tracking, pet-owner normalization, time/radius/group policy and household-scoped runtime kill credit are implemented pending branch acceptance.
+T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`; FURY CI #141 passed the participation policy gate, Fast mod-fury compile and regressions.
+
+T29 is IN_PROGRESS on `agent/m3-t29-participation-score`: generic Director score persistence, the accepted 100-point Defias component set, replay-idempotent snapshot awards and final-stage participation scoring are implemented pending branch acceptance.

@@ -48,7 +48,9 @@ assert_campaign_tables
 echo "[FURY] M1 -> T13 migration path"
 # Downstream schemas may reference Campaign once later M2 tasks exist. Remove
 # those consumers before simulating the historical M1 -> T13 upgrade.
-sql "DROP TABLE IF EXISTS fury_director_run;
+sql "DROP TABLE IF EXISTS fury_director_score_award;
+     DROP TABLE IF EXISTS fury_director_score_component;
+     DROP TABLE IF EXISTS fury_director_run;
      DROP TABLE IF EXISTS fury_director_graph;
      DROP TABLE IF EXISTS fury_contract_progress;
      DROP TABLE IF EXISTS fury_contract_instance;

@@ -28,7 +28,7 @@ for outcome in success partial ignored; do
   assert_eq 1 "$(sql "SELECT COUNT(*) FROM fury_director_run WHERE graph_key='classic.westfall.defias_resurgence.v1';")" "terminal $outcome cannot restart"
 done
 # Base install also contains the constraint (the T16 gate replaced its table).
-sql "DELETE FROM fury_director_run; DROP TABLE fury_director_run;"
+sql "DROP TABLE IF EXISTS fury_director_score_award; DROP TABLE IF EXISTS fury_director_score_component; DELETE FROM fury_director_run; DROP TABLE fury_director_run;"
 "${mysql_cmd[@]}" < "${ROOT}/modules/mod-fury/data/sql/fury/base/70_director.sql"
 assert_eq 2 "$(sql "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name='fury_director_run' AND index_name='uq_fury_defias_once';")" "clean base has one-shot index"
 echo '[FURY][PASS] T25 migration/replay/restart schema gate'
