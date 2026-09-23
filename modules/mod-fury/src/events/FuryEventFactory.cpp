@@ -177,15 +177,26 @@ FuryEvent FuryEventFactory::CreatureKilled(
 }
 
 FuryEvent FuryEventFactory::LivingWorldEntityKilled(
-    Player* player,
+    Player* creditedPlayer,
     Creature* creature,
-    bool viaPet,
-    LivingWorldEntityMetadata const& metadata)
+    LivingWorldEntityMetadata const& metadata,
+    ObjectGuid killerGuid,
+    ActorKind finalBlowActorKind,
+    bool directCredit,
+    uint32 directParticipantCount)
 {
-    FuryEvent event = Base(player, "living_world.entity.killed");
+    FuryEvent event = Base(
+        creditedPlayer,
+        "living_world.entity.killed");
 
     uint64 const creatureGuid =
         creature ? creature->GetGUID().GetRawValue() : 0;
+    uint64 const creditedPlayerGuid =
+        creditedPlayer
+            ? creditedPlayer->GetGUID().GetRawValue()
+            : 0;
+    HouseholdId const householdId =
+        event.actor.householdId.value_or(0);
 
     event.subjectType = "living_world_spawn_group";
     event.subjectId = metadata.spawnGroupId;
@@ -197,7 +208,9 @@ FuryEvent FuryEventFactory::LivingWorldEntityKilled(
         "{{\"runtime_id\":{},\"runtime_group_id\":{},"
         "\"spawn_group_id\":{},\"member_id\":{},\"entry\":{},"
         "\"living_world_template_id\":{},\"tactical_role\":{},"
-        "\"creature_guid\":{},\"via_pet\":{}}}",
+        "\"creature_guid\":{},\"killer_guid\":{},"
+        "\"final_blow_actor_kind\":{},\"credited_player_guid\":{},"
+        "\"credit_kind\":\"{}\",\"direct_participant_count\":{}}}",
         metadata.runtimeId,
         metadata.runtimeGroupId,
         metadata.spawnGroupId,
@@ -206,15 +219,21 @@ FuryEvent FuryEventFactory::LivingWorldEntityKilled(
         metadata.livingWorldTemplateId,
         metadata.tacticalRole,
         creatureGuid,
-        viaPet ? "true" : "false");
+        killerGuid.GetRawValue(),
+        static_cast<uint32>(finalBlowActorKind),
+        creditedPlayerGuid,
+        directCredit ? "direct" : "group_share",
+        directParticipantCount);
 
-    // One spawned runtime entity can die only once. This identity also
-    // collapses duplicate direct/pet callbacks for the same physical kill.
+    // One physical kill can credit each participating household once.
+    // Household-scoped identity prevents the first household from globally
+    // suppressing legitimate participation by another household.
     event.dedupeIdentity = Acore::StringFormat(
-        "living-world:entity-killed:v1:{}:{}:{}",
+        "living-world:entity-killed:v2:{}:{}:{}:{}",
         metadata.runtimeId,
         metadata.runtimeGroupId,
-        creatureGuid);
+        creatureGuid,
+        householdId);
 
     return event;
 }
