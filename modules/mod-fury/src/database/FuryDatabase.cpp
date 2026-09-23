@@ -47,6 +47,11 @@ void DatabaseConnection::DoPrepareStatements()
     PrepareStatement(FURY_SEL_EVENT_ID_BY_DEDUPE,
         "SELECT id FROM fury_event WHERE dedupe_key = ?",
         CONNECTION_SYNCH);
+    PrepareStatement(FURY_SEL_EVENT_BY_ID,
+        "SELECT id, event_type, actor_kind, actor_guid, account_id, household_id, "
+        "map_id, zone_id, area_id, subject_type, subject_id, source_system, correlation_key, payload "
+        "FROM fury_event WHERE id = ?",
+        CONNECTION_SYNCH);
     PrepareStatement(FURY_SEL_EVENTS_AFTER_ID,
         "SELECT id, event_type, actor_kind, actor_guid, account_id, household_id, "
         "map_id, zone_id, area_id, subject_type, subject_id, source_system, correlation_key, payload "
