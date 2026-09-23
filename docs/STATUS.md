@@ -165,4 +165,6 @@ T30 is **GREEN** through PR #34 / merge commit `e0f90103e60667819bcfe8362f508c5d
 
 T31 is **GREEN** through PR #38 / merge commit `f6610fb4d31faa8f92ad26c8a8ea25964f0a9957`. FURY CI **#168** passed the dedicated adaptive Field Relief gate, Fast mod-fury compile, and all active regressions.
 
-T32 Persistent Defias Resolution is **IN_PROGRESS** on `agent/m3-t32-persistent-resolution`: canonical Director terminal event binding, Success/Partial/Ignored projections, campaign continuation after non-success, replay-safe proofs/Chronicle, emergency pressure, and a pending-only Success reward entitlement are implemented pending branch acceptance.
+T32 is **GREEN** through PR #39 / merge commit `e5d67505b3421f6333e93fcaf3af05ead25ff4be`. FURY CI **#174** passed the persistent-resolution gate, historical one-shot upgrade migration, T25 regressions, Fast mod-fury compile, and all active CI jobs.
+
+T33 Director/Living World Recovery is **IN_PROGRESS** on `agent/m3-t33-recovery`: reconciliation now queues durable recovery intents for crash-gap attach, missing-runtime safe abort, runtime conflict cleanup, restart verification and orphan managed-runtime cleanup.
