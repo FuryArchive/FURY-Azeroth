@@ -527,7 +527,7 @@ Acceptance:
 - craft events replay safely.
 
 ## T32 Defias persistent resolution
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T14, T29
 Commit target: `feat(defias): add persistent outcomes`
 
@@ -553,7 +553,7 @@ Acceptance:
 - valuable physical reward duplication is impossible or valuable physical rewards are withheld until a safe receipt mechanism exists.
 
 ## T33 Director/Living World reconciler
-Status: READY
+Status: IN_PROGRESS
 Depends on: T16, T23, T25
 Commit target: `feat(recovery): reconcile Director and Living World`
 
@@ -639,4 +639,10 @@ T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`;
 
 T29 is GREEN through PR #33 / merge commit `cb3e4b6b1929a2949f38b110eee4e43dde075c08`. FURY CI #159 and Full Runtime #13 passed, including the exact-run score attribution fixes, pinned worldserver build, real FURY DB lifecycle, and two worldserver smokes.
 
-T30 is IN_PROGRESS on `agent/m3-t30-defias-bestiary-r2`: runtime-only Defias Bestiary mappings, personal Human participation credit, and success-gated commander Mastered projection are implemented pending CI.
+T30 is GREEN through PR #34 / commit `e0f90103e60667819bcfe8362f508c5d4094cbc0`; FURY CI #161 passed.
+
+T31 is GREEN through PR #38 / commit `f6610fb4d31faa8f92ad26c8a8ea25964f0a9957`; FURY CI #168 passed.
+
+T32 is GREEN through PR #39 / commit `e5d67505b3421f6333e93fcaf3af05ead25ff4be`; FURY CI #174 passed the persistent-resolution, upgrade-path, replay and Fast mod-fury gates.
+
+Continue with **T33 Director/Living World reconciler** on `agent/m3-t33-recovery`.
