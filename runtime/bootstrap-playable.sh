@@ -17,6 +17,8 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin is require
 [[ -d "${ROOT}/data/dbc" ]] || fail "server data missing"
 [[ -d "${ROOT}/runtime-source/data/sql" ]] || fail "runtime SQL source tree missing"
 [[ -x "${ROOT}/runtime/mysql-wrapper.sh" ]] || fail "bundled MySQL wrapper missing"
+[[ -d "${ROOT}/runtime-libs" ]] || fail "bundled runtime libraries missing"
+export LD_LIBRARY_PATH="${ROOT}/runtime-libs${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
 cd "${ROOT}"
 docker compose -f runtime/docker-compose.playable.yml up -d mysql
