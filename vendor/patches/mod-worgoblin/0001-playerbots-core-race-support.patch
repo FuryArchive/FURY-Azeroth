@@ -1,0 +1,52 @@
+diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
+--- a/src/server/game/Entities/Player/Player.cpp
++++ b/src/server/game/Entities/Player/Player.cpp
+@@ -12594,7 +12594,7 @@ float Player::GetReputationPriceDiscount(Creature const* creature) const
+ 
+ float Player::GetReputationPriceDiscount(FactionTemplateEntry const* factionTemplate) const
+ {
+-    float discount = 1.0f;
++    float discount = HasSpell(69044) ? 0.8f : 1.0f; // Goblin: Best Deals Anywhere
+ 
+     if (!factionTemplate || !factionTemplate->faction)
+     {
+@@ -12611,7 +12611,9 @@ float Player::GetReputationPriceDiscount(FactionTemplateEntry const* factionTem
+         return discount;
+     }
+ 
+-    discount = discount - 0.05f * (rank - REP_NEUTRAL);
++    float reputationDiscount = 1.0f - 0.05f * (rank - REP_NEUTRAL);
++    if (reputationDiscount < discount)
++        discount = reputationDiscount;
+ 
+     sScriptMgr->OnPlayerGetReputationPriceDiscount(this, factionTemplate, discount);
+     return discount;
+diff --git a/src/server/game/Handlers/CharacterHandler.cpp b/src/server/game/Handlers/CharacterHandler.cpp
+--- a/src/server/game/Handlers/CharacterHandler.cpp
++++ b/src/server/game/Handlers/CharacterHandler.cpp
+@@ -2200,7 +2200,8 @@ void WorldSession::HandleCharFactionOrRaceChangeCallback(std::shared_ptr<Charact
+         trans->Append(stmt);
+ 
+         // Race specific languages
+-        if (factionChangeInfo->Race != RACE_ORC && factionChangeInfo->Race != RACE_HUMAN)
++        if (factionChangeInfo->Race != RACE_ORC && factionChangeInfo->Race != RACE_HUMAN &&
++            factionChangeInfo->Race != RACE_WORGEN && factionChangeInfo->Race != RACE_GOBLIN)
+         {
+             stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_SKILL_LANGUAGE);
+             stmt->SetData(0, lowGuid);
+diff --git a/src/server/shared/SharedDefines.h b/src/server/shared/SharedDefines.h
+--- a/src/server/shared/SharedDefines.h
++++ b/src/server/shared/SharedDefines.h
+@@ -76,9 +76,10 @@ enum Races
+     RACE_TAUREN             = 6,  // TITLE Tauren
+     RACE_GNOME              = 7,  // TITLE Gnome
+     RACE_TROLL              = 8,  // TITLE Troll
+-    //RACE_GOBLIN             = 9,
++    RACE_GOBLIN             = 9,  // TITLE Goblin
+     RACE_BLOODELF           = 10, // TITLE Blood Elf
+-    RACE_DRAENEI            = 11 //, TITLE Draenei
++    RACE_DRAENEI            = 11, // TITLE Draenei
++    RACE_WORGEN             = 12  // TITLE Worgen
+     //RACE_FEL_ORC        = 12,
+     //RACE_NAGA           = 13,
+     //RACE_BROKEN         = 14,
