@@ -180,6 +180,7 @@ if [[ "${PROFILE}" == "all" ]]; then
   while IFS=$'\t' read -r key directory; do
     [[ -n "${key}" ]] || continue
     clone_pin "integrations.${key}" "${INTEGRATIONS_DIR}/${directory}"
+    apply_patches "integrations.${key}" "${INTEGRATIONS_DIR}/${directory}" "patches"
   done < <(list_integration_keys)
 
   requested_integrations=",${INTEGRATION_FILTER},"
@@ -191,7 +192,6 @@ if [[ "${PROFILE}" == "all" ]]; then
       exit 1
     fi
 
-    apply_patches "integrations.worgoblin" "${worgoblin}" "patches"
     apply_patches "integrations.worgoblin" "${CORE_DIR}" "core_patches"
 
     rm -rf "${CORE_DIR}/modules/mod-worgoblin"
@@ -203,8 +203,6 @@ if [[ "${PROFILE}" == "all" ]]; then
     solo_platform_dir="$(read_lock "integrations.solo_collections_platform" directory)"
     solo_platform="${INTEGRATIONS_DIR}/${solo_platform_dir}"
     solo_backend="${solo_platform}/mod-solo-collections"
-
-    apply_patches "integrations.solo_collections_platform" "${solo_platform}" "patches"
 
     if [[ ! -f "${solo_backend}/include.sh" ]]; then
       echo "[FURY] SoloCollections backend missing from matched platform: ${solo_backend}" >&2
