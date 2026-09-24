@@ -6,6 +6,7 @@ LOCK="${ROOT}/vendor/lock/fury.lock.yaml"
 UPSTREAM="${ROOT}/upstream"
 CORE_DIR="${UPSTREAM}/azerothcore-wotlk"
 PROFILE="${FURY_STACK_PROFILE:-baseline}"
+INTEGRATION_FILTER="${FURY_INTEGRATION_FILTER:-}"
 
 case "${PROFILE}" in
   baseline|server|all) ;;
@@ -132,20 +133,25 @@ PY
 }
 
 list_integration_keys() {
-  python3 - "${LOCK}" "${PROFILE}" <<'PY'
+  python3 - "${LOCK}" "${PROFILE}" "${INTEGRATION_FILTER}" <<'PY'
 import json
 import sys
 
-lock_path, profile = sys.argv[1:3]
+lock_path, profile, raw_filter = sys.argv[1:4]
 if profile != "all":
     raise SystemExit(0)
+
+requested = {part.strip() for part in raw_filter.split(",") if part.strip()}
 
 with open(lock_path, "r", encoding="utf-8") as fh:
     data = json.load(fh)
 
 for key, integration in data.get("integrations", {}).items():
-    if integration.get("selected", False):
-        print(f"{key}\t{integration['directory']}")
+    if not integration.get("selected", False):
+        continue
+    if requested and key not in requested:
+        continue
+    print(f"{key}\t{integration['directory']}")
 PY
 }
 
@@ -175,17 +181,20 @@ if [[ "${PROFILE}" == "all" ]]; then
     clone_pin "integrations.${key}" "${INTEGRATIONS_DIR}/${directory}"
   done < <(list_integration_keys)
 
-  solo_platform_dir="$(read_lock "integrations.solo_collections_platform" directory)"
-  solo_platform="${INTEGRATIONS_DIR}/${solo_platform_dir}"
-  solo_backend="${solo_platform}/mod-solo-collections"
-  if [[ ! -f "${solo_backend}/include.sh" ]]; then
-    echo "[FURY] SoloCollections backend missing from matched platform: ${solo_backend}" >&2
-    exit 1
-  fi
+  requested_integrations=",${INTEGRATION_FILTER},"
+  if [[ -z "${INTEGRATION_FILTER}" || "${requested_integrations}" == *",solo_collections_platform,"* ]]; then
+    solo_platform_dir="$(read_lock "integrations.solo_collections_platform" directory)"
+    solo_platform="${INTEGRATIONS_DIR}/${solo_platform_dir}"
+    solo_backend="${solo_platform}/mod-solo-collections"
+    if [[ ! -f "${solo_backend}/include.sh" ]]; then
+      echo "[FURY] SoloCollections backend missing from matched platform: ${solo_backend}" >&2
+      exit 1
+    fi
 
-  rm -rf "${CORE_DIR}/modules/mod-solo-collections"
-  ln -s "${solo_backend}" "${CORE_DIR}/modules/mod-solo-collections"
-  echo "[FURY] linked matched SoloCollections backend: modules/mod-solo-collections"
+    rm -rf "${CORE_DIR}/modules/mod-solo-collections"
+    ln -s "${solo_backend}" "${CORE_DIR}/modules/mod-solo-collections"
+    echo "[FURY] linked matched SoloCollections backend: modules/mod-solo-collections"
+  fi
 fi
 
 echo
