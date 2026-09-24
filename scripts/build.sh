@@ -28,7 +28,7 @@ if command -v ninja >/dev/null 2>&1; then
 fi
 
 CMAKE_FAST_ARGS=()
-if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "living-world-only" || "${TARGET}" == "selected-modules-only" ]]; then
+if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "living-world-only" || "${TARGET}" == "selected-modules-only" || "${TARGET}" == "module-only" ]]; then
   CMAKE_FAST_ARGS+=(
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
     "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"
@@ -70,6 +70,10 @@ if [[ "${TARGET}" == "fury-only" ]]; then
   compile_module_tus "mod-fury"
 elif [[ "${TARGET}" == "living-world-only" ]]; then
   compile_module_tus "mod-living-world"
+elif [[ "${TARGET}" == "module-only" ]]; then
+  module="${FURY_SOURCE_MODULE:-}"
+  [[ -n "${module}" ]] || { echo "[FURY] FURY_SOURCE_MODULE is required for module-only" >&2; exit 2; }
+  compile_module_tus "${module}"
 elif [[ "${TARGET}" == "selected-modules-only" ]]; then
   if [[ ! -f "${LOCK}" ]]; then
     echo "[FURY] missing selected-stack lock: ${LOCK}" >&2
