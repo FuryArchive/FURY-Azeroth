@@ -203,6 +203,9 @@
       "note": "Must be reconciled with Playerbots core and Project Reforged client assets before activation.",
       "core_patches": [
         "vendor/patches/mod-worgoblin/0001-playerbots-core-custom-races.patch"
+      ],
+      "patches": [
+        "vendor/patches/mod-worgoblin/0002-current-player-login-hook.patch"
       ]
     },
     "delves": {
