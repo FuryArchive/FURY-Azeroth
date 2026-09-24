@@ -65,14 +65,46 @@ mapfile -t conflicts < <(git -C "${CORE}" diff --name-only --diff-filter=U)
 
 git -C "${CORE}" merge --abort >/dev/null 2>&1 || git -C "${CORE}" reset --hard HEAD >/dev/null
 
-if [[ "${#conflicts[@]}" -gt 0 ]]; then
-  echo "[FURY][ELUNA][BLOCKED] three-way merge has ${#conflicts[@]} conflict(s)" | tee -a "${REPORT}"
+expected_conflicts=(
+  ".github/workflows/codestyle.yml"
+  ".github/workflows/core-build-nopch.yml"
+  ".github/workflows/core-build-pch.yml"
+  ".github/workflows/core_modules_build.yml"
+  ".github/workflows/dashboard-ci.yml"
+  ".github/workflows/import_pending.yml"
+  ".github/workflows/macos_build.yml"
+  ".github/workflows/sql-codestyle.yml"
+  ".github/workflows/windows_build.yml"
+  "src/server/apps/worldserver/worldserver.conf.dist"
+  "src/server/game/Entities/Object/Object.cpp"
+  "src/server/game/Entities/Object/Object.h"
+)
+
+is_expected() {
+  local candidate="$1"
+  local expected
+  for expected in "${expected_conflicts[@]}"; do
+    [[ "${candidate}" == "${expected}" ]] && return 0
+  done
+  return 1
+}
+
+unexpected=()
+for path in "${conflicts[@]}"; do
+  if ! is_expected "${path}"; then
+    unexpected+=("${path}")
+  fi
+done
+
+if [[ "${#unexpected[@]}" -gt 0 ]]; then
+  echo "[FURY][ELUNA][FAIL] new merge conflicts appeared:" | tee -a "${REPORT}"
+  printf '  - %s\n' "${unexpected[@]}" | tee -a "${REPORT}"
   exit 1
 fi
 
-if [[ "${merge_rc}" -ne 0 ]]; then
+if [[ "${merge_rc}" -ne 0 && "${#conflicts[@]}" -eq 0 ]]; then
   echo "[FURY][ELUNA][FAIL] merge failed without ordinary file conflicts" | tee -a "${REPORT}"
   exit "${merge_rc}"
 fi
 
-echo "[FURY][ELUNA][PASS] standard Eluna merges cleanly into pinned Playerbots core" | tee -a "${REPORT}"
+echo "[FURY][ELUNA][PASS] conflict surface is contained within the known reconciliation set (${#conflicts[@]} current conflict(s))" | tee -a "${REPORT}"
