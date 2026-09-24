@@ -250,7 +250,7 @@ jobs:
             cp -a "${module}/data/sql" "${server_root}/runtime-source/modules/${name}/data/sql"
           done
 
-          test -f "${server_root}/runtime-source/data/sql/base/db_world/world_database.sql"
+          test -f "${server_root}/runtime-source/data/sql/base/db_world/updates.sql"
           test -d "${server_root}/runtime-source/modules/mod-solo-collections/data/sql"
           test -x "${server_root}/runtime/mysql-wrapper.sh"
 
