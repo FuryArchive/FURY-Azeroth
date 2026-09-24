@@ -133,6 +133,7 @@ jobs:
           FURY_STARTUP_TIMEOUT: "900"
           FURY_SMOKE_RUNS: "1"
           FURY_WORLDSERVER_CONF: ${{ github.workspace }}/build/dist/etc/worldserver.playable-init.conf
+          FURY_WORLDSERVER_WORKDIR: ${{ github.workspace }}/build/dist
           AC_DATA_DIR: ${{ github.workspace }}/build/dist/data
           AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
           AC_WORLD_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_world"
@@ -204,6 +205,7 @@ jobs:
           FURY_STARTUP_TIMEOUT: "900"
           FURY_SMOKE_RUNS: "1"
           FURY_WORLDSERVER_CONF: ${{ github.workspace }}/build/dist/etc/worldserver.playable.conf
+          FURY_WORLDSERVER_WORKDIR: ${{ github.workspace }}/build/dist
           AC_DATA_DIR: ${{ github.workspace }}/build/dist/data
           AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
           AC_WORLD_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_world"
