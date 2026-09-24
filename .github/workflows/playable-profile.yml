@@ -287,8 +287,13 @@ jobs:
           cp -a "${llm_module}/tools/." "${server_root}/llm-chatter/"
           mkdir -p "${server_root}/llm-chatter/wheels"
           python3 -m pip download \
+            --only-binary=:all: \
             --dest "${server_root}/llm-chatter/wheels" \
             -r "${server_root}/llm-chatter/requirements.txt"
+          (
+            cd "${server_root}/llm-chatter/wheels"
+            sha256sum * > ../WHEELHOUSE-SHA256SUMS
+          )
 
           test -f "${server_root}/llm-chatter/llm_chatter_bridge.py"
           test -f "${server_root}/llm-chatter/requirements.txt"
