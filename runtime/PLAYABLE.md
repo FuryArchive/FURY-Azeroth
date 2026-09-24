@@ -5,8 +5,11 @@ This package is intended to run without a local AzerothCore build tree.
 ## Server
 
 Requirements:
-- Linux
+- modern x86_64 Linux
 - Docker with the Compose plugin
+- Python 3
+
+The archive bundles the non-glibc shared libraries used by the CI-built server, so matching host versions of Boost, MySQL client libraries, OpenSSL, and similar packages are not required.
 
 From the extracted `FURY-Azeroth` directory:
 
