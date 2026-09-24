@@ -123,7 +123,10 @@
       "directory": "mod-dungeon-master",
       "tier": "selected",
       "required": true,
-      "role": "procedural dungeon expeditions; FURY must own persistent rewards"
+      "role": "procedural dungeon expeditions; FURY must own persistent rewards",
+      "patches": [
+        "vendor/patches/mod-dungeon-master/0001-fury-persistent-reward-authority.patch"
+      ]
     },
     "warband_camp": {
       "repository": "Ildourol/mod-warband-camp",
