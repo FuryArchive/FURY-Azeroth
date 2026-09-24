@@ -26,10 +26,15 @@ DELVES="${UPSTREAM}/integrations/$(read_dir delves)"
 MYTHIC="${UPSTREAM}/integrations/$(read_dir mythic_plus_extended)"
 AIO="${UPSTREAM}/integrations/$(read_dir aio)"
 
+MODULES="${UPSTREAM}/azerothcore-wotlk/modules"
+QUEST_RADAR="${MODULES}/mod-quest-radar"
+NEMESIS="${MODULES}/mod-nemesis-system"
+WARBAND="${MODULES}/mod-warband-camp"
+
 fail() { echo "[FURY][PLAYABLE][FAIL] $*" >&2; exit 1; }
 pass() { echo "[FURY][PLAYABLE][PASS] $*"; }
 
-for dir in "${SOLO}" "${WORG}" "${DELVES}" "${MYTHIC}" "${AIO}" "${AC_DATA}/dbc"; do
+for dir in "${SOLO}" "${WORG}" "${DELVES}" "${MYTHIC}" "${AIO}" "${QUEST_RADAR}" "${NEMESIS}" "${WARBAND}" "${AC_DATA}/dbc"; do
   [[ -d "${dir}" ]] || fail "required workspace missing: ${dir}"
 done
 
@@ -41,6 +46,9 @@ bash "${ROOT}/scripts/stage-client-integrations.sh" "${OUT}/solo-collections"
 cp -a "${OUT}/solo-collections/Interface/AddOns/." "${CLIENT}/Interface/AddOns/"
 cp -a "${AIO}/AIO_Client" "${CLIENT}/Interface/AddOns/AIO_Client"
 cp -a "${DELVES}/addon/DelvesTeleporter" "${CLIENT}/Interface/AddOns/DelvesTeleporter"
+cp -a "${QUEST_RADAR}/client-addon/QuestRadar" "${CLIENT}/Interface/AddOns/QuestRadar"
+cp -a "${NEMESIS}/ClientAddon/NemesisTracker" "${CLIENT}/Interface/AddOns/NemesisTracker"
+cp -a "${WARBAND}/Addon/QOLAddon" "${CLIENT}/Interface/AddOns/QOLAddon"
 
 # Hide upstream-declared WIP delves from the normal player-facing browser.
 python3 - "${CLIENT}/Interface/AddOns/DelvesTeleporter/DelvesTeleporter.lua" <<'PY'
@@ -51,7 +59,7 @@ lines = p.read_text(encoding="utf-8").splitlines()
 lines = [line for line in lines if "wip = true" not in line]
 p.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
-pass "matched SoloCollections + AIO + production Delves client AddOns staged"
+pass "SoloCollections + AIO + Delves + QuestRadar + NemesisTracker + QOLAddon staged"
 
 # --- Server Lua --------------------------------------------------------------
 cp -a "${AIO}/AIO_Server/." "${SERVER}/lua_scripts/"
