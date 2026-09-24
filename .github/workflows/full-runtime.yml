@@ -16,6 +16,7 @@ on:
       - "scripts/smoke-fury-db-lifecycle.sh"
       - "scripts/smoke-worldserver.sh"
       - "scripts/fetch-ac-data.sh"
+      - "scripts/test-t34-defias-vertical-slice.sh"
       - ".github/workflows/full-runtime.yml"
   workflow_dispatch:
 
@@ -52,7 +53,7 @@ jobs:
           cat /tmp/fury-changed-files.txt
 
           if grep -Eq '^modules/mod-fury/(mod-fury\.cmake|conf/|src/FuryModule\.cpp|src/mod_fury_loader\.cpp|src/database/FuryDatabaseScript\.cpp)' /tmp/fury-changed-files.txt \
-            || grep -Eq '^scripts/(smoke-fury-db-lifecycle\.sh|smoke-worldserver\.sh|fetch-ac-data\.sh)$' /tmp/fury-changed-files.txt; then
+            || grep -Eq '^scripts/(smoke-fury-db-lifecycle\.sh|smoke-worldserver\.sh|fetch-ac-data\.sh|test-t34-defias-vertical-slice\.sh)$' /tmp/fury-changed-files.txt; then
             echo "required=true" >> "${GITHUB_OUTPUT}"
             exit 0
           fi

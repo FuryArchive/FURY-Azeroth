@@ -1,0 +1,37 @@
+name: fury-azeroth
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: fury-azeroth-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${FURY_MYSQL_PASSWORD:-fury}
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "127.0.0.1:${FURY_MYSQL_PORT:-3306}:3306"
+    volumes:
+      - fury-azeroth-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p${FURY_MYSQL_PASSWORD:-fury} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  llm-bridge:
+    profiles: ["llm"]
+    build:
+      context: ../llm-chatter
+      dockerfile: ../runtime/llm-bridge.Dockerfile
+    container_name: fury-azeroth-llm-bridge
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    network_mode: host
+    volumes:
+      - ../etc/modules/mod_llm_chatter.conf:/config/mod_llm_chatter.conf:ro
+
+volumes:
+  fury-azeroth-mysql:
+    name: fury-azeroth-mysql

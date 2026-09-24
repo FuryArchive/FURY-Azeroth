@@ -1,0 +1,408 @@
+name: FURY Playable Profile
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/playable-profile.yml"
+
+concurrency:
+  group: fury-playable-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playable:
+    name: Build + DB + client + runtime acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install build/runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake make ninja-build gcc g++ clang ccache curl unzip zip rsync python3-pip \
+            lua5.1 netcat-openbsd \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev default-mysql-client
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-playable-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            fury-playable-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
+            fury-playable-ccache-${{ runner.os }}-
+            fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
+            fury-ccache-${{ runner.os }}-
+
+      - name: Configure compiler cache
+        run: |
+          ccache --set-config=max_size=3G
+          ccache --set-config=compression=true
+          ccache --zero-stats
+
+      - name: Resolve selected server + playable integrations
+        env:
+          FURY_STACK_PROFILE: all
+          FURY_INTEGRATION_FILTER: solo_collections_platform,worgoblin,delves,mythic_plus_extended,aio
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Reconcile standard Eluna into patched Playerbots core
+        run: bash scripts/resolve-eluna-playerbots.sh
+
+      - name: Build authserver + worldserver once
+        env:
+          FURY_APPS_BUILD: all
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
+
+      - name: Restore pinned AzerothCore runtime-data archive
+        uses: actions/cache@v4
+        with:
+          path: .cache/ac-data-v20.0/Data.zip
+          key: ac-data-v20.0-enUS-a3d4df635ae6c2c8
+
+      - name: Install pinned AzerothCore runtime data
+        run: bash scripts/fetch-ac-data.sh
+
+      - name: Stage unified server/client playable payload
+        run: bash scripts/stage-playable-profile.sh
+
+      - name: Verify playable payload contracts
+        run: bash scripts/test-playable-profile.sh
+
+      - name: Build final client MPQ
+        run: bash scripts/build-playable-client-mpq.sh
+
+      - name: Install server data overlay
+        run: |
+          for kind in dbc maps vmaps mmaps; do
+            if [[ -d "build/playable-profile/server/data-overlay/${kind}" ]]; then
+              mkdir -p "build/dist/data/${kind}"
+              rsync -a "build/playable-profile/server/data-overlay/${kind}/" "build/dist/data/${kind}/"
+            fi
+          done
+
+      - name: Prepare initial worldserver config without gameplay Lua
+        run: |
+          mkdir -p build/empty-lua
+          cp build/dist/etc/worldserver.conf.dist build/dist/etc/worldserver.playable-init.conf
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("build/dist/etc/worldserver.playable-init.conf")
+          text = p.read_text()
+          text = text.replace(
+              'Eluna.ScriptPath = "lua_scripts"',
+              f'Eluna.ScriptPath = "{Path("build/empty-lua").resolve()}"',
+          )
+          p.write_text(text)
+          PY
+
+      - name: Initialize AzerothCore/module databases
+        env:
+          FURY_STARTUP_TIMEOUT: "900"
+          FURY_SMOKE_RUNS: "1"
+          FURY_WORLDSERVER_CONF: ${{ github.workspace }}/build/dist/etc/worldserver.playable-init.conf
+          FURY_WORLDSERVER_WORKDIR: ${{ github.workspace }}/build/dist
+          AC_DATA_DIR: ${{ github.workspace }}/build/dist/data
+          AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
+          AC_WORLD_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_world"
+          AC_CHARACTER_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_characters"
+          AC_UPDATES_ENABLE_DATABASES: "7"
+          AC_UPDATES_AUTO_SETUP: "1"
+          AC_DISABLE_INTERACTIVE: "1"
+          AC_PLAYERBOTS_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_playerbots"
+          AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_ENABLE: "1"
+          AC_FURY_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_fury"
+          AC_FURY_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_DATABASE_SOURCE_DIRECTORY: ${{ github.workspace }}/modules/mod-fury
+          AC_CONSOLE_ENABLE: "1"
+          AC_BEEP_AT_START: "0"
+          AC_LOG_ASYNC_ENABLE: "0"
+        run: bash scripts/smoke-worldserver.sh
+
+      - name: Import Delves + Mythic+ SQL
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+        run: bash scripts/apply-playable-sql.sh
+
+      - name: Install gameplay Lua and final config
+        run: |
+          rm -rf build/dist/lua_scripts
+          cp -a build/playable-profile/server/lua_scripts build/dist/lua_scripts
+          cp build/dist/etc/worldserver.conf.dist build/dist/etc/worldserver.playable.conf
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("build/dist/etc/worldserver.playable.conf")
+          text = p.read_text()
+          text = text.replace(
+              'Eluna.ScriptPath = "lua_scripts"',
+              f'Eluna.ScriptPath = "{Path("build/dist/lua_scripts").resolve()}"',
+          )
+          p.write_text(text)
+          PY
+
+      - name: Smoke authserver against initialized auth DB
+        env:
+          AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
+        run: |
+          set -euo pipefail
+          build/dist/bin/authserver -c build/dist/etc/authserver.conf.dist > build/authserver.log 2>&1 &
+          pid=$!
+          trap 'kill "${pid}" 2>/dev/null || true' EXIT
+          for i in {1..60}; do
+            if nc -z 127.0.0.1 3724; then
+              echo "[FURY][PASS] authserver listening on 3724"
+              kill "${pid}" 2>/dev/null || true
+              wait "${pid}" 2>/dev/null || true
+              trap - EXIT
+              exit 0
+            fi
+            if ! kill -0 "${pid}" 2>/dev/null; then
+              cat build/authserver.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat build/authserver.log
+          exit 1
+
+      - name: Final playable worldserver smoke with Eluna content
+        env:
+          FURY_STARTUP_TIMEOUT: "900"
+          FURY_SMOKE_RUNS: "1"
+          FURY_WORLDSERVER_CONF: ${{ github.workspace }}/build/dist/etc/worldserver.playable.conf
+          FURY_WORLDSERVER_WORKDIR: ${{ github.workspace }}/build/dist
+          AC_DATA_DIR: ${{ github.workspace }}/build/dist/data
+          AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
+          AC_WORLD_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_world"
+          AC_CHARACTER_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_characters"
+          AC_UPDATES_ENABLE_DATABASES: "7"
+          AC_UPDATES_AUTO_SETUP: "1"
+          AC_DISABLE_INTERACTIVE: "1"
+          AC_PLAYERBOTS_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_playerbots"
+          AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_ENABLE: "1"
+          AC_FURY_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_fury"
+          AC_FURY_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_DATABASE_SOURCE_DIRECTORY: ${{ github.workspace }}/modules/mod-fury
+          AC_CONSOLE_ENABLE: "1"
+          AC_BEEP_AT_START: "0"
+          AC_LOG_ASYNC_ENABLE: "0"
+        run: bash scripts/smoke-worldserver.sh
+
+      - name: Prepare downloadable server/client packages
+        run: |
+          server_root="build/artifacts/server/FURY-Azeroth"
+          mkdir -p "${server_root}"
+          cp -a build/dist/. "${server_root}/"
+
+          mkdir -p "${server_root}/fury-sql"
+          cp -a build/playable-profile/server/sql/. "${server_root}/fury-sql/"
+          cp -a modules/mod-fury "${server_root}/fury-module"
+          cp -a runtime "${server_root}/runtime"
+          chmod +x "${server_root}"/runtime/*.sh
+
+          # The CI build targets Ubuntu 24.04. Bundle non-glibc shared
+          # libraries used by authserver/worldserver so the archive does not
+          # depend on matching Boost/MySQL/OpenSSL package versions on the host.
+          mkdir -p "${server_root}/runtime-libs"
+          {
+            ldd build/dist/bin/worldserver
+            ldd build/dist/bin/authserver
+          } | awk '/=> \/.* \(0x/ { print $3 } /^[[:space:]]*\/.* \(0x/ { print $1 }' \
+            | sort -u \
+            | while IFS= read -r lib; do
+                [[ -f "${lib}" ]] || continue
+                case "$(basename "${lib}")" in
+                  libc.so.*|libm.so.*|libpthread.so.*|libdl.so.*|librt.so.*|libresolv.so.*|libutil.so.*|ld-linux*.so.*)
+                    continue
+                    ;;
+                esac
+                cp -L "${lib}" "${server_root}/runtime-libs/"
+              done
+
+          test -n "$(find "${server_root}/runtime-libs" -maxdepth 1 -type f -print -quit)"
+
+          # AzerothCore's runtime DB updater reads base/update SQL from
+          # SourceDirectory, including modules/<name>/data/sql. Bundle the
+          # minimal SQL source tree so the downloaded archive is independent
+          # from the Actions checkout and does not need a Git clone.
+          mkdir -p "${server_root}/runtime-source/data"
+          cp -a upstream/azerothcore-wotlk/data/sql "${server_root}/runtime-source/data/sql"
+
+          mkdir -p "${server_root}/runtime-source/modules"
+          for module in upstream/azerothcore-wotlk/modules/*; do
+            [[ -d "${module}/data/sql" ]] || continue
+            name="$(basename "${module}")"
+            mkdir -p "${server_root}/runtime-source/modules/${name}/data"
+            cp -a "${module}/data/sql" "${server_root}/runtime-source/modules/${name}/data/sql"
+          done
+
+          test -f "${server_root}/runtime-source/data/sql/base/db_world/updates.sql"
+          test -d "${server_root}/runtime-source/modules/mod-solo-collections/data/sql"
+          test -x "${server_root}/runtime/mysql-wrapper.sh"
+          test -f "${server_root}/runtime/PLAYABLE.md"
+
+          # LLM Chatter needs its Python bridge in addition to the compiled
+          # AzerothCore module. Bundle the pinned bridge tools and a complete
+          # offline wheelhouse so realm startup never depends on pip/network.
+          llm_module="upstream/azerothcore-wotlk/modules/mod-llm-chatter"
+          test -f "${llm_module}/tools/llm_chatter_bridge.py"
+          test -f "${llm_module}/tools/requirements.txt"
+
+          mkdir -p "${server_root}/llm-chatter"
+          cp -a "${llm_module}/tools/." "${server_root}/llm-chatter/"
+          mkdir -p "${server_root}/llm-chatter/wheels"
+          python3 -m pip download \
+            --only-binary=:all: \
+            --dest "${server_root}/llm-chatter/wheels" \
+            -r "${server_root}/llm-chatter/requirements.txt"
+          (
+            cd "${server_root}/llm-chatter/wheels"
+            sha256sum * > ../WHEELHOUSE-SHA256SUMS
+          )
+
+          test -f "${server_root}/llm-chatter/llm_chatter_bridge.py"
+          test -f "${server_root}/llm-chatter/requirements.txt"
+          test -n "$(find "${server_root}/llm-chatter/wheels" -maxdepth 1 -type f -print -quit)"
+
+          cp build/playable-profile/PLAYABLE-MANIFEST.txt "${server_root}/"
+          cp build/playable-profile/SHA256SUMS "${server_root}/"
+
+          mkdir -p build/artifacts/client/FURY-Azeroth-Client
+          cp -a build/playable-profile/client/Data build/artifacts/client/FURY-Azeroth-Client/
+          cp -a build/playable-profile/client/Interface build/artifacts/client/FURY-Azeroth-Client/
+          mkdir -p build/artifacts/client/FURY-Azeroth-Client/runtime
+          cp runtime/install-client.sh build/artifacts/client/FURY-Azeroth-Client/runtime/
+          chmod +x build/artifacts/client/FURY-Azeroth-Client/runtime/install-client.sh
+          cp runtime/PLAYABLE.md build/artifacts/client/FURY-Azeroth-Client/PLAYABLE.md
+          cp build/playable-profile/PLAYABLE-MANIFEST.txt build/artifacts/client/FURY-Azeroth-Client/
+
+          docker build \
+            -f "${server_root}/runtime/llm-bridge.Dockerfile" \
+            -t fury-azeroth-llm-bridge-ci \
+            "${server_root}/llm-chatter"
+
+          tar -C build/artifacts/server -czf build/FURY-Azeroth-Server.tar.gz FURY-Azeroth
+          (cd build/artifacts/client && zip -qr ../../FURY-Azeroth-Client.zip FURY-Azeroth-Client)
+
+      - name: Smoke downloadable server archive
+        env:
+          FURY_MYSQL_PASSWORD: fury-package-ci
+          FURY_MYSQL_PORT: "3307"
+          FURY_REALM_ADDRESS: "127.0.0.1"
+        run: |
+          set -euo pipefail
+          smoke_root="${GITHUB_WORKSPACE}/build/package-smoke"
+          rm -rf "${smoke_root}"
+          mkdir -p "${smoke_root}"
+          tar -xzf build/FURY-Azeroth-Server.tar.gz -C "${smoke_root}"
+          cd "${smoke_root}/FURY-Azeroth"
+
+          cleanup() {
+            docker compose -f runtime/docker-compose.playable.yml down -v >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          ./runtime/bootstrap-playable.sh furyci furyci123
+          test -f etc/worldserver.conf
+          test -f etc/authserver.conf
+          grep -Fq 'SourceDirectory = "' etc/worldserver.conf
+          grep -Fq 'MySQLExecutable = "' etc/worldserver.conf
+          grep -Fq 'DataDir = "' etc/worldserver.conf
+          grep -Eq '^LLMChatter\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_llm_chatter.conf
+          grep -Eq '^ProgressionSystem\.Bracket_0[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
+          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
+          grep -Eq '^AiPlayerbot\.MinRandomBots[[:space:]]*=[[:space:]]*80[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.MaxRandomBots[[:space:]]*=[[:space:]]*120[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.DisabledWithoutRealPlayer[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.SyncLevelWithPlayers[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.RandomBotConcentrateInPlayerZone[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.DisableDeathKnightLogin[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^LivingWorld\.Debug[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_living_world.conf
+          grep -Eq '^LivingWorld\.Playerbots\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_living_world.conf
+          grep -Eq '^ModZoneDifficulty\.Mythicmode\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod-zone-difficulty.conf
+          grep -Eq '^ModZoneDifficulty\.MythicmodeAI\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod-zone-difficulty.conf
+          grep -Eq '^AuctionHouseBot\.EnableSeller[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_ahbot.conf
+          grep -Eq '^AuctionHouseBot\.EnableBuyer[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_ahbot.conf
+          test -x runtime/configure-playable-modules.sh
+          test -x runtime/configure-ahbot.sh
+          test -f llm-chatter/llm_chatter_bridge.py
+          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
+
+          ./runtime/advance-progression.sh
+          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
+          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
+          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
+          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
+            mysql -uroot -pfury-package-ci acore_fury -Nse \
+            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
+          test "${progression_state}" = "1_19"
+
+          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
+
+      - name: Smoke downloadable client overlay
+        run: |
+          set -euo pipefail
+          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
+          wow_root="${smoke_root}/wow"
+          overlay_root="${smoke_root}/overlay"
+          rm -rf "${smoke_root}"
+          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
+
+          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
+          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
+
+          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
+          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
+
+          test -f "${wow_root}/Data/patch-Z.MPQ"
+          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
+          test -d "${wow_root}/Interface/AddOns/SoloCollections"
+          test -d "${wow_root}/Interface/AddOns/AIO_Client"
+          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
+          test -d "${wow_root}/Interface/AddOns/QuestRadar"
+          test -d "${wow_root}/Interface/AddOns/NemesisTracker"
+          test -d "${wow_root}/Interface/AddOns/QOLAddon"
+          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
+
+          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
+
+      - name: Upload playable server
+        uses: actions/upload-artifact@v4
+        with:
+          name: FURY-Azeroth-Server
+          path: build/FURY-Azeroth-Server.tar.gz
+          if-no-files-found: error
+
+      - name: Upload playable client overlay
+        uses: actions/upload-artifact@v4
+        with:
+          name: FURY-Azeroth-Client
+          path: build/FURY-Azeroth-Client.zip
+          if-no-files-found: error

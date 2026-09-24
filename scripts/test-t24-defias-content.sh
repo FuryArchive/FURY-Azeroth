@@ -40,87 +40,87 @@ CXX="${CXX:-g++}"
 "${WORKDIR}/defias_content_policy_golden"
 
 OVERLAY="${ROOT}/modules/mod-fury/data/sql/db-world/updates/2026_09_23_00_fury_defias_control.sql"
+ADAPTER="${ROOT}/scripts/adapt-living-world-sql.py"
+FIXTURE="${WORKDIR}/900_defias_westfall_invasion.sql"
 
-grep -Eq 'UPDATE.*lw_invasion' "${OVERLAY}"
-grep -Eq 'SET.*allow_random_start.*=.*0' "${OVERLAY}"
-grep -Eq 'WHERE.*id.*=.*1' "${OVERLAY}"
-
-if grep -Eiq 'DELETE[[:space:]]+FROM|TRUNCATE|DROP[[:space:]]+TABLE' "${OVERLAY}"; then
-  echo "[FURY][FAIL] Defias overlay contains destructive SQL" >&2
-  exit 1
-fi
-
-python3 - "${OVERLAY}" <<'PY'
+python3 - "${OVERLAY}" "${ADAPTER}" "${FIXTURE}" <<'PY'
+import ast
 import pathlib
 import re
 import sys
 
-sql = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
-sql = sql.replace("`", "")
-lines = []
-for line in sql.splitlines():
-    if line.lstrip().startswith("--"):
-        continue
-    lines.append(line)
-sql = "\n".join(lines)
+overlay = pathlib.Path(sys.argv[1])
+adapter = pathlib.Path(sys.argv[2])
+fixture = pathlib.Path(sys.argv[3])
 
-statements = [s.strip() for s in sql.split(";") if s.strip()]
-if len(statements) != 1:
-    raise SystemExit(f"[FURY][FAIL] expected exactly one executable SQL statement, got {len(statements)}")
-
-statement = statements[0]
-patterns = [
-    r"(?is)^UPDATE\s+lw_invasion\s+",
-    r"(?is)SET\s+allow_random_start\s*=\s*0",
-    r"(?is)WHERE\s+id\s*=\s*1\s*$",
+overlay_text = overlay.read_text(encoding="utf-8")
+executable_lines = [
+    line for line in overlay_text.splitlines()
+    if line.strip() and not line.lstrip().startswith("--")
 ]
-for pattern in patterns:
-    if not re.search(pattern, statement):
-        raise SystemExit(f"[FURY][FAIL] overlay failed narrow-scope pattern: {pattern}")
+if executable_lines:
+    raise SystemExit(
+        "[FURY][FAIL] Defias FURY-owned overlay must remain executable-SQL free; "
+        "Living World owns the source row"
+    )
 
-print("[FURY][PASS] Defias world-DB overlay is a single narrow id=1 update")
+tree = ast.parse(adapter.read_text(encoding="utf-8"), filename=str(adapter))
+values = {}
+for node in tree.body:
+    if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+        continue
+    target = node.targets[0]
+    if isinstance(target, ast.Name) and target.id in {"OLD", "NEW"}:
+        values[target.id] = ast.literal_eval(node.value)
+
+if set(values) != {"OLD", "NEW"}:
+    raise SystemExit("[FURY][FAIL] Living World SQL adapter OLD/NEW contract missing")
+
+old = values["OLD"]
+new = values["NEW"]
+if old == new:
+    raise SystemExit("[FURY][FAIL] Living World SQL adapter does not change the pinned row")
+
+old_match = re.search(r"VALUES\s*\((.*)\);", old)
+new_match = re.search(r"VALUES\s*\((.*)\);", new)
+if not old_match or not new_match:
+    raise SystemExit("[FURY][FAIL] Living World SQL adapter row shape changed unexpectedly")
+
+def split_row(payload: str):
+    parts = []
+    cur = []
+    quote = False
+    for ch in payload:
+        if ch == "'":
+            quote = not quote
+            cur.append(ch)
+        elif ch == "," and not quote:
+            parts.append("".join(cur).strip())
+            cur = []
+        else:
+            cur.append(ch)
+    parts.append("".join(cur).strip())
+    return parts
+
+old_fields = split_row(old_match.group(1))
+new_fields = split_row(new_match.group(1))
+if len(old_fields) != len(new_fields):
+    raise SystemExit("[FURY][FAIL] Living World SQL adapter changes row width")
+
+diffs = [i for i, (a, b) in enumerate(zip(old_fields, new_fields)) if a != b]
+if len(diffs) != 1 or old_fields[diffs[0]] != "1" or new_fields[diffs[0]] != "0":
+    raise SystemExit(
+        "[FURY][FAIL] Living World SQL adapter must change exactly one boolean field 1 -> 0"
+    )
+
+fixture.write_text(old + "\n", encoding="utf-8")
+print("[FURY][PASS] Defias overlay is a tracked no-op and adapter contract is one-field 1 -> 0")
 PY
 
-if command -v mysql >/dev/null 2>&1 && [[ -n "${MYSQL_HOST:-}" ]]; then
-  MYSQL_PORT="${MYSQL_PORT:-3306}"
-  MYSQL_USER="${MYSQL_USER:-root}"
-  MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
-  TEST_DB="${MYSQL_DATABASE:-fury_t24_world}"
+python3 "${ADAPTER}" "${FIXTURE}"
+grep -Fq "3600, 0, 1, 'Defias attack/control Sentinel Hill'" "${FIXTURE}"
+python3 "${ADAPTER}" "${FIXTURE}"
+grep -Fq "3600, 0, 1, 'Defias attack/control Sentinel Hill'" "${FIXTURE}"
 
-  mysql_args=(
-    -h "${MYSQL_HOST}"
-    -P "${MYSQL_PORT}"
-    -u "${MYSQL_USER}"
-    --protocol=TCP
-  )
-
-  if [[ -n "${MYSQL_PASSWORD}" ]]; then
-    mysql_args+=("-p${MYSQL_PASSWORD}")
-  fi
-
-  mysql "${mysql_args[@]}" -e "DROP DATABASE IF EXISTS \`${TEST_DB}\`; CREATE DATABASE \`${TEST_DB}\`;"
-  mysql "${mysql_args[@]}" "${TEST_DB}" <<'SQL'
-CREATE TABLE lw_invasion (
-  id INT UNSIGNED NOT NULL PRIMARY KEY,
-  allow_random_start TINYINT UNSIGNED NOT NULL DEFAULT 1
-);
-INSERT INTO lw_invasion (id, allow_random_start) VALUES
-  (1, 1),
-  (2, 1);
-SQL
-
-  mysql "${mysql_args[@]}" "${TEST_DB}" < "${OVERLAY}"
-  mysql "${mysql_args[@]}" "${TEST_DB}" < "${OVERLAY}"
-
-  defias_random="$(mysql "${mysql_args[@]}" -N -s "${TEST_DB}" -e "SELECT allow_random_start FROM lw_invasion WHERE id=1;")"
-  other_random="$(mysql "${mysql_args[@]}" -N -s "${TEST_DB}" -e "SELECT allow_random_start FROM lw_invasion WHERE id=2;")"
-
-  [[ "${defias_random}" == "0" ]]
-  [[ "${other_random}" == "1" ]]
-
-  mysql "${mysql_args[@]}" -e "DROP DATABASE \`${TEST_DB}\`;"
-
-  echo "[FURY][PASS] Defias overlay is idempotent and leaves non-Defias invasions unchanged"
-fi
-
+echo "[FURY][PASS] Defias Living World SQL adaptation is deterministic and idempotent"
 echo "[FURY][PASS] T24 Defias content/overlay gate passed"

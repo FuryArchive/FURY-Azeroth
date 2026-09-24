@@ -123,7 +123,10 @@
       "directory": "mod-dungeon-master",
       "tier": "selected",
       "required": true,
-      "role": "procedural dungeon expeditions; FURY must own persistent rewards"
+      "role": "procedural dungeon expeditions; FURY must own persistent rewards",
+      "patches": [
+        "vendor/patches/mod-dungeon-master/0001-fury-persistent-reward-authority.patch"
+      ]
     },
     "warband_camp": {
       "repository": "Ildourol/mod-warband-camp",
@@ -141,7 +144,10 @@
       "directory": "mod-nemesis-system",
       "tier": "selected",
       "required": true,
-      "role": "persistent emergent nemesis enemies"
+      "role": "persistent emergent nemesis enemies",
+      "patches": [
+        "vendor/patches/mod-nemesis-system/0001-fury-persistent-reward-authority.patch"
+      ]
     },
     "challenge_modes": {
       "repository": "ZhengPeiRu21/mod-challenge-modes",
@@ -183,7 +189,10 @@
       "kind": "workspace",
       "selected": true,
       "requires_client_component": true,
-      "note": "Use the platform's mod-solo-collections backend plus matched SoloCollections addon; do not stack legacy mod-transmog/account-mounts."
+      "note": "Use the platform's mod-solo-collections backend plus matched SoloCollections addon; do not stack legacy mod-transmog/account-mounts.",
+      "patches": [
+        "vendor/patches/solo-collections-platform/0001-playerbots-core-hook-compat.patch"
+      ]
     },
     "worgoblin": {
       "repository": "araxiaonline/mod-worgoblin",
@@ -194,7 +203,13 @@
       "selected": true,
       "requires_core_patch": true,
       "requires_client_patch": true,
-      "note": "Must be reconciled with Playerbots core and Project Reforged client assets before activation."
+      "note": "Must be reconciled with Playerbots core and Project Reforged client assets before activation.",
+      "core_patches": [
+        "vendor/patches/mod-worgoblin/0001-playerbots-core-custom-races.patch"
+      ],
+      "patches": [
+        "vendor/patches/mod-worgoblin/0002-current-player-login-hook.patch"
+      ]
     },
     "delves": {
       "repository": "araxiaonline/Delves",
@@ -204,7 +219,10 @@
       "kind": "content_bundle",
       "selected": true,
       "requires_client_patch": true,
-      "note": "Late-game side-content candidate with custom maps/assets; keep gated until client/content audit."
+      "note": "Late-game side-content candidate with custom maps/assets; keep gated until client/content audit.",
+      "patches": [
+        "vendor/patches/delves/0001-standard-eluna-ai-update-event.patch"
+      ]
     },
     "mythic_plus_extended": {
       "repository": "Ildourol/MythicPlus-extended",

@@ -1,0 +1,181 @@
+name: FURY Runtime Package CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime-package-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime-package-ci.yml"
+
+jobs:
+  runtime-static:
+    name: Runtime package static acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in runtime/*.sh; do
+            echo "checking ${script}"
+            bash -n "${script}"
+          done
+
+      - name: Validate embedded Python heredocs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          total = 0
+          for path in sorted(Path("runtime").glob("*.sh")):
+              lines = path.read_text().splitlines()
+              blocks = []
+              i = 0
+              while i < len(lines):
+                  if "<<'PY'" not in lines[i]:
+                      i += 1
+                      continue
+                  block = []
+                  i += 1
+                  while i < len(lines) and lines[i] != "PY":
+                      block.append(lines[i])
+                      i += 1
+                  if i >= len(lines):
+                      raise SystemExit(f"unterminated Python heredoc in {path}")
+                  blocks.append("\n".join(block) + "\n")
+                  i += 1
+
+              for index, block in enumerate(blocks, 1):
+                  compile(block, f"{path}:PY#{index}", "exec")
+              if blocks:
+                  print(f"validated {len(blocks)} embedded Python blocks in {path}")
+                  total += len(blocks)
+
+          if total == 0:
+              raise SystemExit("no embedded Python blocks found in runtime scripts")
+          print(f"validated {total} embedded Python blocks total")
+          PY
+
+      - name: Verify playable module comfort policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          trap 'rm -rf "${root}"' EXIT
+          mkdir -p "${root}/runtime" "${root}/etc/modules"
+          cp runtime/configure-playable-modules.sh "${root}/runtime/"
+
+          cat > "${root}/etc/modules/playerbots.conf" <<'EOF'
+          AiPlayerbot.MinRandomBots = 500
+          AiPlayerbot.MaxRandomBots = 500
+          AiPlayerbot.DisabledWithoutRealPlayer = 0
+          AiPlayerbot.SyncLevelWithPlayers = 0
+          AiPlayerbot.RandomBotConcentrateInPlayerZone = 0
+          AiPlayerbot.LimitTalentsExpansion = 0
+          AiPlayerbot.DisableDeathKnightLogin = 0
+          EOF
+
+          cat > "${root}/etc/modules/mod_living_world.conf" <<'EOF'
+          LivingWorld.Enable = 1
+          LivingWorld.Playerbots.Enable = 1
+          LivingWorld.Debug = 1
+          LivingWorld.Invasions.Enable = 1
+          LivingWorld.Travelers.Enable = 1
+          EOF
+
+          cat > "${root}/etc/modules/mod-zone-difficulty.conf" <<'EOF'
+          ModZoneDifficulty.Enable = 1
+          ModZoneDifficulty.Mythicmode.Enable = 1
+          ModZoneDifficulty.MythicmodeAI.Enable = 1
+          EOF
+
+          cat > "${root}/etc/modules/individualProgression.conf" <<'EOF'
+          IndividualProgression.DisableQuestMarkers = 1
+          IndividualProgression.DisableRDF = 1
+          IndividualProgression.EnforceGroupRules = 1
+          EOF
+
+          cat > "${root}/etc/modules/progression_system.conf" <<'EOF'
+          ProgressionSystem.Bracket_0 = 0
+          ProgressionSystem.Bracket_70_6_2 = 0
+          ProgressionSystem.Bracket_71_74 = 0
+          EOF
+
+          bash "${root}/runtime/configure-playable-modules.sh" 0
+
+          grep -Eq '^IndividualProgression\.DisableQuestMarkers[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
+          grep -Eq '^IndividualProgression\.DisableRDF[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
+          grep -Eq '^IndividualProgression\.EnforceGroupRules[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
+          grep -Eq '^AiPlayerbot\.MinRandomBots[[:space:]]*=[[:space:]]*80[[:space:]]*$' "${root}/etc/modules/playerbots.conf"
+          grep -Eq '^ProgressionSystem\.Bracket_70_6_3[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/progression_system.conf"
+
+      - name: Verify MySQL wrapper argument bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          fake_bin="$(mktemp -d)"
+          trap 'rm -rf "${fake_bin}"' EXIT
+          cat > "${fake_bin}/docker" <<'SH'
+          #!/usr/bin/env bash
+          printf '%s\n' "$@"
+          SH
+          chmod +x "${fake_bin}/docker"
+
+          output="$(
+            PATH="${fake_bin}:${PATH}" \
+            FURY_MYSQL_PASSWORD="runtime-ci-secret" \
+            bash runtime/mysql-wrapper.sh \
+              --defaults-extra-file=/tmp/acore.cnf \
+              --host 10.10.10.10 \
+              --port 3399 \
+              --user root \
+              acore_world
+          )"
+
+          ! grep -Fq -- "--defaults-extra-file=" <<<"${output}"
+          ! grep -Fxq -- "10.10.10.10" <<<"${output}"
+          ! grep -Fxq -- "3399" <<<"${output}"
+          grep -Fxq -- "-pruntime-ci-secret" <<<"${output}"
+          grep -Fxq -- "-h127.0.0.1" <<<"${output}"
+          grep -Fxq -- "-P3306" <<<"${output}"
+          grep -Fxq -- "--protocol=TCP" <<<"${output}"
+          grep -Fxq -- "--user" <<<"${output}"
+          grep -Fxq -- "root" <<<"${output}"
+          grep -Fxq -- "acore_world" <<<"${output}"
+
+      - name: Verify downloadable-runtime guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'runtime-source/data/sql' runtime/bootstrap-playable.sh
+          grep -Fq 'runtime/mysql-wrapper.sh' runtime/bootstrap-playable.sh
+          grep -Fq 'SourceDirectory' runtime/bootstrap-playable.sh
+          grep -Fq 'MySQLExecutable' runtime/bootstrap-playable.sh
+          grep -Fq 'DataDir' runtime/bootstrap-playable.sh
+          grep -Fq 'runtime-libs' runtime/bootstrap-playable.sh
+          grep -Fq 'LD_LIBRARY_PATH' runtime/bootstrap-playable.sh
+          grep -Fq 'runtime-libs' runtime/run-playable.sh
+          grep -Fq 'server is not bootstrapped yet' runtime/run-playable.sh
+          grep -Fq 'progression_bracket' runtime/bootstrap-playable.sh
+          grep -Fq 'Bracket_70_6_3' runtime/configure-playable-modules.sh
+          grep -Fq 'configure-playable-modules.sh' runtime/bootstrap-playable.sh
+          grep -Fq 'configure-playable-modules.sh' runtime/advance-progression.sh
+          grep -Fq 'AuctionHouseBot.Account' runtime/configure-ahbot.sh
+          grep -Fq 'AuctionHouseBot.GUID' runtime/configure-ahbot.sh
+          grep -Fq 'backup-playable.sh' runtime/advance-progression.sh
+          grep -Fq 'configure-llm-chatter.sh' runtime/bootstrap-playable.sh
+          grep -Fq -- '--profile llm' runtime/run-playable.sh
+          grep -Fq 'llm-bridge.Dockerfile' runtime/docker-compose.playable.yml
+          grep -Fq 'context: ../llm-chatter' runtime/docker-compose.playable.yml
+          grep -Fq 'COPY requirements.txt' runtime/llm-bridge.Dockerfile
+          grep -Fq 'sha256sum -c' runtime/llm-bridge.Dockerfile
+          grep -Fq 'network_mode: host' runtime/docker-compose.playable.yml
+          grep -Fq '127.0.0.1:11434' runtime/configure-llm-chatter.sh

@@ -18,14 +18,14 @@ fi
 echo "[FURY][PASS] Living World exact pin resolved"
 
 changed="$(git -C "${LW}" diff --name-only | sort)"
-expected=$'src/core/RuntimeEntityGroup.cpp\nsrc/core/RuntimeEntityGroup.h\nsrc/invasions/InvasionRuntimeManager.cpp\nsrc/invasions/InvasionRuntimeManager.h'
+expected=$'data/sql/db-world/prebuilt/900_defias_westfall_invasion.sql\nsrc/core/RuntimeEntityGroup.cpp\nsrc/core/RuntimeEntityGroup.h\nsrc/invasions/InvasionRuntimeManager.cpp\nsrc/invasions/InvasionRuntimeManager.h'
 if [[ "${changed}" != "${expected}" ]]; then
   echo "[FURY][FAIL] unexpected Living World patch surface:" >&2
   printf '%s\n' "${changed}" >&2
   exit 1
 fi
 
-echo "[FURY][PASS] bridge patch touches only runtime entity metadata and terminal observer APIs"
+echo "[FURY][PASS] Living World changes are limited to the bridge plus pinned Defias SQL compatibility"
 
 grep -Fq "struct RuntimeEntityMetadata" "${LW}/src/core/RuntimeEntityGroup.h"
 grep -Fq "FindEntityMetadata(ObjectGuid guid, RuntimeEntityMetadata& metadata) const" "${LW}/src/core/RuntimeEntityGroup.h"

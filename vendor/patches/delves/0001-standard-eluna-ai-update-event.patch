@@ -1,0 +1,10 @@
+diff --git a/lua_scripts/ForemanGlitzbolt.lua b/lua_scripts/ForemanGlitzbolt.lua
+--- a/lua_scripts/ForemanGlitzbolt.lua
++++ b/lua_scripts/ForemanGlitzbolt.lua
+@@ -321,5 +321,5 @@
+-RegisterCreatureEvent(BOSS_ID, 27, OnAIUpdate)       -- Event 27: OnAIUpdate (auto-start idle speech)
++RegisterCreatureEvent(BOSS_ID, 7, OnAIUpdate)        -- Event 7: OnAIUpdate (standard Eluna)
+ RegisterCreatureEvent(BOSS_ID, 1, OnBossCombat)
+ RegisterCreatureEvent(BOSS_ID, 2, OnBossLeaveCombat)
+ RegisterCreatureEvent(BOSS_ID, 3, OnBossKilledTarget)
+ RegisterCreatureEvent(BOSS_ID, 4, OnBossDeath)

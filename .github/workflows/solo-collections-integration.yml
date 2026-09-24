@@ -1,0 +1,61 @@
+name: SoloCollections Integration CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - "scripts/stage-client-integrations.sh"
+      - "scripts/test-solo-collections-integration.sh"
+      - ".github/workflows/solo-collections-integration.yml"
+  push:
+    branches: [main]
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - "scripts/stage-client-integrations.sh"
+      - "scripts/test-solo-collections-integration.sh"
+      - ".github/workflows/solo-collections-integration.yml"
+
+concurrency:
+  group: solo-collections-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: SoloCollections backend + matched client contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install compile dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake ninja-build make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Resolve full integration workspace
+        env:
+          FURY_STACK_PROFILE: all
+          FURY_INTEGRATION_FILTER: solo_collections_platform
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Verify matched backend and client dependency contract
+        run: bash scripts/test-solo-collections-integration.sh
+
+      - name: Fast compile SoloCollections backend
+        env:
+          FURY_BUILD_TARGET: module-only
+          FURY_SOURCE_MODULE: mod-solo-collections
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
+
+      - name: Show staged client manifest
+        run: cat build/client-integrations-test/FURY-SOLO-COLLECTIONS-MANIFEST.txt

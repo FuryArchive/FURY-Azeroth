@@ -11,6 +11,7 @@ fi
 WORLDSERVER_CONF="${FURY_WORLDSERVER_CONF:-${DEFAULT_CONF}}"
 STARTUP_TIMEOUT="${FURY_STARTUP_TIMEOUT:-600}"
 SMOKE_RUNS="${FURY_SMOKE_RUNS:-2}"
+WORLDSERVER_WORKDIR="${FURY_WORLDSERVER_WORKDIR:-${ROOT}}"
 
 if [[ ! -x "${WORLDSERVER}" ]]; then
   echo "[FURY][FAIL] worldserver not found or not executable: ${WORLDSERVER}" >&2
@@ -78,8 +79,11 @@ run_smoke_once() (
 
   trap cleanup_run EXIT
 
-  echo "[FURY] starting worldserver smoke run ${run_number}/${SMOKE_RUNS}"
-  "${WORLDSERVER}" -c "${WORLDSERVER_CONF}" <"${fifo}" >"${log}" 2>&1 &
+  echo "[FURY] starting worldserver smoke run ${run_number}/${SMOKE_RUNS} (cwd=${WORLDSERVER_WORKDIR})"
+  (
+    cd "${WORLDSERVER_WORKDIR}"
+    "${WORLDSERVER}" -c "${WORLDSERVER_CONF}"
+  ) <"${fifo}" >"${log}" 2>&1 &
   server_pid=$!
 
   # Keep the FIFO writer open for the lifetime of this smoke run.
