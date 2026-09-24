@@ -107,3 +107,6 @@ jobs:
           grep -Fq 'server is not bootstrapped yet' runtime/run-playable.sh
           grep -Fq 'progression_bracket' runtime/bootstrap-playable.sh
           grep -Fq 'backup-playable.sh' runtime/advance-progression.sh
+          grep -Fq 'configure-llm-chatter.sh' runtime/bootstrap-playable.sh
+          grep -Fq -- '--profile llm' runtime/run-playable.sh
+          grep -Fq 'llm-bridge.Dockerfile' runtime/docker-compose.playable.yml
