@@ -194,7 +194,10 @@
       "selected": true,
       "requires_core_patch": true,
       "requires_client_patch": true,
-      "note": "Must be reconciled with Playerbots core and Project Reforged client assets before activation."
+      "note": "Must be reconciled with Playerbots core and Project Reforged client assets before activation.",
+      "core_patches": [
+        "vendor/patches/mod-worgoblin/0001-playerbots-core-custom-races.patch"
+      ]
     },
     "delves": {
       "repository": "araxiaonline/Delves",
