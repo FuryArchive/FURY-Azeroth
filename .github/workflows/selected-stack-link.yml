@@ -1,0 +1,64 @@
+name: Selected Stack Link CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/mod-challenge-modes/**"
+      - "vendor/patches/mod-dungeon-master/**"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - ".github/workflows/selected-stack-link.yml"
+
+concurrency:
+  group: selected-stack-link-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  link:
+    name: Full selected server stack link
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake ninja-build make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-selected-link-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml', 'vendor/patches/mod-challenge-modes/**', 'vendor/patches/mod-dungeon-master/**') }}-${{ github.sha }}
+          restore-keys: |
+            fury-selected-link-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml', 'vendor/patches/mod-challenge-modes/**', 'vendor/patches/mod-dungeon-master/**') }}-
+            fury-selected-link-ccache-${{ runner.os }}-
+
+      - name: Configure compiler cache
+        run: |
+          ccache --set-config=max_size=3G
+          ccache --set-config=compression=true
+          ccache --zero-stats
+
+      - name: Resolve selected server stack
+        env:
+          FURY_STACK_PROFILE: server
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Build and link selected worldserver
+        env:
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
+
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats
