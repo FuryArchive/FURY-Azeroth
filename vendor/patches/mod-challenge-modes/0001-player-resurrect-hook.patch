@@ -1,0 +1,12 @@
+diff --git a/src/ChallengeModes.cpp b/src/ChallengeModes.cpp
+--- a/src/ChallengeModes.cpp
++++ b/src/ChallengeModes.cpp
+@@ -445,7 +445,7 @@ class ChallengeModes_PlayerScript : public PlayerScript
+         killed->UpdatePlayerSetting("mod-challenge-modes", HARDCORE_DEAD, 1);
+     }
+ 
+-    void OnPlayerResurrect(Player* player, float /*restore_percent*/, bool /*applySickness*/) override
++    void OnPlayerResurrect(Player* player, float /*restore_percent*/, bool& /*applySickness*/) override
+     {
+         if (!sChallengeModes->challengeEnabledForPlayer(SETTING_HARDCORE, player))
+         {
