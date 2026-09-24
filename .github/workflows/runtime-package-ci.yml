@@ -98,4 +98,7 @@ jobs:
           grep -Fq 'SourceDirectory' runtime/bootstrap-playable.sh
           grep -Fq 'MySQLExecutable' runtime/bootstrap-playable.sh
           grep -Fq 'DataDir' runtime/bootstrap-playable.sh
+          grep -Fq 'runtime-libs' runtime/bootstrap-playable.sh
+          grep -Fq 'LD_LIBRARY_PATH' runtime/bootstrap-playable.sh
+          grep -Fq 'runtime-libs' runtime/run-playable.sh
           grep -Fq 'server is not bootstrapped yet' runtime/run-playable.sh
