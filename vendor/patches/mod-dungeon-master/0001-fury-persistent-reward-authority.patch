@@ -92,7 +92,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      uint32 playerClass = player->getClass();
      uint32 itemEntry = SelectRewardItem(level, quality, playerClass);
  
-@@ -2035,6 +2050,9 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
+@@ -2035,5 +2050,8 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
                                         const std::string& subject, const std::string& body)
  {
 +    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
