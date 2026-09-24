@@ -1,0 +1,64 @@
+diff --git a/conf/mod_nemesis_system.conf.dist b/conf/mod_nemesis_system.conf.dist
+--- a/conf/mod_nemesis_system.conf.dist
++++ b/conf/mod_nemesis_system.conf.dist
+@@ -152,6 +152,15 @@ NemesisSystem.DecayHours = 48
+ 
+ NemesisSystem.DecayHours = 48
+ 
++#
++#    NemesisSystem.DirectPersistentRewards.Enable
++#        Description: Allow the module to directly grant bounty/revenge gold
++#                     and item rewards. FURY keeps this disabled so Nemesis
++#                     state remains gameplay-owned while durable rewards route
++#                     through the FURY reward/proof authority.
++#        Default:     0 - disabled for FURY integration
++#
++NemesisSystem.DirectPersistentRewards.Enable = 0
++
+ #
+ #    NemesisSystem.RevengeRewardItem
+ #        Description: Optional item reward granted when the original target or
+diff --git a/src/NemesisSystem.cpp b/src/NemesisSystem.cpp
+--- a/src/NemesisSystem.cpp
++++ b/src/NemesisSystem.cpp
+@@ -175,6 +175,11 @@ namespace
+         return sConfigMgr->GetOption<uint8>("NemesisSystem.TrivialKillLevelDelta", 5);
+     }
+ 
++    bool AreDirectPersistentRewardsEnabled()
++    {
++        return sConfigMgr->GetOption<bool>("NemesisSystem.DirectPersistentRewards.Enable", false);
++    }
++
+     uint8 GetRewardOverlevelDiffMax()
+     {
+         return sConfigMgr->GetOption<uint8>("NemesisSystem.RewardOverlevelDiffMax", 10);
+@@ -206,6 +211,9 @@ namespace
+ 
+     uint32 GetRewardItem(bool revenge)
+     {
++        if (!AreDirectPersistentRewardsEnabled())
++            return 0;
++
+         return sConfigMgr->GetOption<uint32>(revenge ? "NemesisSystem.RevengeRewardItem" : "NemesisSystem.BountyRewardItem", 0);
+     }
+ 
+@@ -216,6 +224,9 @@ namespace
+ 
+     uint32 GetRewardGold(bool revenge)
+     {
++        if (!AreDirectPersistentRewardsEnabled())
++            return 0;
++
+         return sConfigMgr->GetOption<uint32>(revenge ? "NemesisSystem.RevengeRewardGold" : "NemesisSystem.BountyRewardGold", revenge ? 10000 : 2500);
+     }
+ 
+@@ -1496,6 +1507,9 @@ namespace
+ 
+     void GrantReward(Player* player, bool revenge, uint8 rank, float rewardMultiplier)
+     {
++        if (!AreDirectPersistentRewardsEnabled())
++            return;
++
+         if (!player)
+             return;
