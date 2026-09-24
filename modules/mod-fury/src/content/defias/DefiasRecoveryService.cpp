@@ -11,7 +11,9 @@
 #include "Log.h"
 #include "StringFormat.h"
 
-namespace Fury::Defias
+namespace Fury
+{
+namespace Defias
 {
 RecoveryService::RecoveryService(
     DirectorService& director,
@@ -295,4 +297,5 @@ bool RecoveryService::Reconcile() const
 
     return ok;
 }
-}
+} // namespace Defias
+} // namespace Fury
