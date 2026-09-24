@@ -112,6 +112,11 @@ jobs:
           grep -Fq 'runtime-libs' runtime/run-playable.sh
           grep -Fq 'server is not bootstrapped yet' runtime/run-playable.sh
           grep -Fq 'progression_bracket' runtime/bootstrap-playable.sh
+          grep -Fq 'Bracket_70_6_3' runtime/configure-playable-modules.sh
+          grep -Fq 'configure-playable-modules.sh' runtime/bootstrap-playable.sh
+          grep -Fq 'configure-playable-modules.sh' runtime/advance-progression.sh
+          grep -Fq 'AuctionHouseBot.Account' runtime/configure-ahbot.sh
+          grep -Fq 'AuctionHouseBot.GUID' runtime/configure-ahbot.sh
           grep -Fq 'backup-playable.sh' runtime/advance-progression.sh
           grep -Fq 'configure-llm-chatter.sh' runtime/bootstrap-playable.sh
           grep -Fq -- '--profile llm' runtime/run-playable.sh
