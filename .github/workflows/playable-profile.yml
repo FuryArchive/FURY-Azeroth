@@ -2,23 +2,6 @@ name: FURY Playable Profile
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - "runtime/**"
-      - "vendor/lock/fury.lock.yaml"
-      - "vendor/patches/**"
-      - "scripts/sync-upstreams.sh"
-      - "scripts/resolve-eluna-playerbots.sh"
-      - "scripts/build.sh"
-      - "scripts/fetch-ac-data.sh"
-      - "scripts/merge-dbc-csv.py"
-      - "scripts/stage-playable-profile.sh"
-      - "scripts/test-playable-profile.sh"
-      - "scripts/build-playable-client-mpq.sh"
-      - "scripts/apply-playable-sql.sh"
-      - "scripts/smoke-worldserver.sh"
-      - ".github/workflows/playable-profile.yml"
 
 concurrency:
   group: fury-playable-${{ github.ref }}
