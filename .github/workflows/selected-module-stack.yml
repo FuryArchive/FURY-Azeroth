@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/**"
       - "scripts/sync-upstreams.sh"
       - "scripts/build.sh"
       - ".github/workflows/selected-module-stack.yml"
@@ -13,6 +14,7 @@ on:
       - main
     paths:
       - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/**"
       - "scripts/sync-upstreams.sh"
       - "scripts/build.sh"
       - ".github/workflows/selected-module-stack.yml"
