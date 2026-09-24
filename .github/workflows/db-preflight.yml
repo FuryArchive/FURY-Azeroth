@@ -1,0 +1,60 @@
+name: FURY Database Preflight
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/**"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/adapt-worgoblin-sql.py"
+      - "scripts/db-preflight.sh"
+      - ".github/workflows/db-preflight.yml"
+
+concurrency:
+  group: fury-db-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database:
+    name: Clean-schema module SQL preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install preflight dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git default-mysql-client
+
+      - name: Resolve selected stack without compiling
+        env:
+          FURY_STACK_PROFILE: all
+          FURY_INTEGRATION_FILTER: solo_collections_platform,worgoblin,delves,mythic_plus_extended,aio
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Validate clean database SQL compatibility
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+        run: bash scripts/db-preflight.sh
