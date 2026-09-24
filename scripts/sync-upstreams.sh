@@ -203,6 +203,9 @@ if [[ "${PROFILE}" == "all" ]]; then
     solo_platform_dir="$(read_lock "integrations.solo_collections_platform" directory)"
     solo_platform="${INTEGRATIONS_DIR}/${solo_platform_dir}"
     solo_backend="${solo_platform}/mod-solo-collections"
+
+    apply_patches "integrations.solo_collections_platform" "${solo_platform}" "patches"
+
     if [[ ! -f "${solo_backend}/include.sh" ]]; then
       echo "[FURY] SoloCollections backend missing from matched platform: ${solo_backend}" >&2
       exit 1
