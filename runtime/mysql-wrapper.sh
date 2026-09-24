@@ -14,9 +14,13 @@ filtered=()
 for arg in "$@"; do
   case "${arg}" in
     --defaults-extra-file=*)
-      # AzerothCore writes host-side credentials here. The MySQL client runs
-      # inside our container, so that temp path is intentionally replaced by
-      # the password already used to launch the bundled MySQL service.
+      # AzerothCore writes host-side credentials here. The mysql client runs
+      # inside the bundled database container, so use the container password.
+      ;;
+    -h*|-P*|--host=*|--port=*|--protocol=*|-S*|--socket=*)
+      # AzerothCore passes the host-side database endpoint. Inside the MySQL
+      # container the server is always local on TCP 3306, regardless of the
+      # host's FURY_MYSQL_PORT mapping.
       ;;
     *)
       filtered+=("${arg}")
@@ -24,4 +28,5 @@ for arg in "$@"; do
   esac
 done
 
-exec docker compose -f "${COMPOSE}" exec -T mysql   mysql "-p${DB_PASSWORD}" "${filtered[@]}"
+exec docker compose -f "${COMPOSE}" exec -T mysql \
+  mysql "-p${DB_PASSWORD}" -h127.0.0.1 -P3306 --protocol=TCP "${filtered[@]}"
