@@ -81,15 +81,21 @@ jobs:
             FURY_MYSQL_PASSWORD="runtime-ci-secret" \
             bash runtime/mysql-wrapper.sh \
               --defaults-extra-file=/tmp/acore.cnf \
-              --host 127.0.0.1 \
+              --host 10.10.10.10 \
+              --port 3399 \
               --user root \
               acore_world
           )"
 
           ! grep -Fq -- "--defaults-extra-file=" <<<"${output}"
+          ! grep -Fxq -- "10.10.10.10" <<<"${output}"
+          ! grep -Fxq -- "3399" <<<"${output}"
           grep -Fxq -- "-pruntime-ci-secret" <<<"${output}"
-          grep -Fxq -- "--host" <<<"${output}"
-          grep -Fxq -- "127.0.0.1" <<<"${output}"
+          grep -Fxq -- "-h127.0.0.1" <<<"${output}"
+          grep -Fxq -- "-P3306" <<<"${output}"
+          grep -Fxq -- "--protocol=TCP" <<<"${output}"
+          grep -Fxq -- "--user" <<<"${output}"
+          grep -Fxq -- "root" <<<"${output}"
           grep -Fxq -- "acore_world" <<<"${output}"
 
       - name: Verify downloadable-runtime guardrails
