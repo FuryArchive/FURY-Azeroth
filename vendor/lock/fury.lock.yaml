@@ -124,8 +124,8 @@
       "tier": "selected",
       "required": true,
       "role": "procedural dungeon expeditions; FURY must own persistent rewards",
-      "patches": [
-        "vendor/patches/mod-dungeon-master/0001-fury-persistent-reward-authority.patch"
+      "transforms": [
+        "vendor/transforms/mod-dungeon-master/fury-persistent-reward-authority.py"
       ]
     },
     "warband_camp": {
