@@ -1,0 +1,56 @@
+diff --git a/MythicPlus/Mythic_Server.lua b/MythicPlus/Mythic_Server.lua
+--- a/MythicPlus/Mythic_Server.lua
++++ b/MythicPlus/Mythic_Server.lua
+@@ -1256,18 +1256,11 @@ end
+ local function GetEligibleVaultLoot(player, tier, faction)
+     local eligible = {}
+     for _, loot in ipairs(VaultLootTable) do
+-        if loot.faction ~= "N" and loot.faction ~= faction then
+-            goto continue
+-        end
+-        if not isVaultTierEligibleForBracket(loot.loot_bracket, tier) then
+-            goto continue
+-        end
+-        if not CanPlayerUseItem(player, loot.itemid) then
+-            goto continue
++        if (loot.faction == "N" or loot.faction == faction)
++            and isVaultTierEligibleForBracket(loot.loot_bracket, tier)
++            and CanPlayerUseItem(player, loot.itemid) then
++            table.insert(eligible, loot)
+         end
+-        table.insert(eligible, loot)
+-        ::continue::
+     end
+     return eligible
+ end
+@@ -3124,19 +3117,22 @@ local function TryRewardMythicLoot(player, tier, upgradeLevel, diff)
+     end
+ 
+     for _, loot in ipairs(MythicLootTable) do
+-        if loot.type == "pet"   and not MythicRewardConfig.pets      then goto continue end
+-        if loot.type == "mount" and not MythicRewardConfig.mounts    then goto continue end
+-        if loot.type == "gear"  and not MythicRewardConfig.equipment then goto continue end
+-        if loot.type == "spell" and not MythicRewardConfig.spells    then goto continue end
+-        if not isTierEligibleForBracket(loot.loot_bracket, tier) then goto continue end
+-        if loot.faction ~= "N" and loot.faction ~= faction then goto continue end
+-        if loot.type == "gear" then
+-            if not CanPlayerUseItem(player, loot.itemid) then goto continue end
+-        end
+-
+-        table.insert(eligible, loot)
+-        ::continue::
++        local rewardTypeEnabled =
++            (loot.type ~= "pet"   or MythicRewardConfig.pets) and
++            (loot.type ~= "mount" or MythicRewardConfig.mounts) and
++            (loot.type ~= "gear"  or MythicRewardConfig.equipment) and
++            (loot.type ~= "spell" or MythicRewardConfig.spells)
++        local tierEligible = isTierEligibleForBracket(loot.loot_bracket, tier)
++        local factionEligible = (loot.faction == "N" or loot.faction == faction)
++        local itemEligible = (loot.type ~= "gear" or CanPlayerUseItem(player, loot.itemid))
++
++        if rewardTypeEnabled and tierEligible and factionEligible and itemEligible then
++            table.insert(eligible, loot)
++        end
+     end
+ 
+     local rewardsGiven = 0
