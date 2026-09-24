@@ -16,6 +16,21 @@ services:
       timeout: 5s
       retries: 30
 
+  llm-bridge:
+    profiles: ["llm"]
+    build:
+      context: ..
+      dockerfile: runtime/llm-bridge.Dockerfile
+    container_name: fury-azeroth-llm-bridge
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../etc/modules/mod_llm_chatter.conf:/config/mod_llm_chatter.conf:ro
+
 volumes:
   fury-azeroth-mysql:
     name: fury-azeroth-mysql
