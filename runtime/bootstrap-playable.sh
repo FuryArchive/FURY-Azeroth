@@ -53,6 +53,7 @@ export AC_WORLD_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_wo
 export AC_CHARACTER_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_characters"
 export AC_UPDATES_ENABLE_DATABASES="7"
 export AC_UPDATES_AUTO_SETUP="1"
+export AC_DISABLE_INTERACTIVE="1"
 export AC_PLAYERBOTS_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_playerbots"
 export AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES="1"
 export AC_FURY_ENABLE="1"
@@ -82,6 +83,16 @@ import sys
 path = Path(sys.argv[1])
 selected = sys.argv[2]
 text = path.read_text()
+
+# Pinned upstream code contains 70_6_3 (final TBC flying-trainer cleanup)
+# but its distributed config accidentally omits the key. Restore it in the
+# canonical order so FURY does not silently skip that progression step.
+missing = "ProgressionSystem.Bracket_70_6_3"
+if missing not in text:
+    anchor = re.compile(r"(?m)^(ProgressionSystem\.Bracket_70_6_2\s*=\s*[01]\s*)$")
+    if not anchor.search(text):
+        raise SystemExit("[FURY][BOOTSTRAP][FAIL] cannot place missing upstream bracket 70_6_3")
+    text = anchor.sub(r"\1\nProgressionSystem.Bracket_70_6_3 = 0", text, count=1)
 
 pattern = re.compile(
     r'(?m)^(ProgressionSystem\.Bracket_([A-Za-z0-9_]+)\s*=\s*)[01]\s*$'
