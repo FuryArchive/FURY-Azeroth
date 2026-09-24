@@ -95,9 +95,23 @@ PY
   fi
 
   echo "[FURY] fast selected-stack compile: ${#selected_modules[@]} module(s)"
+  failed_modules=()
   for module in "${selected_modules[@]}"; do
-    compile_module_tus "${module}"
+    if compile_module_tus "${module}"; then
+      echo "[FURY][PASS] selected-stack module ${module}"
+    else
+      echo "[FURY][FAIL] selected-stack module ${module}" >&2
+      failed_modules+=("${module}")
+    fi
   done
+
+  if [[ "${#failed_modules[@]}" -ne 0 ]]; then
+    echo "[FURY][FAIL] selected-stack compile failures: ${#failed_modules[@]}" >&2
+    printf '  - %s\n' "${failed_modules[@]}" >&2
+    exit 1
+  fi
+
+  echo "[FURY][PASS] all selected server modules compile"
 elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
   cmake --build "${BUILD_DIR}" --target "${TARGET}" --parallel "${JOBS}"

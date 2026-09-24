@@ -127,6 +127,18 @@ Do not return to T31-T34 until the selected stack has been worked through in thi
 8. Produce one coherent FURY client/server package.
 9. Resume the remaining Defias M3 acceptance tasks on top of the final stack.
 
+## Compatibility evidence
+
+The first selected-stack compile run reached twelve selected modules successfully before stopping at `mod-challenge-modes`:
+
+- AutoBalance, AHBot, Progression System, Zone Difficulty, RDF Expansion;
+- Dungeon Clear, AoE Loot, Account Achievements, War Effort;
+- Dungeon Master, Warband Camp, Nemesis System.
+
+`mod-challenge-modes` was written for the older `OnPlayerResurrect(..., bool)` hook. The pinned Playerbots core exposes `OnPlayerResurrect(..., bool&)`, so FURY carries a narrow compatibility patch for that signature only.
+
+The selected-stack gate now compiles every selected module even when one fails and reports the complete failing-module set at the end. This prevents one early incompatibility from hiding later ones such as Quest Radar or LLM Chatter.
+
 ## Status
 
 Selection: **LOCKED**
