@@ -253,6 +253,7 @@ jobs:
           test -f "${server_root}/runtime-source/data/sql/base/db_world/updates.sql"
           test -d "${server_root}/runtime-source/modules/mod-solo-collections/data/sql"
           test -x "${server_root}/runtime/mysql-wrapper.sh"
+          test -f "${server_root}/runtime/PLAYABLE.md"
 
           cp build/playable-profile/PLAYABLE-MANIFEST.txt "${server_root}/"
           cp build/playable-profile/SHA256SUMS "${server_root}/"
@@ -263,6 +264,7 @@ jobs:
           mkdir -p build/artifacts/client/FURY-Azeroth-Client/runtime
           cp runtime/install-client.sh build/artifacts/client/FURY-Azeroth-Client/runtime/
           chmod +x build/artifacts/client/FURY-Azeroth-Client/runtime/install-client.sh
+          cp runtime/PLAYABLE.md build/artifacts/client/FURY-Azeroth-Client/PLAYABLE.md
           cp build/playable-profile/PLAYABLE-MANIFEST.txt build/artifacts/client/FURY-Azeroth-Client/
 
           tar -C build/artifacts/server -czf build/FURY-Azeroth-Server.tar.gz FURY-Azeroth
