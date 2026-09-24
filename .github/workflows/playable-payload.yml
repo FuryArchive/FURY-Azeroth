@@ -1,0 +1,71 @@
+name: FURY Playable Payload
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/delves/**"
+      - "vendor/patches/mythic-plus-extended/**"
+      - "vendor/patches/mod-worgoblin/**"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/merge-dbc-csv.py"
+      - "scripts/stage-client-integrations.sh"
+      - "scripts/stage-playable-profile.sh"
+      - "scripts/test-playable-profile.sh"
+      - "scripts/build-playable-client-mpq.sh"
+      - ".github/workflows/playable-payload.yml"
+
+concurrency:
+  group: fury-playable-payload-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  payload:
+    name: DBC + Lua + MPQ playable payload
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install payload dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git curl unzip rsync lua5.1
+
+      - name: Resolve playable integration sources
+        env:
+          FURY_STACK_PROFILE: all
+          FURY_INTEGRATION_FILTER: solo_collections_platform,worgoblin,delves,mythic_plus_extended,aio
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Restore pinned AzerothCore runtime-data archive
+        uses: actions/cache@v4
+        with:
+          path: .cache/ac-data-v20.0/Data.zip
+          key: ac-data-v20.0-enUS-a3d4df635ae6c2c8
+
+      - name: Install pinned AzerothCore runtime data
+        run: bash scripts/fetch-ac-data.sh
+
+      - name: Stage unified payload
+        run: bash scripts/stage-playable-profile.sh
+
+      - name: Verify payload contracts
+        run: bash scripts/test-playable-profile.sh
+
+      - name: Build final client MPQ
+        run: bash scripts/build-playable-client-mpq.sh
+
+      - name: Upload client overlay smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FURY-Azeroth-Client-Payload-Smoke
+          path: |
+            build/playable-profile/client/Data/patch-Z.MPQ
+            build/playable-profile/client/Data/patch-Z.MPQ.sha256
+            build/playable-profile/PLAYABLE-MANIFEST.txt
+          if-no-files-found: error
