@@ -18,3 +18,4 @@ services:
 
 volumes:
   fury-azeroth-mysql:
+    name: fury-azeroth-mysql
