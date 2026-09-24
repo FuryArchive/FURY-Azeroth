@@ -6,6 +6,7 @@ LOCK="${ROOT}/vendor/lock/fury.lock.yaml"
 UPSTREAM="${ROOT}/upstream"
 CORE_DIR="${UPSTREAM}/azerothcore-wotlk"
 PROFILE="${FURY_STACK_PROFILE:-baseline}"
+INTEGRATION_FILTER="${FURY_INTEGRATION_FILTER:-}"
 
 case "${PROFILE}" in
   baseline|server|all) ;;
@@ -133,20 +134,25 @@ PY
 }
 
 list_integration_keys() {
-  python3 - "${LOCK}" "${PROFILE}" <<'PY'
+  python3 - "${LOCK}" "${PROFILE}" "${INTEGRATION_FILTER}" <<'PY'
 import json
 import sys
 
-lock_path, profile = sys.argv[1:3]
+lock_path, profile, raw_filter = sys.argv[1:4]
 if profile != "all":
     raise SystemExit(0)
+
+requested = {part.strip() for part in raw_filter.split(",") if part.strip()}
 
 with open(lock_path, "r", encoding="utf-8") as fh:
     data = json.load(fh)
 
 for key, integration in data.get("integrations", {}).items():
-    if integration.get("selected", False):
-        print(f"{key}\t{integration['directory']}")
+    if not integration.get("selected", False):
+        continue
+    if requested and key not in requested:
+        continue
+    print(f"{key}\t{integration['directory']}")
 PY
 }
 
@@ -176,18 +182,21 @@ if [[ "${PROFILE}" == "all" ]]; then
     clone_pin "integrations.${key}" "${INTEGRATIONS_DIR}/${directory}"
   done < <(list_integration_keys)
 
-  worgoblin_dir="$(read_lock "integrations.worgoblin" directory)"
-  worgoblin="${INTEGRATIONS_DIR}/${worgoblin_dir}"
-  if [[ ! -f "${worgoblin}/include.sh" ]]; then
-    echo "[FURY] Worgen/Goblin module missing from integration workspace: ${worgoblin}" >&2
-    exit 1
+  requested_integrations=",${INTEGRATION_FILTER},"
+  if [[ -z "${INTEGRATION_FILTER}" || "${requested_integrations}" == *",worgoblin,"* ]]; then
+    worgoblin_dir="$(read_lock "integrations.worgoblin" directory)"
+    worgoblin="${INTEGRATIONS_DIR}/${worgoblin_dir}"
+    if [[ ! -f "${worgoblin}/include.sh" ]]; then
+      echo "[FURY] Worgen/Goblin module missing from integration workspace: ${worgoblin}" >&2
+      exit 1
+    fi
+
+    apply_patches "integrations.worgoblin" "${CORE_DIR}" "core_patches"
+
+    rm -rf "${CORE_DIR}/modules/mod-worgoblin"
+    ln -s "${worgoblin}" "${CORE_DIR}/modules/mod-worgoblin"
+    echo "[FURY] linked Worgen/Goblin module with Playerbots-adapted core patch"
   fi
-
-  apply_patches "integrations.worgoblin" "${CORE_DIR}" "core_patches"
-
-  rm -rf "${CORE_DIR}/modules/mod-worgoblin"
-  ln -s "${worgoblin}" "${CORE_DIR}/modules/mod-worgoblin"
-  echo "[FURY] linked Worgen/Goblin module with Playerbots-adapted core patch"
 fi
 
 echo
