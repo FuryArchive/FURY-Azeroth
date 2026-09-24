@@ -227,12 +227,18 @@ jobs:
           cp -a build/dist/. build/artifacts/server/FURY-Azeroth/
           mkdir -p build/artifacts/server/FURY-Azeroth/fury-sql
           cp -a build/playable-profile/server/sql/. build/artifacts/server/FURY-Azeroth/fury-sql/
+          cp -a modules/mod-fury build/artifacts/server/FURY-Azeroth/fury-module
+          cp -a runtime build/artifacts/server/FURY-Azeroth/runtime
+          chmod +x build/artifacts/server/FURY-Azeroth/runtime/*.sh
           cp build/playable-profile/PLAYABLE-MANIFEST.txt build/artifacts/server/FURY-Azeroth/
           cp build/playable-profile/SHA256SUMS build/artifacts/server/FURY-Azeroth/
 
           mkdir -p build/artifacts/client/FURY-Azeroth-Client
           cp -a build/playable-profile/client/Data build/artifacts/client/FURY-Azeroth-Client/
           cp -a build/playable-profile/client/Interface build/artifacts/client/FURY-Azeroth-Client/
+          mkdir -p build/artifacts/client/FURY-Azeroth-Client/runtime
+          cp runtime/install-client.sh build/artifacts/client/FURY-Azeroth-Client/runtime/
+          chmod +x build/artifacts/client/FURY-Azeroth-Client/runtime/install-client.sh
           cp build/playable-profile/PLAYABLE-MANIFEST.txt build/artifacts/client/FURY-Azeroth-Client/
 
           tar -C build/artifacts/server -czf build/FURY-Azeroth-Server.tar.gz FURY-Azeroth
