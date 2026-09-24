@@ -150,7 +150,10 @@
       "directory": "mod-challenge-modes",
       "tier": "selected",
       "required": false,
-      "role": "optional per-character challenge rules"
+      "role": "optional per-character challenge rules",
+      "patches": [
+        "vendor/patches/mod-challenge-modes/0001-player-resurrect-hook.patch"
+      ]
     },
     "quest_radar": {
       "repository": "warblups/mod-quest-radar",
