@@ -204,7 +204,12 @@
       "kind": "content_bundle",
       "selected": true,
       "requires_client_patch": true,
-      "note": "Late-game side-content candidate with custom maps/assets; keep gated until client/content audit."
+      "note": "Custom maps/content bundle. Standard Eluna scripts validated separately; additive DBC rows must merge into base DBCs. Undefined Araxia reward IDs are suppressed until the FURY Delves reward adapter exists.",
+      "requires": [
+        "standard_eluna"
+      ],
+      "dbc_mode": "merge_additive",
+      "reward_mode": "fury_deferred"
     },
     "mythic_plus_extended": {
       "repository": "Ildourol/MythicPlus-extended",
