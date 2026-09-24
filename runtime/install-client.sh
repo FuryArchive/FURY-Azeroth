@@ -26,9 +26,20 @@ while IFS= read -r -d '' file; do
 done < <(find "${TARGET}/Data" -mindepth 2 -maxdepth 2 -type f -iname 'realmlist.wtf' -print0)
 
 if [[ "${found}" -eq 0 ]]; then
-  mkdir -p "${TARGET}/Data/enUS"
-  printf 'set realmlist %s\n' "${REALM}" > "${TARGET}/Data/enUS/realmlist.wtf"
-  echo "[FURY] created Data/enUS/realmlist.wtf"
+  locale_found=0
+  for locale in enUS enGB deDE esES esMX frFR ruRU koKR zhCN zhTW; do
+    locale_dir="${TARGET}/Data/${locale}"
+    [[ -d "${locale_dir}" ]] || continue
+    printf 'set realmlist %s\n' "${REALM}" > "${locale_dir}/realmlist.wtf"
+    echo "[FURY] created Data/${locale}/realmlist.wtf"
+    locale_found=1
+  done
+
+  if [[ "${locale_found}" -eq 0 ]]; then
+    mkdir -p "${TARGET}/Data/enUS"
+    printf 'set realmlist %s\n' "${REALM}" > "${TARGET}/Data/enUS/realmlist.wtf"
+    echo "[FURY] no locale directory detected; created Data/enUS/realmlist.wtf"
+  fi
 fi
 
 echo "[FURY][CLIENT][PASS] FURY overlay installed into ${TARGET}"

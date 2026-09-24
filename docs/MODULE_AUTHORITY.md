@@ -59,4 +59,4 @@ The gate currently enforces:
 
 Dungeon Master and Nemesis keep their gameplay loops active, but their durable reward surfaces are intentionally suppressed for now. The later FURY adapters should consume explicit completion/kill events and mint Reward Registry claims instead of re-enabling the upstream direct grants.
 
-MythicPlus Extended remains deferred until the standard-Eluna + Playerbots core reconciliation is complete. When activated, Zone Difficulty Mythic and any Dungeon Master "Mythic+ style" identity remain secondary mechanics and must not become a competing canonical keystone/rating system.
+MythicPlus Extended is now the selected canonical keystone/timer/affix runtime after the standard-Eluna + Playerbots reconciliation. Zone Difficulty Mythic remains OFF, and any Dungeon Master "Mythic+ style" identity remains secondary. FURY still owns durable cross-system reward claims and campaign consequences rather than allowing parallel persistent reward authorities.
