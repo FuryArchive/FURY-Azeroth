@@ -109,7 +109,7 @@ jobs:
           ProgressionSystem.Bracket_71_74 = 0
           EOF
 
-          "${root}/runtime/configure-playable-modules.sh" 0
+          bash "${root}/runtime/configure-playable-modules.sh" 0
 
           grep -Eq '^IndividualProgression\.DisableQuestMarkers[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
           grep -Eq '^IndividualProgression\.DisableRDF[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
