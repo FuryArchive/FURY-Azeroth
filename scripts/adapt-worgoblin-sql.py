@@ -164,10 +164,13 @@ def adapt(payload: str) -> tuple[str, int, int, set[str]]:
                 for idx in indexes:
                     column = normalized[idx]
                     value = values[idx].strip()
-                    if value not in ZEROISH:
+                    allowed = ZEROISH
+                    if column == "scale":
+                        allowed = {"1", "1.0", "1.00"}
+                    if value not in allowed:
                         raise ValueError(
-                            f"{table} row {row_no}: refusing to drop non-zero "
-                            f"{column}={value}; trainer semantics need explicit migration"
+                            f"{table} row {row_no}: refusing to drop "
+                            f"{column}={value}; explicit schema migration is required"
                         )
 
         new_columns = [c for i, c in enumerate(columns) if i not in indexes]
