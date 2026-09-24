@@ -1,0 +1,63 @@
+name: Worgen Goblin Compatibility CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/mod-worgoblin/**"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - "scripts/stage-worgoblin-integration.sh"
+      - "scripts/test-worgoblin-integration.sh"
+      - ".github/workflows/worgoblin-integration.yml"
+  push:
+    branches: [main]
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/mod-worgoblin/**"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - "scripts/stage-worgoblin-integration.sh"
+      - "scripts/test-worgoblin-integration.sh"
+      - ".github/workflows/worgoblin-integration.yml"
+
+concurrency:
+  group: worgoblin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    name: Playerbots core + Worgen/Goblin module
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install compile dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake ninja-build make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Resolve targeted Worgen/Goblin workspace
+        env:
+          FURY_STACK_PROFILE: all
+          FURY_INTEGRATION_FILTER: worgoblin
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Verify custom-race integration contract
+        run: bash scripts/test-worgoblin-integration.sh
+
+      - name: Fast compile Worgen/Goblin module
+        env:
+          FURY_BUILD_TARGET: module-only
+          FURY_SOURCE_MODULE: mod-worgoblin
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
+
+      - name: Show merge-input manifest
+        run: cat build/worgoblin-integration-test/FURY-WORGOBLIN-MANIFEST.txt
