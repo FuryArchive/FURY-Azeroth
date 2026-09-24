@@ -236,7 +236,10 @@
         "standard_eluna",
         "aio"
       ],
-      "note": "Primary Mythic+ candidate. Do not enable competing mythic modes from zone-difficulty or Dungeon Master as the canonical M+ system."
+      "note": "Primary Mythic+ candidate. Do not enable competing mythic modes from zone-difficulty or Dungeon Master as the canonical M+ system.",
+      "patches": [
+        "vendor/patches/mythic-plus-extended/0001-lua51-remove-goto.patch"
+      ]
     },
     "aio": {
       "repository": "Rochet2/AIO",
