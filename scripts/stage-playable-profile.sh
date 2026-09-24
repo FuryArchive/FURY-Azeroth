@@ -56,6 +56,81 @@ pass "matched SoloCollections + AIO + production Delves client AddOns staged"
 # --- Server Lua --------------------------------------------------------------
 cp -a "${AIO}/AIO_Server/." "${SERVER}/lua_scripts/"
 cp -a "${MYTHIC}/MythicPlus" "${SERVER}/lua_scripts/MythicPlus"
+
+# MythicPlus Extended currently uses Lua 5.2+ goto/labels for loop-continue.
+# Standard Eluna in WotLK runs Lua 5.1, so rewrite those two filters into
+# equivalent predicate-based blocks in the staged copy.
+python3 - "${SERVER}/lua_scripts/MythicPlus/Mythic_Server.lua" <<'PY'
+from pathlib import Path
+import sys
+
+p = Path(sys.argv[1])
+text = p.read_text(encoding="utf-8")
+
+old_vault = '''    for _, loot in ipairs(VaultLootTable) do
+        if loot.faction ~= "N" and loot.faction ~= faction then
+            goto continue
+        end
+        if not isVaultTierEligibleForBracket(loot.loot_bracket, tier) then
+            goto continue
+        end
+        if not CanPlayerUseItem(player, loot.itemid) then
+            goto continue
+        end
+        table.insert(eligible, loot)
+        ::continue::
+    end
+'''
+new_vault = '''    for _, loot in ipairs(VaultLootTable) do
+        local factionEligible = loot.faction == "N" or loot.faction == faction
+        local tierEligible = isVaultTierEligibleForBracket(loot.loot_bracket, tier)
+        local itemEligible = CanPlayerUseItem(player, loot.itemid)
+        if factionEligible and tierEligible and itemEligible then
+            table.insert(eligible, loot)
+        end
+    end
+'''
+
+old_loot = '''    for _, loot in ipairs(MythicLootTable) do
+        if loot.type == "pet"   and not MythicRewardConfig.pets      then goto continue end
+        if loot.type == "mount" and not MythicRewardConfig.mounts    then goto continue end
+        if loot.type == "gear"  and not MythicRewardConfig.equipment then goto continue end
+        if loot.type == "spell" and not MythicRewardConfig.spells    then goto continue end
+        if not isTierEligibleForBracket(loot.loot_bracket, tier) then goto continue end
+        if loot.faction ~= "N" and loot.faction ~= faction then goto continue end
+        if loot.type == "gear" then
+            if not CanPlayerUseItem(player, loot.itemid) then goto continue end
+        end
+
+        table.insert(eligible, loot)
+        ::continue::
+    end
+'''
+new_loot = '''    for _, loot in ipairs(MythicLootTable) do
+        local typeEnabled =
+            not (loot.type == "pet"   and not MythicRewardConfig.pets) and
+            not (loot.type == "mount" and not MythicRewardConfig.mounts) and
+            not (loot.type == "gear"  and not MythicRewardConfig.equipment) and
+            not (loot.type == "spell" and not MythicRewardConfig.spells)
+        local tierEligible = isTierEligibleForBracket(loot.loot_bracket, tier)
+        local factionEligible = loot.faction == "N" or loot.faction == faction
+        local itemEligible = loot.type ~= "gear" or CanPlayerUseItem(player, loot.itemid)
+
+        if typeEnabled and tierEligible and factionEligible and itemEligible then
+            table.insert(eligible, loot)
+        end
+    end
+'''
+
+if old_vault not in text:
+    raise SystemExit("[FURY][PLAYABLE][FAIL] Mythic+ vault goto block changed upstream")
+if old_loot not in text:
+    raise SystemExit("[FURY][PLAYABLE][FAIL] Mythic+ reward goto block changed upstream")
+
+text = text.replace(old_vault, new_vault, 1).replace(old_loot, new_loot, 1)
+p.write_text(text, encoding="utf-8")
+PY
+
 mkdir -p "${SERVER}/lua_scripts/Delves"
 cp -a "${DELVES}/lua_scripts/." "${SERVER}/lua_scripts/Delves/"
 
