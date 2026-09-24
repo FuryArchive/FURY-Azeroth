@@ -80,12 +80,13 @@ clone_pin() {
 apply_patches() {
   local key="$1"
   local dest="$2"
+  local field="${3:-patches}"
 
-  mapfile -t patches < <(python3 - "${LOCK}" "${key}" <<'PY'
+  mapfile -t patches < <(python3 - "${LOCK}" "${key}" "${field}" <<'PY'
 import json
 import sys
 
-lock_path, dotted_path = sys.argv[1:3]
+lock_path, dotted_path, field = sys.argv[1:4]
 with open(lock_path, "r", encoding="utf-8") as fh:
     data = json.load(fh)
 
@@ -93,7 +94,7 @@ node = data
 for part in dotted_path.split("."):
     node = node[part]
 
-for patch in node.get("patches", []):
+for patch in node.get(field, []):
     print(patch)
 PY
 )
@@ -145,7 +146,7 @@ with open(lock_path, "r", encoding="utf-8") as fh:
 
 for key, integration in data.get("integrations", {}).items():
     if integration.get("selected", False):
-        print(f"{key}\t{integration['directory']}")
+        print(f"{key}\t{integration['directory']}\t{integration.get('core_module_directory', '')}")
 PY
 }
 
@@ -170,9 +171,76 @@ fi
 if [[ "${PROFILE}" == "all" ]]; then
   INTEGRATIONS_DIR="${UPSTREAM}/integrations"
   mkdir -p "${INTEGRATIONS_DIR}"
+  while IFS=
+echo
+echo "[FURY] resolved workspace profile: ${PROFILE}"
+printf "  core: %s\n" "$(git -C "${CORE_DIR}" rev-parse HEAD)"
+
+while IFS=$'\t' read -r key directory; do
+  [[ -n "${key}" ]] || continue
+  printf "  %-24s %s\n" "${key}:" "$(git -C "${CORE_DIR}/modules/${directory}" rev-parse HEAD)"
+done < <(list_module_keys)
+
+if [[ "${PROFILE}" == "all" ]]; then
+  echo "  integrations:"
+  while IFS=fi
+
+echo
+echo "[FURY] upstream sync complete."
+\t' read -r key directory core_module_directory; do
+    [[ -n "${key}" ]] || continue
+    dest="${INTEGRATIONS_DIR}/${directory}"
+    clone_pin "integrations.${key}" "${dest}"
+    apply_patches "integrations.${key}" "${dest}"
+
+    if [[ -n "${core_module_directory}" ]]; then
+      rm -rf "${CORE_DIR}/modules/${core_module_directory}"
+      ln -s "${dest}" "${CORE_DIR}/modules/${core_module_directory}"
+      echo "[FURY] linked integration module: modules/${core_module_directory}"
+      apply_patches "integrations.${key}" "${CORE_DIR}" "core_patches"
+    fi
+  done < <(list_integration_keys)
+fi
+
+echo
+echo "[FURY] resolved workspace profile: ${PROFILE}"
+printf "  core: %s\n" "$(git -C "${CORE_DIR}" rev-parse HEAD)"
+
+while IFS=$'\t' read -r key directory; do
+  [[ -n "${key}" ]] || continue
+  printf "  %-24s %s\n" "${key}:" "$(git -C "${CORE_DIR}/modules/${directory}" rev-parse HEAD)"
+done < <(list_module_keys)
+
+if [[ "${PROFILE}" == "all" ]]; then
+  echo "  integrations:"
   while IFS=$'\t' read -r key directory; do
     [[ -n "${key}" ]] || continue
-    clone_pin "integrations.${key}" "${INTEGRATIONS_DIR}/${directory}"
+    printf "    %-22s %s\n" "${key}:" "$(git -C "${UPSTREAM}/integrations/${directory}" rev-parse HEAD)"
+  done < <(list_integration_keys)
+fi
+
+echo
+echo "[FURY] upstream sync complete."
+\t' read -r key directory core_module_directory; do
+    [[ -n "${key}" ]] || continue
+    printf "    %-22s %s\n" "${key}:" "$(git -C "${UPSTREAM}/integrations/${directory}" rev-parse HEAD)"
+  done < <(list_integration_keys)
+fi
+
+echo
+echo "[FURY] upstream sync complete."
+\t' read -r key directory core_module_directory; do
+    [[ -n "${key}" ]] || continue
+    dest="${INTEGRATIONS_DIR}/${directory}"
+    clone_pin "integrations.${key}" "${dest}"
+    apply_patches "integrations.${key}" "${dest}"
+
+    if [[ -n "${core_module_directory}" ]]; then
+      rm -rf "${CORE_DIR}/modules/${core_module_directory}"
+      ln -s "${dest}" "${CORE_DIR}/modules/${core_module_directory}"
+      echo "[FURY] linked integration module: modules/${core_module_directory}"
+      apply_patches "integrations.${key}" "${CORE_DIR}" "core_patches"
+    fi
   done < <(list_integration_keys)
 fi
 
