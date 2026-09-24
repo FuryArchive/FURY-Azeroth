@@ -3,7 +3,15 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CORE="${ROOT}/upstream/azerothcore-wotlk"
-PLATFORM="${ROOT}/upstream/integrations/SoloCollectionsPlatform"
+platform_dir="$(python3 - "${ROOT}/vendor/lock/fury.lock.yaml" <<'PY'
+import json
+import sys
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    lock = json.load(fh)
+print(lock["integrations"]["solo_collections_platform"]["directory"])
+PY
+)"
+PLATFORM="${ROOT}/upstream/integrations/${platform_dir}"
 BACKEND="${CORE}/modules/mod-solo-collections"
 ADDON="${PLATFORM}/SoloCollections/addon/SoloCollections"
 SUITE="${PLATFORM}/SoloClientSuite/Interface/AddOns"
