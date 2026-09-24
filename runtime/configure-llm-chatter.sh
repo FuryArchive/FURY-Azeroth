@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONF="${ROOT}/etc/modules/mod_llm_chatter.conf"
 DB_PASSWORD="${FURY_MYSQL_PASSWORD:-fury}"
+DB_PORT="${FURY_MYSQL_PORT:-3306}"
 MODE="${FURY_LLM_ENABLE:-auto}"
 EXPLICIT_MODEL="${FURY_LLM_MODEL:-}"
 
@@ -19,7 +20,7 @@ case "${MODE}" in
   *) fail "FURY_LLM_ENABLE must be auto, 0 or 1" ;;
 esac
 
-python3 - "${CONF}" "${MODE}" "${EXPLICIT_MODEL}" "${DB_PASSWORD}" <<'PY'
+python3 - "${CONF}" "${MODE}" "${EXPLICIT_MODEL}" "${DB_PASSWORD}" "${DB_PORT}" <<'PY'
 from pathlib import Path
 import json
 import re
@@ -30,6 +31,7 @@ path = Path(sys.argv[1])
 mode = sys.argv[2]
 explicit_model = sys.argv[3].strip()
 db_password = sys.argv[4]
+db_port = sys.argv[5]
 text = path.read_text()
 
 def set_option(payload: str, key: str, value: str) -> str:
@@ -86,10 +88,10 @@ else:
 text = set_option(text, "LLMChatter.Enable", "1" if enabled else "0")
 text = set_option(text, "LLMChatter.Provider", "ollama")
 text = set_option(text, "LLMChatter.Model", detected_model or "qwen3:4b-instruct")
-text = set_option(text, "LLMChatter.Ollama.BaseUrl", "http://host.docker.internal:11434")
+text = set_option(text, "LLMChatter.Ollama.BaseUrl", "http://127.0.0.1:11434")
 text = set_option(text, "LLMChatter.Ollama.DisableThinking", "1")
-text = set_option(text, "LLMChatter.Database.Host", "mysql")
-text = set_option(text, "LLMChatter.Database.Port", "3306")
+text = set_option(text, "LLMChatter.Database.Host", "127.0.0.1")
+text = set_option(text, "LLMChatter.Database.Port", db_port)
 text = set_option(text, "LLMChatter.Database.User", "root")
 text = set_option(text, "LLMChatter.Database.Password", db_password)
 text = set_option(text, "LLMChatter.Database.Name", "acore_characters")
