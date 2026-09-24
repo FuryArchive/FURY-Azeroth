@@ -17,7 +17,7 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin is require
 [[ -f "${CONF}" ]] || fail "Progression System config missing"
 [[ -d "${ROOT}/runtime-libs" ]] || fail "bundled runtime libraries missing"
 
-if pgrep -f "${ROOT}/bin/worldserver" >/dev/null 2>&1 || pgrep -f "${ROOT}/bin/authserver" >/dev/null 2>&1; then
+if pgrep -x worldserver >/dev/null 2>&1 || pgrep -x authserver >/dev/null 2>&1; then
   fail "stop the realm before advancing progression"
 fi
 
