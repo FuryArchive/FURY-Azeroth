@@ -309,7 +309,7 @@ jobs:
           docker build \
             -f "${server_root}/runtime/llm-bridge.Dockerfile" \
             -t fury-azeroth-llm-bridge-ci \
-            "${server_root}"
+            "${server_root}/llm-chatter"
 
           tar -C build/artifacts/server -czf build/FURY-Azeroth-Server.tar.gz FURY-Azeroth
           (cd build/artifacts/client && zip -qr ../../FURY-Azeroth-Client.zip FURY-Azeroth-Client)
