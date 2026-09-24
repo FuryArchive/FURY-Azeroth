@@ -124,16 +124,37 @@ mysql_exec() {
     mysql -uroot -p"${DB_PASSWORD}" "$@"
 }
 
-echo "[FURY] importing Delves + Mythic+ content"
-while IFS= read -r -d '' sql; do
-  case "${sql}" in
-    */world/*) db=acore_world ;;
-    */characters/*) db=acore_characters ;;
-    *) continue ;;
-  esac
-  echo "  -> ${db}: ${sql#${ROOT}/}"
-  mysql_exec "${db}" < "${sql}"
-done < <(find "${ROOT}/fury-sql" -type f -name '*.sql' -print0 | sort -z)
+mysql_exec acore_fury -e "
+  CREATE TABLE IF NOT EXISTS fury_runtime_state (
+    state_key VARCHAR(96) NOT NULL PRIMARY KEY,
+    state_value VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+"
+
+content_marker="$(mysql_exec acore_fury -Nse \
+  "SELECT state_value FROM fury_runtime_state WHERE state_key='playable_content_v1' LIMIT 1;")"
+
+if [[ "${content_marker}" != "applied" ]]; then
+  echo "[FURY] importing Delves + Mythic+ content"
+  while IFS= read -r -d '' sql; do
+    case "${sql}" in
+      */world/*) db=acore_world ;;
+      */characters/*) db=acore_characters ;;
+      *) continue ;;
+    esac
+    echo "  -> ${db}: ${sql#${ROOT}/}"
+    mysql_exec "${db}" < "${sql}"
+  done < <(find "${ROOT}/fury-sql" -type f -name '*.sql' -print0 | sort -z)
+
+  mysql_exec acore_fury -e "
+    INSERT INTO fury_runtime_state (state_key, state_value)
+    VALUES ('playable_content_v1', 'applied')
+    ON DUPLICATE KEY UPDATE state_value=VALUES(state_value);
+  "
+else
+  echo "[FURY] Delves + Mythic+ playable content v1 already applied; skipping one-time import"
+fi
 
 mysql_exec acore_auth -e \
   "UPDATE realmlist SET name='FURY Azeroth', address='${REALM_ADDRESS}', localAddress='127.0.0.1', port=8085 WHERE id=1;"
