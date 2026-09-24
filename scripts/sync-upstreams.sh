@@ -174,6 +174,18 @@ if [[ "${PROFILE}" == "all" ]]; then
     [[ -n "${key}" ]] || continue
     clone_pin "integrations.${key}" "${INTEGRATIONS_DIR}/${directory}"
   done < <(list_integration_keys)
+
+  solo_platform_dir="$(read_lock "integrations.solo_collections_platform" directory)"
+  solo_platform="${INTEGRATIONS_DIR}/${solo_platform_dir}"
+  solo_backend="${solo_platform}/mod-solo-collections"
+  if [[ ! -f "${solo_backend}/include.sh" ]]; then
+    echo "[FURY] SoloCollections backend missing from matched platform: ${solo_backend}" >&2
+    exit 1
+  fi
+
+  rm -rf "${CORE_DIR}/modules/mod-solo-collections"
+  ln -s "${solo_backend}" "${CORE_DIR}/modules/mod-solo-collections"
+  echo "[FURY] linked matched SoloCollections backend: modules/mod-solo-collections"
 fi
 
 echo
