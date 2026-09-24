@@ -31,6 +31,15 @@ git -C "${CORE}" fetch --no-tags fury-eluna "${commit}"
 git -C "${CORE}" config user.name "FURY Integration"
 git -C "${CORE}" config user.email "fury-integration@invalid.local"
 
+# Integration profiles may apply narrow tracked core patches (for example
+# playable Goblin/Worgen support) before Eluna is reconciled. Commit those
+# generated-workspace changes first so the three-way merge has a clean index.
+if [[ -n "$(git -C "${CORE}" status --porcelain --untracked-files=no)" ]]; then
+  echo "[FURY][ELUNA] commit pre-Eluna FURY core patches"
+  git -C "${CORE}" add -u
+  git -C "${CORE}" commit -m "FURY generated pre-Eluna core patches"
+fi
+
 echo "[FURY][ELUNA] merge standard Eluna ${commit} into Playerbots $(git -C "${CORE}" rev-parse HEAD)"
 
 set +e
