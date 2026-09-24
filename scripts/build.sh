@@ -123,14 +123,22 @@ elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
   cmake --build "${BUILD_DIR}" --target "${TARGET}" --parallel "${JOBS}"
 else
-  echo "[FURY] build worldserver dependency graph with ${JOBS} job(s)"
-  cmake --build "${BUILD_DIR}" --target worldserver --parallel "${JOBS}"
+  if [[ "${APPS_BUILD}" == "all" ]]; then
+    echo "[FURY] build authserver + worldserver dependency graphs with ${JOBS} job(s)"
+    cmake --build "${BUILD_DIR}" --target authserver worldserver --parallel "${JOBS}"
+  else
+    echo "[FURY] build worldserver dependency graph with ${JOBS} job(s)"
+    cmake --build "${BUILD_DIR}" --target worldserver --parallel "${JOBS}"
+  fi
 
-  echo "[FURY] install worldserver runtime artifacts"
+  echo "[FURY] install server runtime artifacts"
   cmake --install "${BUILD_DIR}"
 
-  echo "[FURY] worldserver binary smoke"
+  echo "[FURY] server binary smoke"
   "${INSTALL_DIR}/bin/worldserver" --version
+  if [[ "${APPS_BUILD}" == "all" ]]; then
+    "${INSTALL_DIR}/bin/authserver" --version
+  fi
 fi
 
 if command -v ccache >/dev/null 2>&1; then
