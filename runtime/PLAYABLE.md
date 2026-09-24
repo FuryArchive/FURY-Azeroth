@@ -32,6 +32,20 @@ export FURY_REALM_ADDRESS='192.168.1.10'
 
 `run-playable.sh` refuses to start until bootstrap has completed.
 
+The MySQL data lives in the stable Docker volume `fury-azeroth-mysql`, so extracting a newer FURY server package does not by itself discard character/server progress.
+
+Before an update, create a portable database backup:
+
+```bash
+./runtime/backup-playable.sh
+```
+
+Backups are written to `./backups/` by default. To restore one while the realm is stopped:
+
+```bash
+./runtime/restore-playable.sh ./backups/FURY-Azeroth-backup-YYYYMMDD-HHMMSS.tar.gz
+```
+
 ## Client
 
 Extract `FURY-Azeroth-Client.zip`, then run:
