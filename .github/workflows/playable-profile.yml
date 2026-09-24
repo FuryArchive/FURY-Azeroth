@@ -227,6 +227,7 @@ jobs:
 
       - name: Prepare downloadable server/client packages
         run: |
+          set -euo pipefail
           server_root="build/artifacts/server/FURY-Azeroth"
           mkdir -p "${server_root}"
           cp -a build/dist/. "${server_root}/"
@@ -237,9 +238,7 @@ jobs:
           cp -a runtime "${server_root}/runtime"
           chmod +x "${server_root}"/runtime/*.sh
 
-          # The CI build targets Ubuntu 24.04. Bundle non-glibc shared
-          # libraries used by authserver/worldserver so the archive does not
-          # depend on matching Boost/MySQL/OpenSSL package versions on the host.
+          # Bundle non-glibc shared libraries used by the Ubuntu-built realm.
           mkdir -p "${server_root}/runtime-libs"
           {
             ldd build/dist/bin/worldserver
@@ -255,16 +254,11 @@ jobs:
                 esac
                 cp -L "${lib}" "${server_root}/runtime-libs/"
               done
-
           test -n "$(find "${server_root}/runtime-libs" -maxdepth 1 -type f -print -quit)"
 
-          # AzerothCore's runtime DB updater reads base/update SQL from
-          # SourceDirectory, including modules/<name>/data/sql. Bundle the
-          # minimal SQL source tree so the downloaded archive is independent
-          # from the Actions checkout and does not need a Git clone.
+          # Runtime DB updater source tree: core SQL plus all compiled module SQL.
           mkdir -p "${server_root}/runtime-source/data"
           cp -a upstream/azerothcore-wotlk/data/sql "${server_root}/runtime-source/data/sql"
-
           mkdir -p "${server_root}/runtime-source/modules"
           for module in upstream/azerothcore-wotlk/modules/*; do
             [[ -d "${module}/data/sql" ]] || continue
@@ -272,22 +266,17 @@ jobs:
             mkdir -p "${server_root}/runtime-source/modules/${name}/data"
             cp -a "${module}/data/sql" "${server_root}/runtime-source/modules/${name}/data/sql"
           done
-
           test -f "${server_root}/runtime-source/data/sql/base/db_world/updates.sql"
           test -d "${server_root}/runtime-source/modules/mod-solo-collections/data/sql"
           test -x "${server_root}/runtime/mysql-wrapper.sh"
           test -f "${server_root}/runtime/PLAYABLE.md"
 
-          # LLM Chatter needs its Python bridge in addition to the compiled
-          # AzerothCore module. Bundle the pinned bridge tools and a complete
-          # offline wheelhouse so realm startup never depends on pip/network.
+          # Package the pinned LLM Chatter bridge with an offline Python wheelhouse.
           llm_module="upstream/azerothcore-wotlk/modules/mod-llm-chatter"
           test -f "${llm_module}/tools/llm_chatter_bridge.py"
           test -f "${llm_module}/tools/requirements.txt"
-
-          mkdir -p "${server_root}/llm-chatter"
-          cp -a "${llm_module}/tools/." "${server_root}/llm-chatter/"
           mkdir -p "${server_root}/llm-chatter/wheels"
+          cp -a "${llm_module}/tools/." "${server_root}/llm-chatter/"
           python3 -m pip download \
             --only-binary=:all: \
             --dest "${server_root}/llm-chatter/wheels" \
@@ -296,9 +285,6 @@ jobs:
             cd "${server_root}/llm-chatter/wheels"
             sha256sum * > ../WHEELHOUSE-SHA256SUMS
           )
-
-          test -f "${server_root}/llm-chatter/llm_chatter_bridge.py"
-          test -f "${server_root}/llm-chatter/requirements.txt"
           test -n "$(find "${server_root}/llm-chatter/wheels" -maxdepth 1 -type f -print -quit)"
 
           cp build/playable-profile/PLAYABLE-MANIFEST.txt "${server_root}/"
@@ -340,636 +326,29 @@ jobs:
           trap cleanup EXIT
 
           ./runtime/bootstrap-playable.sh furyci furyci123
+
           test -f etc/worldserver.conf
           test -f etc/authserver.conf
           grep -Fq 'SourceDirectory = "' etc/worldserver.conf
           grep -Fq 'MySQLExecutable = "' etc/worldserver.conf
           grep -Fq 'DataDir = "' etc/worldserver.conf
+
           grep -Eq '^LLMChatter\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_llm_chatter.conf
-          grep -Eq '^ProgressionSystem\.Bracket_0[[:space:]]*=[[:space:]]*1[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
+          grep -Eq '^ProgressionSystem\.Bracket_0[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
           test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
 
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
+          grep -Eq '^AiPlayerbot\.MinRandomBots[[:space:]]*=[[:space:]]*80[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.MaxRandomBots[[:space:]]*=[[:space:]]*120[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.DisabledWithoutRealPlayer[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.SyncLevelWithPlayers[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.RandomBotConcentrateInPlayerZone[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+          grep -Eq '^AiPlayerbot\.DisableDeathKnightLogin[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/playerbots.conf
+
+          grep -Eq '^LivingWorld\.Debug[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_living_world.conf
+          grep -Eq '^LivingWorld\.Playerbots\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_living_world.conf
+          grep -Eq '^ModZoneDifficulty\.Mythicmode\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod-zone-difficulty.conf
+          grep -Eq '^ModZoneDifficulty\.MythicmodeAI\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod-zone-difficulty.conf
 
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/progression_system.conf)" -eq 1
-          grep -Eq '^AiPlayerbot\.MinRandomBots[[:space:]]*=[[:space:]]*80[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/playerbots.conf
-          grep -Eq '^AiPlayerbot\.MaxRandomBots[[:space:]]*=[[:space:]]*120[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/playerbots.conf
-          grep -Eq '^AiPlayerbot\.DisabledWithoutRealPlayer[[:space:]]*=[[:space:]]*1[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/playerbots.conf
-          grep -Eq '^AiPlayerbot\.SyncLevelWithPlayers[[:space:]]*=[[:space:]]*1[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/playerbots.conf
-          grep -Eq '^AiPlayerbot\.RandomBotConcentrateInPlayerZone[[:space:]]*=[[:space:]]*1[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/playerbots.conf
-          grep -Eq '^AiPlayerbot\.DisableDeathKnightLogin[[:space:]]*=[[:space:]]*1[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/playerbots.conf
-          grep -Eq '^LivingWorld\.Debug[[:space:]]*=[[:space:]]*0[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/mod_living_world.conf
-          grep -Eq '^LivingWorld\.Playerbots\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/mod_living_world.conf
-          grep -Eq '^ModZoneDifficulty\.Mythicmode\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/mod-zone-difficulty.conf
-          grep -Eq '^ModZoneDifficulty\.MythicmodeAI\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*
-          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
-
-          ./runtime/advance-progression.sh
-          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
-          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
-          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
-          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
-            mysql -uroot -pfury-package-ci acore_fury -Nse \
-            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
-          test "${progression_state}" = "1_19"
-
-          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
-
-      - name: Smoke downloadable client overlay
-        run: |
-          set -euo pipefail
-          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
-          wow_root="${smoke_root}/wow"
-          overlay_root="${smoke_root}/overlay"
-          rm -rf "${smoke_root}"
-          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
-
-          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
-          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
-
-          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
-          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
-
-          test -f "${wow_root}/Data/patch-Z.MPQ"
-          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
-          test -d "${wow_root}/Interface/AddOns/SoloCollections"
-          test -d "${wow_root}/Interface/AddOns/AIO_Client"
-          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
-          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
-
-          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
-
-      - name: Upload playable server
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Server
-          path: build/FURY-Azeroth-Server.tar.gz
-          if-no-files-found: error
-
-      - name: Upload playable client overlay
-        uses: actions/upload-artifact@v4
-        with:
-          name: FURY-Azeroth-Client
-          path: build/FURY-Azeroth-Client.zip
-          if-no-files-found: error
- etc/modules/mod-zone-difficulty.conf
           test -f llm-chatter/llm_chatter_bridge.py
           test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
 
@@ -977,6 +356,7 @@ jobs:
           test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
           grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
           test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
+
           progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
             mysql -uroot -pfury-package-ci acore_fury -Nse \
             "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
