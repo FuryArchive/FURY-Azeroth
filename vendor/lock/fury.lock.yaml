@@ -144,7 +144,10 @@
       "directory": "mod-nemesis-system",
       "tier": "selected",
       "required": true,
-      "role": "persistent emergent nemesis enemies"
+      "role": "persistent emergent nemesis enemies",
+      "patches": [
+        "vendor/patches/mod-nemesis-system/0001-fury-persistent-reward-authority.patch"
+      ]
     },
     "challenge_modes": {
       "repository": "ZhengPeiRu21/mod-challenge-modes",
