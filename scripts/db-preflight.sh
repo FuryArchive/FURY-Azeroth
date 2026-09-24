@@ -27,7 +27,10 @@ import_file() {
   local db="$1"
   local sql="$2"
   echo "[FURY][DB-PREFLIGHT] ${db} <- ${sql#${ROOT}/}"
-  mysql_exec "${db}" < "${sql}"
+  {
+    printf '%s\n' "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    cat "${sql}"
+  } | mysql_exec "${db}"
 }
 
 import_tree() {
