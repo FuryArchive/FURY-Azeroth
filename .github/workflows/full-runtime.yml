@@ -8,6 +8,7 @@ on:
       # itself changes. Domain SQL/services remain covered by fast MySQL
       # golden gates + mod-fury translation-unit compilation.
       - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/mod-living-world/**"
       - "modules/mod-fury/mod-fury.cmake"
       - "modules/mod-fury/conf/**"
       - "modules/mod-fury/src/FuryModule.cpp"
@@ -23,8 +24,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  impact:
+    name: Full runtime impact check
+    runs-on: ubuntu-24.04
+    outputs:
+      run_full: ${{ steps.decision.outputs.run_full }}
+    steps:
+      - name: Checkout FURY with comparison history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide whether baseline runtime is affected
+        id: decision
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "run_full=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          decision="$(python3 scripts/needs-full-runtime.py \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}")"
+          echo "run_full=${decision}" >> "${GITHUB_OUTPUT}"
+
   build:
     name: Conditional full worldserver + runtime
+    needs: impact
+    if: needs.impact.outputs.run_full == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 240
 
