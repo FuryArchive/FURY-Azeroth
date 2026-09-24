@@ -235,6 +235,27 @@ jobs:
           cp -a runtime "${server_root}/runtime"
           chmod +x "${server_root}"/runtime/*.sh
 
+          # The CI build targets Ubuntu 24.04. Bundle non-glibc shared
+          # libraries used by authserver/worldserver so the archive does not
+          # depend on matching Boost/MySQL/OpenSSL package versions on the host.
+          mkdir -p "${server_root}/runtime-libs"
+          {
+            ldd build/dist/bin/worldserver
+            ldd build/dist/bin/authserver
+          } | awk '/=> \/.* \(0x/ { print $3 } /^[[:space:]]*\/.* \(0x/ { print $1 }' \
+            | sort -u \
+            | while IFS= read -r lib; do
+                [[ -f "${lib}" ]] || continue
+                case "$(basename "${lib}")" in
+                  libc.so.*|libm.so.*|libpthread.so.*|libdl.so.*|librt.so.*|libresolv.so.*|libutil.so.*|ld-linux*.so.*)
+                    continue
+                    ;;
+                esac
+                cp -L "${lib}" "${server_root}/runtime-libs/"
+              done
+
+          test -n "$(find "${server_root}/runtime-libs" -maxdepth 1 -type f -print -quit)"
+
           # AzerothCore's runtime DB updater reads base/update SQL from
           # SourceDirectory, including modules/<name>/data/sql. Bundle the
           # minimal SQL source tree so the downloaded archive is independent
@@ -269,6 +290,34 @@ jobs:
 
           tar -C build/artifacts/server -czf build/FURY-Azeroth-Server.tar.gz FURY-Azeroth
           (cd build/artifacts/client && zip -qr ../../FURY-Azeroth-Client.zip FURY-Azeroth-Client)
+
+      - name: Smoke downloadable server archive
+        env:
+          FURY_MYSQL_PASSWORD: fury-package-ci
+          FURY_MYSQL_PORT: "3307"
+          FURY_REALM_ADDRESS: "127.0.0.1"
+        run: |
+          set -euo pipefail
+          smoke_root="${GITHUB_WORKSPACE}/build/package-smoke"
+          rm -rf "${smoke_root}"
+          mkdir -p "${smoke_root}"
+          tar -xzf build/FURY-Azeroth-Server.tar.gz -C "${smoke_root}"
+          cd "${smoke_root}/FURY-Azeroth"
+
+          cleanup() {
+            docker compose -f runtime/docker-compose.playable.yml down -v >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          ./runtime/bootstrap-playable.sh furyci furyci123
+          test -f etc/worldserver.conf
+          test -f etc/authserver.conf
+          grep -Fq 'SourceDirectory = "' etc/worldserver.conf
+          grep -Fq 'MySQLExecutable = "' etc/worldserver.conf
+          grep -Fq 'DataDir = "' etc/worldserver.conf
+          grep -Fq '[FURY][BOOTSTRAP][PASS]' logs/bootstrap-worldserver.log || true
+
+          echo "[FURY][PACKAGE][PASS] extracted downloadable server bootstrapped successfully"
 
       - name: Upload playable server
         uses: actions/upload-artifact@v4
