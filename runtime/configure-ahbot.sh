@@ -36,7 +36,7 @@ mysql_exec() {
   docker compose -f "${COMPOSE}" exec -T mysql     mysql -uroot -p"${DB_PASSWORD}" "$@"
 }
 
-read -r account_sql character_sql < <(
+mapfile -t sql_queries < <(
   python3 - "${ACCOUNT}" "${CHARACTER}" <<'PY'
 import sys
 account = sys.argv[1].encode("utf-8").hex()
@@ -52,6 +52,10 @@ print(
 )
 PY
 )
+
+[[ "${#sql_queries[@]}" -eq 2 ]] || fail "failed to construct AHBot lookup queries"
+account_sql="${sql_queries[0]}"
+character_sql="${sql_queries[1]}"
 
 account_id="$(mysql_exec acore_auth -Nse "${account_sql}")"
 [[ "${account_id}" =~ ^[1-9][0-9]*$ ]] || fail "account not found: ${ACCOUNT}"
