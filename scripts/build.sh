@@ -119,6 +119,14 @@ elif [[ "${TARGET}" == "integration-module-only" ]]; then
     exit 1
   fi
   compile_module_tus "${module}"
+
+  if [[ -n "${FURY_INTEGRATION_CORE_FILES:-}" ]]; then
+    echo "[FURY] compile integration-touched core translation units"
+    FURY_BUILD_JOBS="${JOBS}" \
+      FURY_SOURCE_MODULE="core-integration" \
+      FURY_SOURCE_FILES="${FURY_INTEGRATION_CORE_FILES}" \
+      python3 "${ROOT}/scripts/compile-fury-only.py" "${BUILD_DIR}/compile_commands.json"
+  fi
 elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
   cmake --build "${BUILD_DIR}" --target "${TARGET}" --parallel "${JOBS}"
