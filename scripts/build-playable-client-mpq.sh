@@ -4,7 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="${1:-${ROOT}/build/playable-profile}"
 RAW="${PROFILE}/client/mpq-root"
-OUT="${2:-${PROFILE}/client/Patch-FURY.MPQ}"
+MPQ_NAME="${FURY_MPQ_NAME:-patch-Z.MPQ}"
+OUT="${2:-${PROFILE}/client/Data/${MPQ_NAME}}"
 
 MPQCLI_VERSION="v0.11.0"
 MPQCLI_SHA256="a2583a938814b7dd32b116daf96376648b476e0399856c85f7013d31938ab9db"
