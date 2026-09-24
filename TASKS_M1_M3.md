@@ -553,7 +553,7 @@ Acceptance:
 - valuable physical reward duplication is impossible or valuable physical rewards are withheld until a safe receipt mechanism exists.
 
 ## T33 Director/Living World reconciler
-Status: IN_PROGRESS
+Status: GREEN
 Depends on: T16, T23, T25
 Commit target: `feat(recovery): reconcile Director and Living World`
 
@@ -569,7 +569,7 @@ Acceptance:
 - reconciliation is observable in logs/diagnostics.
 
 ## T34 Defias golden suite + acceptance runbook
-Status: READY
+Status: IN_PROGRESS
 Depends on: T24–T33
 Commit targets:
 - `test(defias): add vertical-slice golden suite`
@@ -639,4 +639,12 @@ T28 is GREEN through PR #32 / commit `f1c314e8d47fb9c65826760e3301fab14a4fc5a4`;
 
 T29 is GREEN through PR #33 / merge commit `cb3e4b6b1929a2949f38b110eee4e43dde075c08`. FURY CI #159 and Full Runtime #13 passed, including the exact-run score attribution fixes, pinned worldserver build, real FURY DB lifecycle, and two worldserver smokes.
 
-T30 is IN_PROGRESS on `agent/m3-t30-defias-bestiary-r2`: runtime-only Defias Bestiary mappings, personal Human participation credit, and success-gated commander Mastered projection are implemented pending CI.
+T30 is GREEN through PR #34 / merge commit `e0f90103e60667819bcfe8362f508c5d4094cbc0`; FURY CI #161 passed.
+
+T31 is GREEN through PR #38 / merge commit `f6610fb4d31faa8f92ad26c8a8ea25964f0a9957`; FURY CI #168 passed.
+
+T32 is GREEN through PR #39 / merge commit `e5d67505b3421f6333e93fcaf3af05ead25ff4be`; FURY CI #174 passed.
+
+T33 is GREEN through PR #41 / merge commit `04e24f059a4a66ed44cf9abeb18de6afee2194a8`; FURY CI #183 passed the recovery gate, Living World boundary regression, Fast mod-fury compile, and all active regressions.
+
+T34 is IN_PROGRESS on `agent/m3-t34-defias-acceptance`: the automated GS10-GS18 aggregate gate, two-human operational runbook, and pre/post-restart live-state verifier are implemented pending branch CI and one documented real-worldserver acceptance run.

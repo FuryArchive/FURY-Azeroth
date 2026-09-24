@@ -12,6 +12,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  defias-t34-vertical-slice:
+    name: T34 Defias GS10-GS18 vertical-slice gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install T34 test dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++ default-mysql-client
+      - name: Run GS10-GS18 and gameplay dependency sweep
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+        run: bash scripts/test-t34-defias-golden.sh
+
   director-lw-recovery:
     name: T33 Director/Living World recovery gate
     runs-on: ubuntu-24.04

@@ -167,4 +167,6 @@ T31 is **GREEN** through PR #38 / merge commit `f6610fb4d31faa8f92ad26c8a8ea2596
 
 T32 is **GREEN** through PR #39 / merge commit `e5d67505b3421f6333e93fcaf3af05ead25ff4be`. FURY CI **#174** passed the persistent outcome gate, T25 upgrade-path regression, Fast mod-fury compile, and all active regressions.
 
-T33 Director/Living World Recovery is **IN_PROGRESS** on `agent/m3-t33-director-lw-recovery`: the reconcile tick now executes repair actions, can adopt a crash-window replacement runtime, restart a genuinely missing executor once, and abort orphan Living World runtimes with durable diagnostics.
+T33 is **GREEN** through PR #41 / merge commit `04e24f059a4a66ed44cf9abeb18de6afee2194a8`. FURY CI **#183** passed the recovery gate, T23 boundary regression, Fast mod-fury compile, and all active regressions.
+
+T34 Defias Acceptance is **IN_PROGRESS** on `agent/m3-t34-defias-acceptance`: the GS10-GS18 aggregate suite, gameplay dependency sweep, two-Human operational runbook, acceptance record template, and pre/post-restart state verifier are implemented. Automated CI and one real two-Human worldserver acceptance run remain before M3 can be marked GREEN.
