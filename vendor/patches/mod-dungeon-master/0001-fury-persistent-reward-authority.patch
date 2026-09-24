@@ -1,0 +1,129 @@
+diff --git a/conf/mod_dungeon_master.conf.dist b/conf/mod_dungeon_master.conf.dist
+--- a/conf/mod_dungeon_master.conf.dist
++++ b/conf/mod_dungeon_master.conf.dist
+@@ -112,6 +112,14 @@ DungeonMaster.Variety.RecentEntries = 12
+ # REWARDS
+ ###############################################################################
+ 
++#    DungeonMaster.Rewards.DirectPersistentEnabled
++#        Allow Dungeon Master to directly grant custom kill XP, generated loot,
++#        completion gold/items, and roguelike reward items.
++#        FURY keeps this disabled so persistent rewards/progression can be
++#        mediated by the FURY reward/proof layer instead of bypassing it.
++#        Default for the FURY integration: 0
++DungeonMaster.Rewards.DirectPersistentEnabled = 0
++
+ #    DungeonMaster.Rewards.BaseGold    (copper)     Default: 50000 (5g)
+ DungeonMaster.Rewards.BaseGold = 50000
+ 
+diff --git a/src/DMConfig.h b/src/DMConfig.h
+--- a/src/DMConfig.h
++++ b/src/DMConfig.h
+@@ -57,6 +57,7 @@ public:
+     float GetBossDamageMult()     const { return _bossDamageMult; }
+ 
+     // --- Rewards ---
++    bool   AreDirectPersistentRewardsEnabled() const { return _directPersistentRewardsEnabled; }
+     uint32 GetBaseGold()     const { return _baseGold; }
+     uint32 GetGoldPerMob()   const { return _goldPerMob; }
+     uint32 GetGoldPerBoss()  const { return _goldPerBoss; }
+@@ -133,6 +134,7 @@ private:
+     float _bossDamageMult  = 1.5f;
+ 
+     // Rewards
++    bool   _directPersistentRewardsEnabled = false;
+     uint32 _baseGold    = 50000;
+     uint32 _goldPerMob  = 50;
+     uint32 _goldPerBoss = 10000;
+diff --git a/src/DMConfig.cpp b/src/DMConfig.cpp
+--- a/src/DMConfig.cpp
++++ b/src/DMConfig.cpp
+@@ -82,6 +82,7 @@ void DMConfig::LoadConfig(bool reload)
+     _bossDamageMult  = sConfigMgr->GetOption<float> ("DungeonMaster.Scaling.BossDamageMult",    1.5f);
+ 
+     // Rewards
++    _directPersistentRewardsEnabled = sConfigMgr->GetOption<bool>("DungeonMaster.Rewards.DirectPersistentEnabled", false);
+     _baseGold     = sConfigMgr->GetOption<uint32>("DungeonMaster.Rewards.BaseGold",    50000);
+     _goldPerMob   = sConfigMgr->GetOption<uint32>("DungeonMaster.Rewards.GoldPerMob",  50);
+     _goldPerBoss  = sConfigMgr->GetOption<uint32>("DungeonMaster.Rewards.GoldPerBoss", 10000);
+diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
+--- a/src/DungeonMasterMgr.cpp
++++ b/src/DungeonMasterMgr.cpp
+@@ -1880,6 +1880,13 @@ void DungeonMasterMgr::HandlePlayerDeath(Player* player, Session* session)
+ // Rewards
+ void DungeonMasterMgr::DistributeRewards(Session* session)
+ {
++    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
++    {
++        LOG_INFO("module", "DungeonMaster: direct persistent completion rewards suppressed by FURY authority");
++        return;
++    }
++
+     if (!session) return;
+     const DifficultyTier* diff = sDMConfig->GetDifficulty(session->DifficultyId);
+     if (!diff) return;
+@@ -1925,6 +1932,9 @@ void DungeonMasterMgr::DistributeRewards(Session* session)
+ 
+ void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
+ {
++    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
++        return;
++
+     if (!session) return;
+ 
+     for (const auto& pd : session->Players)
+@@ -1945,6 +1955,9 @@ void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
+ 
+ void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
+ {
++    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
++        return;
++
+     if (!player || !amount) return;
+     player->ModifyMoney(amount);
+ 
+@@ -1960,6 +1973,9 @@ void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
+ 
+ void DungeonMasterMgr::GiveItemReward(Player* player, uint8 level, uint8 quality)
+ {
++    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
++        return;
++
+     uint32 playerClass = player->getClass();
+     uint32 itemEntry = SelectRewardItem(level, quality, playerClass);
+ 
+@@ -2034,6 +2050,9 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
+                                        const std::string& subject, const std::string& body)
+ {
++    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
++        return;
++
+     if (!player || !player->IsInWorld()) return;
+ 
+     uint32 playerClass = player->getClass();
+@@ -2110,6 +2129,13 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
+ void DungeonMasterMgr::DistributeRoguelikeRewards(uint32 tier, uint8 effectiveLevel,
+                                                     const std::vector<ObjectGuid>& playerGuids)
+ {
++    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
++    {
++        LOG_INFO("module", "DungeonMaster: direct persistent roguelike rewards suppressed by FURY authority");
++        return;
++    }
++
+     uint8 rewardLevel = static_cast<uint8>(std::min<uint32>(effectiveLevel, 80));
+ 
+ 
+@@ -2397,6 +2423,13 @@ uint32 DungeonMasterMgr::SelectLootItem(uint8 level, uint8 minQuality, uint8 max
+ 
+ void DungeonMasterMgr::FillCreatureLoot(Creature* creature, Session* session, bool isBoss)
+ {
++    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
++    {
++        LOG_DEBUG("module", "DungeonMaster: generated creature loot suppressed by FURY authority");
++        return;
++    }
++
+     if (!creature || !session) return;
+ 
+     Loot& loot = creature->loot;
