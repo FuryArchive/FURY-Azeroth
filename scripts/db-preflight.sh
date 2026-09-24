@@ -33,6 +33,16 @@ import_file() {
   } | mysql_exec "${db}"
 }
 
+import_file_force() {
+  local db="$1"
+  local sql="$2"
+  echo "[FURY][DB-PREFLIGHT][CORE-UPDATE] ${db} <- ${sql#${ROOT}/}"
+  {
+    printf '%s\n' "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    cat "${sql}"
+  } | mysql "${mysql_args[@]}" --force "${db}"
+}
+
 import_tree() {
   local db="$1"
   local dir="$2"
@@ -89,37 +99,24 @@ import_tree acore_auth "${CORE}/data/sql/base/db_auth"
 import_tree acore_characters "${CORE}/data/sql/base/db_characters"
 import_tree acore_world "${CORE}/data/sql/base/db_world"
 
-base_dump_cutoff() {
-  local dir="$1"
-  local date
-  date="$(grep -hE 'Dump completed on [0-9]{4}-[0-9]{2}-[0-9]{2}' "${dir}"/*.sql 2>/dev/null     | sed -E 's/.*Dump completed on ([0-9]{4}-[0-9]{2}-[0-9]{2}).*/\\1/'     | sort     | tail -n 1)"
-  [[ -n "${date}" ]] || fail "cannot determine base dump date for ${dir}"
-  echo "${date//-/_}"
-}
-
-import_updates_after_base() {
-  local db="$1"
-  local base_dir="$2"
-  local updates_dir="$3"
-  [[ -d "${updates_dir}" ]] || return 0
-
-  local cutoff
-  cutoff="$(base_dump_cutoff "${base_dir}")"
-  echo "[FURY][DB-PREFLIGHT] ${db} base cutoff: ${cutoff}"
-
+echo "[FURY][DB-PREFLIGHT] replaying AzerothCore updates in schema-evolution mode"
+for spec in \
+  "acore_auth:${CORE}/data/sql/updates/db_auth" \
+  "acore_characters:${CORE}/data/sql/updates/db_characters" \
+  "acore_world:${CORE}/data/sql/updates/db_world"
+do
+  db="${spec%%:*}"
+  dir="${spec#*:}"
+  [[ -d "${dir}" ]] || continue
   while IFS= read -r -d '' sql; do
-    local name
-    name="$(basename "${sql}")"
-    if [[ "${name}" > "${cutoff}_99.sql" ]]; then
-      import_file "${db}" "${sql}"
-    fi
-  done < <(find "${updates_dir}" -maxdepth 1 -type f -name '*.sql' -print0 | sort -z)
-}
+    import_file_force "${db}" "${sql}"
+  done < <(find "${dir}" -maxdepth 1 -type f -name '*.sql' -print0 | sort -z)
+done
 
-echo "[FURY][DB-PREFLIGHT] applying AzerothCore updates newer than each base dump"
-import_updates_after_base acore_auth "${CORE}/data/sql/base/db_auth" "${CORE}/data/sql/updates/db_auth"
-import_updates_after_base acore_characters "${CORE}/data/sql/base/db_characters" "${CORE}/data/sql/updates/db_characters"
-import_updates_after_base acore_world "${CORE}/data/sql/base/db_world" "${CORE}/data/sql/updates/db_world"
+mysql_exec acore_world -Nse "SHOW COLUMNS FROM creature LIKE 'id'" | grep -q . \
+  || fail "core update replay did not produce current creature.id schema"
+mysql_exec acore_world -Nse "SHOW COLUMNS FROM creature LIKE 'id1'" | grep -q . \
+  && fail "core update replay left obsolete creature.id1 schema"
 
 echo "[FURY][DB-PREFLIGHT] applying selected module SQL without compiling C++"
 while IFS= read -r -d '' sql; do
