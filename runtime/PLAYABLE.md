@@ -64,6 +64,29 @@ Backups are written to `./backups/` by default. To restore one while the realm i
 ./runtime/restore-playable.sh ./backups/FURY-Azeroth-backup-YYYYMMDD-HHMMSS.tar.gz
 ```
 
+### Playerbots and private-realm defaults
+
+FURY overrides the upstream 500-bot development-style population for the playable profile. By default it targets 80-120 random bots, keeps them logged out while no real player is online, syncs their upper level to the active players, and concentrates activity near relevant player zones. Death Knight random bots stay disabled until the WotLK progression brackets.
+
+You can change the population before bootstrap with:
+
+```bash
+export FURY_RANDOM_BOTS_MIN=80
+export FURY_RANDOM_BOTS_MAX=120
+```
+
+### Auction House Bot
+
+AHBot is intentionally left disabled until it has a dedicated character; upstream warns against using a normal played character as the auction bot.
+
+Create a throwaway account/character for the market, stop the realm, then run:
+
+```bash
+./runtime/configure-ahbot.sh MarketAccount Marketkeeper
+```
+
+This resolves the account/character IDs from the database and enables both AH seller and buyer. Set `FURY_AHBOT_SELLER=0` or `FURY_AHBOT_BUYER=0` before the command if you only want one side of the market.
+
 ### LLM Chatter
 
 The server archive includes the pinned Python LLM Chatter bridge and all of its Python dependencies as an offline wheelhouse. No separate bridge checkout or `pip install` is required.
