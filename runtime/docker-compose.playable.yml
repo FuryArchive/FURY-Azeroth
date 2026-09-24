@@ -19,8 +19,8 @@ services:
   llm-bridge:
     profiles: ["llm"]
     build:
-      context: ..
-      dockerfile: runtime/llm-bridge.Dockerfile
+      context: ../llm-chatter
+      dockerfile: ../runtime/llm-bridge.Dockerfile
     container_name: fury-azeroth-llm-bridge
     restart: unless-stopped
     depends_on:
