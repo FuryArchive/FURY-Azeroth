@@ -14,6 +14,11 @@ command -v docker >/dev/null 2>&1 || { echo "[FURY][FAIL] Docker is required" >&
   echo "[FURY][FAIL] runtime SQL source tree is missing" >&2
   exit 1
 }
+[[ -d "${ROOT}/runtime-libs" ]] || {
+  echo "[FURY][FAIL] bundled runtime libraries are missing" >&2
+  exit 1
+}
+export LD_LIBRARY_PATH="${ROOT}/runtime-libs${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 cd "${ROOT}"
 docker compose -f runtime/docker-compose.playable.yml up -d mysql
 
