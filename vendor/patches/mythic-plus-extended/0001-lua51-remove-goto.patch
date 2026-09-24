@@ -1,7 +1,7 @@
 diff --git a/MythicPlus/Mythic_Server.lua b/MythicPlus/Mythic_Server.lua
 --- a/MythicPlus/Mythic_Server.lua
 +++ b/MythicPlus/Mythic_Server.lua
-@@ -1256,18 +1256,11 @@ end
+@@ -1256,17 +1256,11 @@ end
  local function GetEligibleVaultLoot(player, tier, faction)
      local eligible = {}
      for _, loot in ipairs(VaultLootTable) do
@@ -23,7 +23,7 @@ diff --git a/MythicPlus/Mythic_Server.lua b/MythicPlus/Mythic_Server.lua
      end
      return eligible
  end
-@@ -3124,19 +3117,22 @@ local function TryRewardMythicLoot(player, tier, upgradeLevel, diff)
+@@ -3124,18 +3118,18 @@ local function TryRewardMythicLoot(player, tier, upgradeLevel, diff)
      end
  
      for _, loot in ipairs(MythicLootTable) do
