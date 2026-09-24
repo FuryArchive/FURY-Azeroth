@@ -14,6 +14,7 @@ mysql_args=(
   --host="${MYSQL_HOST}"
   --port="${MYSQL_PORT}"
   --user="${MYSQL_USER}"
+  --default-character-set=utf8
   --binary-mode=1
   --max_allowed_packet=1073741824
 )
