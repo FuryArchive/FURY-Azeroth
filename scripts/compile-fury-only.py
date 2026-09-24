@@ -12,7 +12,15 @@ def selected_module() -> str:
     return os.environ.get("FURY_SOURCE_MODULE", "mod-fury")
 
 
-def is_selected_source(path: str, module: str) -> bool:
+def selected_files() -> list[str]:
+    raw = os.environ.get("FURY_SOURCE_FILES", "")
+    return [value.strip() for value in raw.split(",") if value.strip()]
+
+
+def is_selected_source(path: str, module: str, files: list[str]) -> bool:
+    normalized = Path(path).as_posix()
+    if files:
+        return any(normalized.endswith(value) for value in files)
     return module in Path(path).parts
 
 
@@ -56,14 +64,16 @@ def main() -> int:
     database_path = Path(sys.argv[1])
     entries = json.loads(database_path.read_text())
     module = selected_module()
-    selected_entries = [entry for entry in entries if is_selected_source(entry["file"], module)]
+    files = selected_files()
+    selected_entries = [entry for entry in entries if is_selected_source(entry["file"], module, files)]
 
+    label = ", ".join(files) if files else module
     if not selected_entries:
-        print(f"[FURY][FAIL] compile database contains no {module} sources", file=sys.stderr)
+        print(f"[FURY][FAIL] compile database contains no sources for {label}", file=sys.stderr)
         return 1
 
     jobs = max(1, int(os.environ.get("FURY_BUILD_JOBS", "4")))
-    print(f"[FURY] compiling {len(selected_entries)} {module} translation unit(s) with {jobs} worker(s)")
+    print(f"[FURY] compiling {len(selected_entries)} translation unit(s) for {label} with {jobs} worker(s)")
 
     failures: list[tuple[str, str]] = []
 
@@ -83,7 +93,7 @@ def main() -> int:
             print(f"\n===== {source} =====\n{output}", file=sys.stderr)
         return 1
 
-    print(f"[FURY] {module} compile gate passed")
+    print(f"[FURY] {label} compile gate passed")
     return 0
 
 
