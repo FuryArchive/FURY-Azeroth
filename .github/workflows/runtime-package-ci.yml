@@ -64,6 +64,59 @@ jobs:
           print(f"validated {total} embedded Python blocks total")
           PY
 
+      - name: Verify playable module comfort policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          trap 'rm -rf "${root}"' EXIT
+          mkdir -p "${root}/runtime" "${root}/etc/modules"
+          cp runtime/configure-playable-modules.sh "${root}/runtime/"
+
+          cat > "${root}/etc/modules/playerbots.conf" <<'EOF'
+          AiPlayerbot.MinRandomBots = 500
+          AiPlayerbot.MaxRandomBots = 500
+          AiPlayerbot.DisabledWithoutRealPlayer = 0
+          AiPlayerbot.SyncLevelWithPlayers = 0
+          AiPlayerbot.RandomBotConcentrateInPlayerZone = 0
+          AiPlayerbot.LimitTalentsExpansion = 0
+          AiPlayerbot.DisableDeathKnightLogin = 0
+          EOF
+
+          cat > "${root}/etc/modules/mod_living_world.conf" <<'EOF'
+          LivingWorld.Enable = 1
+          LivingWorld.Playerbots.Enable = 1
+          LivingWorld.Debug = 1
+          LivingWorld.Invasions.Enable = 1
+          LivingWorld.Travelers.Enable = 1
+          EOF
+
+          cat > "${root}/etc/modules/mod-zone-difficulty.conf" <<'EOF'
+          ModZoneDifficulty.Enable = 1
+          ModZoneDifficulty.Mythicmode.Enable = 1
+          ModZoneDifficulty.MythicmodeAI.Enable = 1
+          EOF
+
+          cat > "${root}/etc/modules/individualProgression.conf" <<'EOF'
+          IndividualProgression.DisableQuestMarkers = 1
+          IndividualProgression.DisableRDF = 1
+          IndividualProgression.EnforceGroupRules = 1
+          EOF
+
+          cat > "${root}/etc/modules/progression_system.conf" <<'EOF'
+          ProgressionSystem.Bracket_0 = 0
+          ProgressionSystem.Bracket_70_6_2 = 0
+          ProgressionSystem.Bracket_71_74 = 0
+          EOF
+
+          bash "${root}/runtime/configure-playable-modules.sh" 0
+
+          grep -Eq '^IndividualProgression\.DisableQuestMarkers[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
+          grep -Eq '^IndividualProgression\.DisableRDF[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
+          grep -Eq '^IndividualProgression\.EnforceGroupRules[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/individualProgression.conf"
+          grep -Eq '^AiPlayerbot\.MinRandomBots[[:space:]]*=[[:space:]]*80[[:space:]]*$' "${root}/etc/modules/playerbots.conf"
+          grep -Eq '^ProgressionSystem\.Bracket_70_6_3[[:space:]]*=[[:space:]]*0[[:space:]]*$' "${root}/etc/modules/progression_system.conf"
+
       - name: Verify MySQL wrapper argument bridge
         shell: bash
         run: |

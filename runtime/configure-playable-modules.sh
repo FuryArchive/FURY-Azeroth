@@ -15,21 +15,23 @@ fail() { echo "[FURY][MODULES][FAIL] $*" >&2; exit 1; }
 PLAYERBOTS="${ROOT}/etc/modules/playerbots.conf"
 LIVING="${ROOT}/etc/modules/mod_living_world.conf"
 ZONE="${ROOT}/etc/modules/mod-zone-difficulty.conf"
+INDIVIDUAL="${ROOT}/etc/modules/individualProgression.conf"
 PROGRESSION="${ROOT}/etc/modules/progression_system.conf"
 
-for file in "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${PROGRESSION}"; do
+for file in "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${INDIVIDUAL}" "${PROGRESSION}"; do
   [[ -f "${file}" ]] || fail "required playable module config missing: ${file}"
 done
 
-python3 - "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${PROGRESSION}" "${BRACKET}" "${MIN_BOTS}" "${MAX_BOTS}" <<'PY'
+python3 - "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${INDIVIDUAL}" "${PROGRESSION}" "${BRACKET}" "${MIN_BOTS}" "${MAX_BOTS}" <<'PY'
 from pathlib import Path
 import re
 import sys
 
-playerbots, living, zone, progression, bracket, min_bots, max_bots = sys.argv[1:8]
+playerbots, living, zone, individual, progression, bracket, min_bots, max_bots = sys.argv[1:9]
 playerbots = Path(playerbots)
 living = Path(living)
 zone = Path(zone)
+individual = Path(individual)
 progression = Path(progression)
 
 def set_option(path: Path, key: str, value: str) -> None:
@@ -100,6 +102,15 @@ set_option(living, "LivingWorld.Travelers.Enable", "1")
 set_option(zone, "ModZoneDifficulty.Enable", "1")
 set_option(zone, "ModZoneDifficulty.Mythicmode.Enable", "0")
 set_option(zone, "ModZoneDifficulty.MythicmodeAI.Enable", "0")
+
+# Individual Progression supplies historical mechanics/phasing, but the global
+# Progression System remains the server-wide content authority. Keep co-op/QoL
+# surfaces available: normal quest markers and sparkles stay visible, RDF stays
+# usable, and the two human players are never blocked from grouping because
+# their personal boss milestones differ.
+set_option(individual, "IndividualProgression.DisableQuestMarkers", "0")
+set_option(individual, "IndividualProgression.DisableRDF", "0")
+set_option(individual, "IndividualProgression.EnforceGroupRules", "0")
 
 
 print(
