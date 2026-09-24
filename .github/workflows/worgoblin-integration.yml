@@ -1,0 +1,71 @@
+name: Worgoblin Integration CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/mod-worgoblin/**"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - "scripts/compile-fury-only.py"
+      - ".github/workflows/worgoblin-integration.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "vendor/patches/mod-worgoblin/**"
+      - "scripts/sync-upstreams.sh"
+      - "scripts/build.sh"
+      - "scripts/compile-fury-only.py"
+      - ".github/workflows/worgoblin-integration.yml"
+
+concurrency:
+  group: worgoblin-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    name: Worgen/Goblin Playerbots compatibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake ninja-build make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-worgoblin-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml', 'vendor/patches/mod-worgoblin/**') }}-${{ github.sha }}
+          restore-keys: |
+            fury-worgoblin-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml', 'vendor/patches/mod-worgoblin/**') }}-
+            fury-worgoblin-ccache-${{ runner.os }}-
+
+      - name: Configure compiler cache
+        run: |
+          ccache --set-config=max_size=1G
+          ccache --set-config=compression=true
+          ccache --zero-stats
+
+      - name: Resolve Worgen/Goblin integration
+        env:
+          FURY_STACK_PROFILE: worgoblin
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Compile Worgen/Goblin module and patched core units
+        env:
+          FURY_BUILD_TARGET: integration-module-only
+          FURY_INTEGRATION_MODULE: mod-worgoblin
+          FURY_INTEGRATION_CORE_FILES: src/server/game/Entities/Player/Player.cpp,src/server/game/Handlers/CharacterHandler.cpp
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
