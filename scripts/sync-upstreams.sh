@@ -191,6 +191,7 @@ if [[ "${PROFILE}" == "all" ]]; then
       exit 1
     fi
 
+    apply_patches "integrations.worgoblin" "${worgoblin}" "patches"
     apply_patches "integrations.worgoblin" "${CORE_DIR}" "core_patches"
 
     rm -rf "${CORE_DIR}/modules/mod-worgoblin"
