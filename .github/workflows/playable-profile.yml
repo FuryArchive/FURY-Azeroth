@@ -397,6 +397,9 @@ jobs:
           test -d "${wow_root}/Interface/AddOns/SoloCollections"
           test -d "${wow_root}/Interface/AddOns/AIO_Client"
           test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
+          test -d "${wow_root}/Interface/AddOns/QuestRadar"
+          test -d "${wow_root}/Interface/AddOns/NemesisTracker"
+          test -d "${wow_root}/Interface/AddOns/QOLAddon"
           grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
 
           echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
