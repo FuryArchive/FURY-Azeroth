@@ -1,7 +1,7 @@
 diff --git a/conf/mod_nemesis_system.conf.dist b/conf/mod_nemesis_system.conf.dist
 --- a/conf/mod_nemesis_system.conf.dist
 +++ b/conf/mod_nemesis_system.conf.dist
-@@ -152,6 +152,15 @@ NemesisSystem.DecayHours = 48
+@@ -152,6 +152,16 @@ NemesisSystem.DecayHours = 48
  
  NemesisSystem.DecayHours = 48
  
