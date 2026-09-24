@@ -34,31 +34,34 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          path = Path("runtime/bootstrap-playable.sh")
-          lines = path.read_text().splitlines()
-          blocks = []
-          i = 0
-          while i < len(lines):
-              if "<<'PY'" not in lines[i]:
+          total = 0
+          for path in sorted(Path("runtime").glob("*.sh")):
+              lines = path.read_text().splitlines()
+              blocks = []
+              i = 0
+              while i < len(lines):
+                  if "<<'PY'" not in lines[i]:
+                      i += 1
+                      continue
+                  block = []
                   i += 1
-                  continue
-              block = []
-              i += 1
-              while i < len(lines) and lines[i] != "PY":
-                  block.append(lines[i])
+                  while i < len(lines) and lines[i] != "PY":
+                      block.append(lines[i])
+                      i += 1
+                  if i >= len(lines):
+                      raise SystemExit(f"unterminated Python heredoc in {path}")
+                  blocks.append("\n".join(block) + "\n")
                   i += 1
-              if i >= len(lines):
-                  raise SystemExit("unterminated Python heredoc in bootstrap-playable.sh")
-              blocks.append("\n".join(block) + "\n")
-              i += 1
 
-          if not blocks:
-              raise SystemExit("no embedded Python blocks found in bootstrap-playable.sh")
+              for index, block in enumerate(blocks, 1):
+                  compile(block, f"{path}:PY#{index}", "exec")
+              if blocks:
+                  print(f"validated {len(blocks)} embedded Python blocks in {path}")
+                  total += len(blocks)
 
-          for index, block in enumerate(blocks, 1):
-              compile(block, f"bootstrap-playable.sh:PY#{index}", "exec")
-
-          print(f"validated {len(blocks)} embedded Python blocks")
+          if total == 0:
+              raise SystemExit("no embedded Python blocks found in runtime scripts")
+          print(f"validated {total} embedded Python blocks total")
           PY
 
       - name: Verify MySQL wrapper argument bridge
@@ -102,3 +105,5 @@ jobs:
           grep -Fq 'LD_LIBRARY_PATH' runtime/bootstrap-playable.sh
           grep -Fq 'runtime-libs' runtime/run-playable.sh
           grep -Fq 'server is not bootstrapped yet' runtime/run-playable.sh
+          grep -Fq 'progression_bracket' runtime/bootstrap-playable.sh
+          grep -Fq 'backup-playable.sh' runtime/advance-progression.sh
