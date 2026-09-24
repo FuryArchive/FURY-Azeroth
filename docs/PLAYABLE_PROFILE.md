@@ -48,7 +48,12 @@ Upstream-declared WIP Delves are staged for future development but hidden from t
 9. import Delves + Mythic+ SQL into real MySQL;
 10. start authserver and verify port 3724;
 11. start worldserver again with AIO/Mythic+/Delves Lua enabled;
-12. upload standalone server and client artifacts.
+12. assemble standalone server and client artifacts;
+13. bundle non-glibc runtime libraries and the offline LLM Chatter bridge;
+14. build the packaged LLM bridge container image;
+15. extract and bootstrap the actual server tarball against isolated MySQL;
+16. install the actual client ZIP onto a clean 3.3.5a-shaped tree;
+17. upload the accepted server and client artifacts.
 
 A green playable-profile run is the release gate for a playable build.
 
@@ -56,12 +61,14 @@ A green playable-profile run is the release gate for a playable build.
 
 Download and extract `FURY-Azeroth-Server`.
 
-The server bundle includes Docker Compose for an isolated MySQL 8 database. From inside the extracted `FURY-Azeroth` directory:
+The server bundle includes Docker Compose for an isolated MySQL 8 database, persistent progress storage, backup/restore tooling, sequential Classic-to-WotLK progression, and the optional packaged LLM Chatter bridge. From inside the extracted `FURY-Azeroth` directory:
 
 ```bash
 bash runtime/bootstrap-playable.sh fury fury
 bash runtime/run-playable.sh
 ```
+
+The bootstrap initializes a fresh realm at the first FURY progression bracket, creates the requested account, and configures LLM Chatter for a detected local Ollama model when available. LLM absence is non-fatal.
 
 The bootstrap chooses the first non-loopback host address as the realm address when available. Override it for LAN/VPN play with:
 
@@ -83,6 +90,8 @@ The installer:
 - updates existing `realmlist.wtf` files, or creates an enUS one when none exists.
 
 Then launch the WoW client normally and log in using the account passed to `bootstrap-playable.sh`.
+
+For normal play/update operations, use the commands documented in the packaged `PLAYABLE.md`: `backup-playable.sh`, `restore-playable.sh`, `advance-progression.sh`, and `configure-llm-chatter.sh`.
 
 ## Source build
 
