@@ -47,6 +47,10 @@ current="$(mysql_exec acore_fury -Nse \
   "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
 [[ -n "${current}" ]] || fail "progression state is missing; run bootstrap first"
 
+# Normalize FURY's playable module policy and repair the upstream-omitted
+# 70_6_3 config key before deriving the next sequential bracket.
+"${ROOT}/runtime/configure-playable-modules.sh" "${current}"
+
 next="$(python3 - "${CONF}" "${current}" <<'PY'
 from pathlib import Path
 import re
