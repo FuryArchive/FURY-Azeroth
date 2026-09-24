@@ -70,6 +70,8 @@ for dist in etc/modules/*.conf.dist; do
   cp -n "${dist}" "${dist%.dist}"
 done
 
+"${ROOT}/runtime/configure-llm-chatter.sh"
+
 progression_conf="${ROOT}/etc/modules/progression_system.conf"
 [[ -f "${progression_conf}" ]] || fail "Progression System config missing"
 python3 - "${progression_conf}" "${progression_bracket}" <<'PY'
