@@ -31,7 +31,7 @@ resolve_mpqcli() {
   if [[ ! -f "${PINNED}" ]] || [[ "$(sha256sum "${PINNED}" | awk '{print $1}')" != "${MPQCLI_SHA256}" ]]; then
     rm -f "${PINNED}" "${PINNED}.tmp"
     curl --fail --location --retry 4 --output "${PINNED}.tmp" "${MPQCLI_URL}"
-    echo "${MPQCLI_SHA256}  ${PINNED}.tmp" | sha256sum -c -
+    echo "${MPQCLI_SHA256}  ${PINNED}.tmp" | sha256sum -c - >/dev/null
     mv "${PINNED}.tmp" "${PINNED}"
     chmod +x "${PINNED}"
   fi
