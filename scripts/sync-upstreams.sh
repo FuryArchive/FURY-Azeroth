@@ -115,6 +115,46 @@ PY
   done
 }
 
+apply_transforms() {
+  local key="$1"
+  local dest="$2"
+
+  mapfile -t transforms < <(python3 - "${LOCK}" "${key}" <<'PY'
+import json
+import sys
+
+lock_path, dotted_path = sys.argv[1:3]
+with open(lock_path, "r", encoding="utf-8") as fh:
+    data = json.load(fh)
+
+node = data
+for part in dotted_path.split("."):
+    node = node[part]
+
+for transform in node.get("transforms", []):
+    print(transform)
+PY
+)
+
+  for relative_transform in "${transforms[@]}"; do
+    local transform="${ROOT}/${relative_transform}"
+    if [[ ! -f "${transform}" ]]; then
+      echo "[FURY] missing upstream transform: ${relative_transform}" >&2
+      exit 1
+    fi
+
+    echo "[FURY] apply transform ${relative_transform}"
+    case "${transform}" in
+      *.py) python3 "${transform}" "${dest}" ;;
+      *.sh) bash "${transform}" "${dest}" ;;
+      *)
+        echo "[FURY] unsupported transform type: ${relative_transform}" >&2
+        exit 1
+        ;;
+    esac
+  done
+}
+
 list_module_keys() {
   python3 - "${LOCK}" "${PROFILE}" <<'PY'
 import json
@@ -159,6 +199,7 @@ while IFS=$'\t' read -r key directory; do
   dest="${CORE_DIR}/modules/${directory}"
   clone_pin "modules.${key}" "${dest}"
   apply_patches "modules.${key}" "${dest}"
+  apply_transforms "modules.${key}" "${dest}"
 done < <(list_module_keys)
 
 if [[ -d "${ROOT}/modules/mod-fury" ]]; then
