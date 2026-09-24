@@ -1,7 +1,7 @@
 diff --git a/src/ChallengeModes.cpp b/src/ChallengeModes.cpp
 --- a/src/ChallengeModes.cpp
 +++ b/src/ChallengeModes.cpp
-@@ -445,7 +445,7 @@ class ChallengeModes_PlayerScript : public PlayerScript
+@@ -445,7 +445,7 @@
          killed->UpdatePlayerSetting("mod-challenge-modes", HARDCORE_DEAD, 1);
      }
  
@@ -10,12 +10,12 @@ diff --git a/src/ChallengeModes.cpp b/src/ChallengeModes.cpp
      {
          if (!sChallengeModes->challengeEnabledForPlayer(SETTING_HARDCORE, player))
          {
-@@ -626,7 +626,7 @@ class ChallengeModes_PlayerScript2 : public PlayerScript
-         killed->UpdatePlayerSetting("mod-challenge-modes", HARDCORE_DEAD, 1);
-     }
+@@ -626,7 +626,7 @@
+ public:
+     ChallengeMode_IronMan() : ChallengeMode("ChallengeMode_IronMan", SETTING_IRON_MAN) {}
  
 -    void OnPlayerResurrect(Player* player, float /*restore_percent*/, bool /*applySickness*/) override
 +    void OnPlayerResurrect(Player* player, float /*restore_percent*/, bool& /*applySickness*/) override
      {
-         if (!sChallengeModes->challengeEnabledForPlayer(SETTING_SEMI_HARDCORE, player))
+         if (!sChallengeModes->challengeEnabledForPlayer(SETTING_IRON_MAN, player))
          {
