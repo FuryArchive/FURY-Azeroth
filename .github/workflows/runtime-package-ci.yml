@@ -1,0 +1,101 @@
+name: FURY Runtime Package CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime-package-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime-package-ci.yml"
+
+jobs:
+  runtime-static:
+    name: Runtime package static acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in runtime/*.sh; do
+            echo "checking ${script}"
+            bash -n "${script}"
+          done
+
+      - name: Validate embedded Python heredocs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("runtime/bootstrap-playable.sh")
+          lines = path.read_text().splitlines()
+          blocks = []
+          i = 0
+          while i < len(lines):
+              if "<<'PY'" not in lines[i]:
+                  i += 1
+                  continue
+              block = []
+              i += 1
+              while i < len(lines) and lines[i] != "PY":
+                  block.append(lines[i])
+                  i += 1
+              if i >= len(lines):
+                  raise SystemExit("unterminated Python heredoc in bootstrap-playable.sh")
+              blocks.append("\n".join(block) + "\n")
+              i += 1
+
+          if not blocks:
+              raise SystemExit("no embedded Python blocks found in bootstrap-playable.sh")
+
+          for index, block in enumerate(blocks, 1):
+              compile(block, f"bootstrap-playable.sh:PY#{index}", "exec")
+
+          print(f"validated {len(blocks)} embedded Python blocks")
+          PY
+
+      - name: Verify MySQL wrapper argument bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          fake_bin="$(mktemp -d)"
+          trap 'rm -rf "${fake_bin}"' EXIT
+          cat > "${fake_bin}/docker" <<'SH'
+          #!/usr/bin/env bash
+          printf '%s\n' "$@"
+          SH
+          chmod +x "${fake_bin}/docker"
+
+          output="$(
+            PATH="${fake_bin}:${PATH}" \
+            FURY_MYSQL_PASSWORD="runtime-ci-secret" \
+            runtime/mysql-wrapper.sh \
+              --defaults-extra-file=/tmp/acore.cnf \
+              --host 127.0.0.1 \
+              --user root \
+              acore_world
+          )"
+
+          ! grep -Fq -- "--defaults-extra-file=" <<<"${output}"
+          grep -Fxq -- "-pruntime-ci-secret" <<<"${output}"
+          grep -Fxq -- "--host" <<<"${output}"
+          grep -Fxq -- "127.0.0.1" <<<"${output}"
+          grep -Fxq -- "acore_world" <<<"${output}"
+
+      - name: Verify downloadable-runtime guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'runtime-source/data/sql' runtime/bootstrap-playable.sh
+          grep -Fq 'runtime/mysql-wrapper.sh' runtime/bootstrap-playable.sh
+          grep -Fq 'SourceDirectory' runtime/bootstrap-playable.sh
+          grep -Fq 'MySQLExecutable' runtime/bootstrap-playable.sh
+          grep -Fq 'DataDir' runtime/bootstrap-playable.sh
+          grep -Fq 'server is not bootstrapped yet' runtime/run-playable.sh
