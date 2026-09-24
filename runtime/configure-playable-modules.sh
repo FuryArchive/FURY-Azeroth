@@ -43,6 +43,26 @@ def set_option(path: Path, key: str, value: str) -> None:
     path.write_text(text)
 
 progression_text = progression.read_text()
+
+# The pinned upstream module contains a real Bracket_70_6_3 loader/SQL tree but
+# omits its config key from progression_system.conf.dist. Restore the missing
+# step in the correct TBC -> WotLK position so sequential advancement cannot
+# silently jump from 70_6_2 to 71_74.
+if not re.search(r"(?m)^\s*ProgressionSystem\.Bracket_70_6_3\s*=", progression_text):
+    anchor = re.compile(
+        r"(?m)^(\s*ProgressionSystem\.Bracket_70_6_2\s*=\s*[01]\s*)$"
+    )
+    if not anchor.search(progression_text):
+        raise SystemExit(
+            "[FURY][MODULES][FAIL] cannot place missing progression bracket 70_6_3"
+        )
+    progression_text = anchor.sub(
+        lambda match: match.group(1) + "\nProgressionSystem.Bracket_70_6_3 = 0",
+        progression_text,
+        count=1,
+    )
+    progression.write_text(progression_text)
+
 order = [
     match.group(1)
     for match in re.finditer(
