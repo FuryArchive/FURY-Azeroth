@@ -19,7 +19,7 @@ diff --git a/src/server/shared/SharedDefines.h b/src/server/shared/SharedDefines
 diff --git a/src/server/shared/enuminfo_SharedDefines.cpp b/src/server/shared/enuminfo_SharedDefines.cpp
 --- a/src/server/shared/enuminfo_SharedDefines.cpp
 +++ b/src/server/shared/enuminfo_SharedDefines.cpp
-@@ -40,14 +40,16 @@ AC_API_EXPORT EnumText EnumUtils<Races>::ToString(Races value)
+@@ -40,13 +40,15 @@ AC_API_EXPORT EnumText EnumUtils<Races>::ToString(Races value)
          case RACE_GNOME: return { "RACE_GNOME", "Gnome", "" };
          case RACE_TROLL: return { "RACE_TROLL", "Troll", "" };
 +        case RACE_GOBLIN: return { "RACE_GOBLIN", "Goblin", "" };
@@ -80,7 +80,7 @@ diff --git a/src/server/game/Handlers/CharacterHandler.cpp b/src/server/game/Han
 diff --git a/src/server/game/Entities/Player/Player.cpp b/src/server/game/Entities/Player/Player.cpp
 --- a/src/server/game/Entities/Player/Player.cpp
 +++ b/src/server/game/Entities/Player/Player.cpp
-@@ -12596,6 +12596,14 @@ float Player::GetReputationPriceDiscount(Creature const* creature) const
+@@ -12596,6 +12596,15 @@ float Player::GetReputationPriceDiscount(Creature const* creature) const
  float Player::GetReputationPriceDiscount(FactionTemplateEntry const* factionTemplate) const
  {
      float discount = 1.0f;
