@@ -4,23 +4,51 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DB_PASSWORD="${FURY_MYSQL_PASSWORD:-fury}"
 DB_PORT="${FURY_MYSQL_PORT:-3306}"
+COMPOSE="${ROOT}/runtime/docker-compose.playable.yml"
 
-command -v docker >/dev/null 2>&1 || { echo "[FURY][FAIL] Docker is required" >&2; exit 1; }
-[[ -f "${ROOT}/etc/worldserver.conf" && -f "${ROOT}/etc/authserver.conf" ]] || {
-  echo "[FURY][FAIL] server is not bootstrapped yet; run ./runtime/bootstrap-playable.sh first" >&2
-  exit 1
-}
-[[ -d "${ROOT}/runtime-source/data/sql" ]] || {
-  echo "[FURY][FAIL] runtime SQL source tree is missing" >&2
-  exit 1
-}
-[[ -d "${ROOT}/runtime-libs" ]] || {
-  echo "[FURY][FAIL] bundled runtime libraries are missing" >&2
-  exit 1
-}
+fail() { echo "[FURY][RUN][FAIL] $*" >&2; exit 1; }
+
+command -v docker >/dev/null 2>&1 || fail "Docker is required"
+docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin is required"
+
+[[ -f "${ROOT}/etc/worldserver.conf" && -f "${ROOT}/etc/authserver.conf" ]] ||   fail "server is not bootstrapped yet; run ./runtime/bootstrap-playable.sh first"
+[[ -d "${ROOT}/runtime-source/data/sql" ]] || fail "runtime SQL source tree is missing"
+[[ -d "${ROOT}/runtime-libs" ]] || fail "bundled runtime libraries are missing"
+
 export LD_LIBRARY_PATH="${ROOT}/runtime-libs${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
 cd "${ROOT}"
-docker compose -f runtime/docker-compose.playable.yml up -d mysql
+docker compose -f "${COMPOSE}" up -d mysql
+
+echo "[FURY] waiting for MySQL"
+for _ in {1..90}; do
+  if docker compose -f "${COMPOSE}" exec -T mysql \
+      mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+docker compose -f "${COMPOSE}" exec -T mysql \
+  mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1 \
+  || fail "MySQL did not become healthy"
+
+bridge_started=0
+llm_conf="${ROOT}/etc/modules/mod_llm_chatter.conf"
+if [[ -f "${llm_conf}" ]] && grep -Eq '^LLMChatter\.Enable[[:space:]]*=[[:space:]]*1[[:space:]]*$' "${llm_conf}"; then
+  if [[ -f "${ROOT}/llm-chatter/llm_chatter_bridge.py" && -d "${ROOT}/llm-chatter/wheels" ]]; then
+    echo "[FURY] starting packaged LLM Chatter bridge"
+    if docker compose -f "${COMPOSE}" --profile llm up -d llm-bridge; then
+      bridge_started=1
+    else
+      echo "[FURY][LLM][WARN] bridge failed to start; realm will continue without generated chatter" >&2
+    fi
+  else
+    echo "[FURY][LLM][WARN] chatter is enabled but packaged bridge files are missing" >&2
+  fi
+else
+  echo "[FURY] LLM Chatter disabled; realm startup does not depend on an LLM"
+fi
 
 export AC_LOGIN_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_auth"
 export AC_WORLD_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_world"
@@ -43,11 +71,15 @@ mkdir -p logs
 auth_pid=$!
 
 cleanup() {
-  kill "${auth_pid}" 2>/dev/null || true
-  wait "${auth_pid}" 2>/dev/null || true
+  kill "${auth_pid:-}" 2>/dev/null || true
+  wait "${auth_pid:-}" 2>/dev/null || true
+  if [[ "${bridge_started}" -eq 1 ]]; then
+    docker compose -f "${COMPOSE}" --profile llm stop llm-bridge >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT INT TERM
 
 echo "[FURY] authserver pid=${auth_pid}"
+[[ "${bridge_started}" -eq 0 ]] || echo "[FURY] LLM Chatter bridge is running"
 echo "[FURY] worldserver console follows; Ctrl+C stops the realm"
 "${ROOT}/bin/worldserver" -c "${ROOT}/etc/worldserver.conf"
