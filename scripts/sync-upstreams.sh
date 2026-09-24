@@ -8,9 +8,9 @@ CORE_DIR="${UPSTREAM}/azerothcore-wotlk"
 PROFILE="${FURY_STACK_PROFILE:-baseline}"
 
 case "${PROFILE}" in
-  baseline|server|all) ;;
+  baseline|server|all|worgoblin) ;;
   *)
-    echo "[FURY] unknown stack profile '${PROFILE}' (expected baseline|server|all)" >&2
+    echo "[FURY] unknown stack profile '${PROFILE}' (expected baseline|server|all|worgoblin)" >&2
     exit 1
     ;;
 esac
@@ -125,13 +125,16 @@ list_integration_keys() {
 import json
 import sys
 lock_path, profile = sys.argv[1:3]
-if profile != "all":
+if profile not in ("all", "worgoblin"):
     raise SystemExit(0)
 with open(lock_path, "r", encoding="utf-8") as fh:
     data = json.load(fh)
 for key, integration in data.get("integrations", {}).items():
-    if integration.get("selected", False):
-        print(f"{key}|{integration['directory']}|{integration.get('core_module_directory', '')}")
+    if not integration.get("selected", False):
+        continue
+    if profile == "worgoblin" and key != "worgoblin":
+        continue
+    print(f"{key}|{integration['directory']}|{integration.get('core_module_directory', '')}")
 PY
 }
 
@@ -152,7 +155,7 @@ if [[ -d "${ROOT}/modules/mod-fury" ]]; then
   echo "[FURY] linked first-party module: modules/mod-fury"
 fi
 
-if [[ "${PROFILE}" == "all" ]]; then
+if [[ "${PROFILE}" == "all" || "${PROFILE}" == "worgoblin" ]]; then
   INTEGRATIONS_DIR="${UPSTREAM}/integrations"
   mkdir -p "${INTEGRATIONS_DIR}"
   while IFS="|" read -r key directory core_module_directory; do
@@ -179,7 +182,7 @@ while IFS="|" read -r key directory; do
   printf "  %-24s %s\n" "${key}:" "$(git -C "${CORE_DIR}/modules/${directory}" rev-parse HEAD)"
 done < <(list_module_keys)
 
-if [[ "${PROFILE}" == "all" ]]; then
+if [[ "${PROFILE}" == "all" || "${PROFILE}" == "worgoblin" ]]; then
   echo "  integrations:"
   while IFS="|" read -r key directory core_module_directory; do
     [[ -n "${key}" ]] || continue
