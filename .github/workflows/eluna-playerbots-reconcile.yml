@@ -1,0 +1,48 @@
+name: Eluna Playerbots Reconciliation CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "scripts/resolve-eluna-playerbots.sh"
+      - ".github/workflows/eluna-playerbots-reconcile.yml"
+  push:
+    branches: [main]
+    paths:
+      - "vendor/lock/fury.lock.yaml"
+      - "scripts/resolve-eluna-playerbots.sh"
+      - ".github/workflows/eluna-playerbots-reconcile.yml"
+
+concurrency:
+  group: eluna-playerbots-reconcile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    name: Merge + compile Playerbots with standard Eluna
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake ninja-build make gcc g++ clang ccache \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev
+
+      - name: Resolve pinned Playerbots baseline
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Reconcile pinned standard Eluna
+        run: bash scripts/resolve-eluna-playerbots.sh
+
+      - name: Configure and compile game target
+        env:
+          FURY_BUILD_TARGET: game
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
