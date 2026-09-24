@@ -110,3 +110,5 @@ jobs:
           grep -Fq 'configure-llm-chatter.sh' runtime/bootstrap-playable.sh
           grep -Fq -- '--profile llm' runtime/run-playable.sh
           grep -Fq 'llm-bridge.Dockerfile' runtime/docker-compose.playable.yml
+          grep -Fq 'context: ../llm-chatter' runtime/docker-compose.playable.yml
+          grep -Fq 'COPY requirements.txt' runtime/llm-bridge.Dockerfile
