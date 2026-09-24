@@ -172,6 +172,7 @@ if [[ "${PROFILE}" == "all" ]]; then
   INTEGRATIONS_DIR="${UPSTREAM}/integrations"
   mkdir -p "${INTEGRATIONS_DIR}"
   while IFS=
+
 echo
 echo "[FURY] resolved workspace profile: ${PROFILE}"
 printf "  core: %s\n" "$(git -C "${CORE_DIR}" rev-parse HEAD)"
@@ -183,7 +184,8 @@ done < <(list_module_keys)
 
 if [[ "${PROFILE}" == "all" ]]; then
   echo "  integrations:"
-  while IFS=fi
+  while IFS=
+fi
 
 echo
 echo "[FURY] upstream sync complete."
