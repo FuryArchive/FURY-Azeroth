@@ -1,8 +1,8 @@
 diff --git a/src/Worgoblin.cpp b/src/Worgoblin.cpp
 --- a/src/Worgoblin.cpp
 +++ b/src/Worgoblin.cpp
-@@ -12,7 +12,7 @@ public:
- 
+@@ -10,7 +10,7 @@ class announce : public PlayerScript {
+ public:
      announce() : PlayerScript("announce") { }
  
 -    void OnLogin(Player* player) override
