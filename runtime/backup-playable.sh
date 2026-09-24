@@ -15,13 +15,16 @@ cd "${ROOT}"
 docker compose -f "${COMPOSE}" up -d mysql
 
 for _ in {1..90}; do
-  if docker compose -f "${COMPOSE}" exec -T mysql       mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1; then
+  if docker compose -f "${COMPOSE}" exec -T mysql \
+      mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
 
-docker compose -f "${COMPOSE}" exec -T mysql   mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1   || fail "MySQL did not become healthy"
+docker compose -f "${COMPOSE}" exec -T mysql \
+  mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1 \
+  || fail "MySQL did not become healthy"
 
 mkdir -p "${BACKUP_DIR}"
 stamp="$(date +%Y%m%d-%H%M%S)"
@@ -29,7 +32,9 @@ work="$(mktemp -d)"
 trap 'rm -rf "${work}"' EXIT
 
 mapfile -t databases < <(
-  docker compose -f "${COMPOSE}" exec -T mysql     mysql -uroot -p"${DB_PASSWORD}" -Nse     "SHOW DATABASES WHERE \`Database\` NOT IN ('information_schema','mysql','performance_schema','sys');"
+  docker compose -f "${COMPOSE}" exec -T mysql \
+    mysql -uroot -p"${DB_PASSWORD}" -Nse \
+    "SHOW DATABASES WHERE \`Database\` NOT IN ('information_schema','mysql','performance_schema','sys');"
 )
 
 [[ "${#databases[@]}" -gt 0 ]] || fail "no playable databases found"
@@ -37,7 +42,11 @@ mapfile -t databases < <(
 for db in "${databases[@]}"; do
   [[ "${db}" =~ ^[A-Za-z0-9_]+$ ]] || fail "unexpected database name: ${db}"
   echo "[FURY] backing up ${db}"
-  docker compose -f "${COMPOSE}" exec -T mysql     mysqldump -uroot -p"${DB_PASSWORD}"       --single-transaction --quick --routines --events --triggers "${db}"       > "${work}/${db}.sql"
+  docker compose -f "${COMPOSE}" exec -T mysql \
+    mysqldump -uroot -p"${DB_PASSWORD}" \
+      --single-transaction --quick --routines --events --triggers \
+      --databases "${db}" --add-drop-database \
+      > "${work}/${db}.sql"
 done
 
 cat > "${work}/BACKUP-MANIFEST.txt" <<EOF
