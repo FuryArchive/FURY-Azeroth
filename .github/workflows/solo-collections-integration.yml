@@ -44,6 +44,7 @@ jobs:
       - name: Resolve full integration workspace
         env:
           FURY_STACK_PROFILE: all
+          FURY_INTEGRATION_FILTER: solo_collections_platform
         run: bash scripts/sync-upstreams.sh
 
       - name: Verify matched backend and client dependency contract
