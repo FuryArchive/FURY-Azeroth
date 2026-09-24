@@ -96,6 +96,8 @@ text = pattern.sub(
 path.write_text(text)
 PY
 
+"${ROOT}/runtime/configure-playable-modules.sh" "${next}"
+
 export AC_LOGIN_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_auth"
 export AC_WORLD_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_world"
 export AC_CHARACTER_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_characters"
