@@ -32,6 +32,13 @@ if grep -Eq '\[(4001|4011)\][[:space:]]*=' "${SERVER}/lua_scripts/Delves/delves-
 fi
 pass "upstream WIP Delves are hidden from production profile"
 
+grep -Fq 'RegisterCreatureEvent(BOSS_ID, 7, OnAIUpdate)' "${SERVER}/lua_scripts/Delves/ForemanGlitzbolt.lua" \
+  || fail "Delves Foreman Glitzbolt is not bound to standard Eluna AIUPDATE event 7"
+if grep -Fq 'RegisterCreatureEvent(BOSS_ID, 27, OnAIUpdate)' "${SERVER}/lua_scripts/Delves/ForemanGlitzbolt.lua"; then
+  fail "Delves Foreman Glitzbolt still uses ALE/incorrect event 27 for AIUPDATE"
+fi
+pass "Delves AI update hooks target standard Eluna"
+
 grep -Eq 'NoKeystoneRequired[[:space:]]*=[[:space:]]*0' "${SERVER}/lua_scripts/MythicPlus/Mythic_Config.lua" \
   || fail "Mythic+ strict keystone progression is not enabled"
 pass "Mythic+ strict keystone progression enabled"
