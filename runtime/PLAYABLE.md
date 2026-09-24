@@ -28,6 +28,18 @@ The bootstrap is repeat-safe for the packaged one-time Delves/Mythic+ content. R
 ./runtime/bootstrap-playable.sh fury2 choose-a-password
 ```
 
+### Staged Classic -> TBC -> WotLK progression
+
+A fresh FURY realm starts in Progression System `Bracket_0`. Do not edit the progression module config by hand.
+
+When the current progression milestone is complete and the realm is stopped, advance exactly one bracket with:
+
+```bash
+./runtime/advance-progression.sh
+```
+
+The command creates a database backup first, enables only the next upstream bracket, starts worldserver long enough to apply its database updates, records the new FURY progression state, and shuts worldserver down again. It will not skip brackets or move backwards.
+
 Useful environment variables:
 
 ```bash
