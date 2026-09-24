@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: fury-azeroth-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${FURY_MYSQL_PASSWORD:-fury}
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "${FURY_MYSQL_PORT:-3306}:3306"
+    volumes:
+      - fury-azeroth-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p${FURY_MYSQL_PASSWORD:-fury} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  fury-azeroth-mysql:
