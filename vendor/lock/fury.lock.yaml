@@ -219,7 +219,10 @@
       "kind": "content_bundle",
       "selected": true,
       "requires_client_patch": true,
-      "note": "Late-game side-content candidate with custom maps/assets; keep gated until client/content audit."
+      "note": "Late-game side-content candidate with custom maps/assets; keep gated until client/content audit.",
+      "patches": [
+        "vendor/patches/delves/0001-standard-eluna-ai-update-event.patch"
+      ]
     },
     "mythic_plus_extended": {
       "repository": "Ildourol/MythicPlus-extended",
