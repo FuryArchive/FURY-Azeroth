@@ -344,10 +344,21 @@ jobs:
           grep -Fq 'MySQLExecutable = "' etc/worldserver.conf
           grep -Fq 'DataDir = "' etc/worldserver.conf
           grep -Eq '^LLMChatter\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_llm_chatter.conf
+          grep -Eq '^ProgressionSystem\.Bracket_0[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
+          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
           test -f llm-chatter/llm_chatter_bridge.py
           test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
 
-          echo "[FURY][PACKAGE][PASS] extracted downloadable server bootstrapped successfully"
+          ./runtime/advance-progression.sh
+          test -n "$(find backups -maxdepth 1 -type f -name 'FURY-Azeroth-backup-*.tar.gz' -print -quit)"
+          grep -Eq '^ProgressionSystem\.Bracket_1_19[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf
+          test "$(grep -Ec '^ProgressionSystem\.Bracket_[^=]+[[:space:]]*=[[:space:]]*1[[:space:]]*$' etc/modules/progression_system.conf)" -eq 1
+          progression_state="$(docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
+            mysql -uroot -pfury-package-ci acore_fury -Nse \
+            "SELECT state_value FROM fury_runtime_state WHERE state_key='progression_bracket' LIMIT 1;")"
+          test "${progression_state}" = "1_19"
+
+          echo "[FURY][PACKAGE][PASS] extracted server bootstrapped and advanced 0 -> 1_19 successfully"
 
       - name: Smoke downloadable client overlay
         run: |
