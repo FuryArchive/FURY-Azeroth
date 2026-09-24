@@ -23,12 +23,15 @@ docker compose -f runtime/docker-compose.playable.yml up -d mysql
 
 echo "[FURY] waiting for MySQL"
 for _ in {1..90}; do
-  if docker compose -f runtime/docker-compose.playable.yml exec -T mysql       mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1; then
+  if docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
+      mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
-docker compose -f runtime/docker-compose.playable.yml exec -T mysql   mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1   || fail "MySQL did not become healthy"
+docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
+  mysqladmin ping -h localhost -uroot -p"${DB_PASSWORD}" --silent >/dev/null 2>&1 \
+  || fail "MySQL did not become healthy"
 
 export AC_LOGIN_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_auth"
 export AC_WORLD_DATABASE_INFO="127.0.0.1;${DB_PORT};root;${DB_PASSWORD};acore_world"
@@ -63,79 +66,7 @@ text = conf.read_text()
 
 def set_option(payload: str, key: str, value: str) -> str:
     line = f'{key} = "{value}"'
-    pattern = re.compile(rf'(?m)^\s*{re.escape(key)}\s*=.*
-fifo="$(mktemp -u)"
-mkfifo "${fifo}"
-log="${ROOT}/logs/bootstrap-worldserver.log"
-cleanup() {
-  rm -f "${fifo}"
-  if [[ -n "${pid:-}" ]] && kill -0 "${pid}" 2>/dev/null; then
-    kill "${pid}" 2>/dev/null || true
-  fi
-}
-trap cleanup EXIT
-
-echo "[FURY] first worldserver start: creating/updating AzerothCore databases"
-"${ROOT}/bin/worldserver" -c "${ROOT}/etc/worldserver.bootstrap.conf" <"${fifo}" >"${log}" 2>&1 &
-pid=$!
-exec 3>"${fifo}"
-
-deadline=$((SECONDS + 900))
-while (( SECONDS < deadline )); do
-  if grep -Fq "worldserver-daemon) ready..." "${log}"; then
-    break
-  fi
-  if ! kill -0 "${pid}" 2>/dev/null; then
-    tail -n 200 "${log}" >&2 || true
-    fail "worldserver exited during database initialization"
-  fi
-  sleep 1
-done
-grep -Fq "worldserver-daemon) ready..." "${log}" || {
-  tail -n 200 "${log}" >&2 || true
-  fail "worldserver database initialization timed out"
-}
-
-printf 'account create %s %s\n' "${ACCOUNT}" "${PASSWORD}" >&3
-sleep 2
-printf 'server shutdown 1\n' >&3
-exec 3>&-
-wait "${pid}" || true
-pid=""
-
-mysql_exec() {
-  docker compose -f runtime/docker-compose.playable.yml exec -T mysql     mysql -uroot -p"${DB_PASSWORD}" "$@"
-}
-
-echo "[FURY] importing Delves + Mythic+ content"
-while IFS= read -r -d '' sql; do
-  case "${sql}" in
-    */world/*) db=acore_world ;;
-    */characters/*) db=acore_characters ;;
-    *) continue ;;
-  esac
-  echo "  -> ${db}: ${sql#${ROOT}/}"
-  mysql_exec "${db}" < "${sql}"
-done < <(find "${ROOT}/fury-sql" -type f -name '*.sql' -print0 | sort -z)
-
-mysql_exec acore_auth -e   "UPDATE realmlist SET name='FURY Azeroth', address='${REALM_ADDRESS}', localAddress='127.0.0.1', port=8085 WHERE id=1;"
-
-cp -n etc/worldserver.conf.dist etc/worldserver.conf
-cp -n etc/authserver.conf.dist etc/authserver.conf
-
-python3 - "${ROOT}/etc/worldserver.conf" "${ROOT}/etc/authserver.conf" "${ROOT}/runtime-source" "${ROOT}/runtime/mysql-wrapper.sh" "${ROOT}/data" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-world, auth, source, mysql_wrapper, data_dir = map(Path, sys.argv[1:6])
-
-def set_option(payload: str, key: str, value: str) -> str:
-    line = f'{key} = "{value}"'
-    pattern = re.compile(rf'(?m)^\s*{re.escape(key)}\s*=.*echo "[FURY] account: ${ACCOUNT}"
-echo "[FURY] realm address: ${REALM_ADDRESS}"
-echo "[FURY] next: ./runtime/run-playable.sh"
-)
+    pattern = re.compile(rf'(?m)^\s*{re.escape(key)}\s*=.*$')
     if pattern.search(payload):
         return pattern.sub(line, payload, count=1)
     return payload.rstrip() + "\n" + line + "\n"
@@ -187,7 +118,8 @@ wait "${pid}" || true
 pid=""
 
 mysql_exec() {
-  docker compose -f runtime/docker-compose.playable.yml exec -T mysql     mysql -uroot -p"${DB_PASSWORD}" "$@"
+  docker compose -f runtime/docker-compose.playable.yml exec -T mysql \
+    mysql -uroot -p"${DB_PASSWORD}" "$@"
 }
 
 echo "[FURY] importing Delves + Mythic+ content"
@@ -201,16 +133,22 @@ while IFS= read -r -d '' sql; do
   mysql_exec "${db}" < "${sql}"
 done < <(find "${ROOT}/fury-sql" -type f -name '*.sql' -print0 | sort -z)
 
-mysql_exec acore_auth -e   "UPDATE realmlist SET name='FURY Azeroth', address='${REALM_ADDRESS}', localAddress='127.0.0.1', port=8085 WHERE id=1;"
+mysql_exec acore_auth -e \
+  "UPDATE realmlist SET name='FURY Azeroth', address='${REALM_ADDRESS}', localAddress='127.0.0.1', port=8085 WHERE id=1;"
 
 cp -n etc/worldserver.conf.dist etc/worldserver.conf
 cp -n etc/authserver.conf.dist etc/authserver.conf
 
-echo "[FURY][BOOTSTRAP][PASS] server initialized"
-echo "[FURY] account: ${ACCOUNT}"
-echo "[FURY] realm address: ${REALM_ADDRESS}"
-echo "[FURY] next: ./runtime/run-playable.sh"
-)
+python3 - "${ROOT}/etc/worldserver.conf" "${ROOT}/etc/authserver.conf" "${ROOT}/runtime-source" "${ROOT}/runtime/mysql-wrapper.sh" "${ROOT}/data" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+world, auth, source, mysql_wrapper, data_dir = map(Path, sys.argv[1:6])
+
+def set_option(payload: str, key: str, value: str) -> str:
+    line = f'{key} = "{value}"'
+    pattern = re.compile(rf'(?m)^\s*{re.escape(key)}\s*=.*$')
     if pattern.search(payload):
         return pattern.sub(line, payload, count=1)
     return payload.rstrip() + "\n" + line + "\n"
@@ -227,83 +165,14 @@ auth_text = set_option(auth_text, "MySQLExecutable", str(mysql_wrapper))
 auth.write_text(auth_text)
 PY
 
-account_count="$(mysql_exec acore_auth -Nse "SELECT COUNT(*) FROM account WHERE username=UPPER('${ACCOUNT}');")"
-[[ "${account_count}" =~ ^[1-9][0-9]*$ ]] || fail "game account was not created"
-
-echo "[FURY][BOOTSTRAP][PASS] server initialized"
-echo "[FURY] account: ${ACCOUNT}"
-echo "[FURY] realm address: ${REALM_ADDRESS}"
-echo "[FURY] next: ./runtime/run-playable.sh"
-)
-    if pattern.search(payload):
-        return pattern.sub(line, payload, count=1)
-    return payload.rstrip() + "\n" + line + "\n"
-
-text = set_option(text, "Eluna.ScriptPath", str(empty))
-text = set_option(text, "SourceDirectory", str(source))
-text = set_option(text, "MySQLExecutable", str(mysql_wrapper))
-text = set_option(text, "DataDir", str(data_dir))
-conf.write_text(text)
+account_sql="$(python3 - "${ACCOUNT}" <<'PY'
+import sys
+value = sys.argv[1].encode("utf-8").hex()
+print(f"SELECT COUNT(*) FROM account WHERE username=UPPER(CONVERT(0x{value} USING utf8mb4));")
 PY
-
-fifo="$(mktemp -u)"
-mkfifo "${fifo}"
-log="${ROOT}/logs/bootstrap-worldserver.log"
-cleanup() {
-  rm -f "${fifo}"
-  if [[ -n "${pid:-}" ]] && kill -0 "${pid}" 2>/dev/null; then
-    kill "${pid}" 2>/dev/null || true
-  fi
-}
-trap cleanup EXIT
-
-echo "[FURY] first worldserver start: creating/updating AzerothCore databases"
-"${ROOT}/bin/worldserver" -c "${ROOT}/etc/worldserver.bootstrap.conf" <"${fifo}" >"${log}" 2>&1 &
-pid=$!
-exec 3>"${fifo}"
-
-deadline=$((SECONDS + 900))
-while (( SECONDS < deadline )); do
-  if grep -Fq "worldserver-daemon) ready..." "${log}"; then
-    break
-  fi
-  if ! kill -0 "${pid}" 2>/dev/null; then
-    tail -n 200 "${log}" >&2 || true
-    fail "worldserver exited during database initialization"
-  fi
-  sleep 1
-done
-grep -Fq "worldserver-daemon) ready..." "${log}" || {
-  tail -n 200 "${log}" >&2 || true
-  fail "worldserver database initialization timed out"
-}
-
-printf 'account create %s %s\n' "${ACCOUNT}" "${PASSWORD}" >&3
-sleep 2
-printf 'server shutdown 1\n' >&3
-exec 3>&-
-wait "${pid}" || true
-pid=""
-
-mysql_exec() {
-  docker compose -f runtime/docker-compose.playable.yml exec -T mysql     mysql -uroot -p"${DB_PASSWORD}" "$@"
-}
-
-echo "[FURY] importing Delves + Mythic+ content"
-while IFS= read -r -d '' sql; do
-  case "${sql}" in
-    */world/*) db=acore_world ;;
-    */characters/*) db=acore_characters ;;
-    *) continue ;;
-  esac
-  echo "  -> ${db}: ${sql#${ROOT}/}"
-  mysql_exec "${db}" < "${sql}"
-done < <(find "${ROOT}/fury-sql" -type f -name '*.sql' -print0 | sort -z)
-
-mysql_exec acore_auth -e   "UPDATE realmlist SET name='FURY Azeroth', address='${REALM_ADDRESS}', localAddress='127.0.0.1', port=8085 WHERE id=1;"
-
-cp -n etc/worldserver.conf.dist etc/worldserver.conf
-cp -n etc/authserver.conf.dist etc/authserver.conf
+)"
+account_count="$(mysql_exec acore_auth -Nse "${account_sql}")"
+[[ "${account_count}" =~ ^[1-9][0-9]*$ ]] || fail "game account was not created"
 
 echo "[FURY][BOOTSTRAP][PASS] server initialized"
 echo "[FURY] account: ${ACCOUNT}"
