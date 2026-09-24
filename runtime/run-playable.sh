@@ -6,6 +6,14 @@ DB_PASSWORD="${FURY_MYSQL_PASSWORD:-fury}"
 DB_PORT="${FURY_MYSQL_PORT:-3306}"
 
 command -v docker >/dev/null 2>&1 || { echo "[FURY][FAIL] Docker is required" >&2; exit 1; }
+[[ -f "${ROOT}/etc/worldserver.conf" && -f "${ROOT}/etc/authserver.conf" ]] || {
+  echo "[FURY][FAIL] server is not bootstrapped yet; run ./runtime/bootstrap-playable.sh first" >&2
+  exit 1
+}
+[[ -d "${ROOT}/runtime-source/data/sql" ]] || {
+  echo "[FURY][FAIL] runtime SQL source tree is missing" >&2
+  exit 1
+}
 cd "${ROOT}"
 docker compose -f runtime/docker-compose.playable.yml up -d mysql
 
@@ -23,6 +31,7 @@ export AC_FURY_DATABASE_SOURCE_DIRECTORY="${ROOT}/fury-module"
 export AC_CONSOLE_ENABLE="1"
 export AC_BEEP_AT_START="0"
 export AC_LOG_ASYNC_ENABLE="0"
+export AC_DATA_DIR="${ROOT}/data"
 
 mkdir -p logs
 "${ROOT}/bin/authserver" -c "${ROOT}/etc/authserver.conf" >"${ROOT}/logs/authserver.log" 2>&1 &
