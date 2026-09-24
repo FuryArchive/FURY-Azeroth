@@ -16,6 +16,7 @@ on:
       - "scripts/smoke-fury-db-lifecycle.sh"
       - "scripts/smoke-worldserver.sh"
       - "scripts/fetch-ac-data.sh"
+      - ".github/workflows/full-runtime.yml"
   workflow_dispatch:
 
 concurrency:
@@ -23,8 +24,270 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  gate:
+    name: Decide whether full runtime is required
+    runs-on: ubuntu-24.04
+    outputs:
+      required: ${{ steps.decide.outputs.required }}
+    steps:
+      - name: Checkout FURY history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify runtime-impacting changes
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${EVENT_NAME}" != "pull_request" ]]; then
+            echo "required=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          git diff --name-only "${BASE_SHA}"...HEAD > /tmp/fury-changed-files.txt
+          cat /tmp/fury-changed-files.txt
+
+          if grep -Eq '^modules/mod-fury/(mod-fury\.cmake|conf/|src/FuryModule\.cpp|src/mod_fury_loader\.cpp|src/database/FuryDatabaseScript\.cpp)' /tmp/fury-changed-files.txt \
+            || grep -Eq '^scripts/(smoke-fury-db-lifecycle\.sh|smoke-worldserver\.sh|fetch-ac-data\.sh)
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install AzerothCore build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake make ninja-build gcc g++ clang ccache curl unzip \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev default-mysql-client
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
+            fury-ccache-${{ runner.os }}-
+
+      - name: Configure compiler cache
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --set-config=compression=true
+          ccache --zero-stats
+
+      - name: Resolve locked upstream source
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Build
+        env:
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
+
+      - name: Run real FURY database lifecycle smoke
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+        run: bash scripts/smoke-fury-db-lifecycle.sh
+
+      - name: Reclaim compile workspace before runtime data
+        run: |
+          rm -rf build/azerothcore
+          df -h .
+
+      - name: Restore pinned AzerothCore runtime-data archive
+        uses: actions/cache@v4
+        with:
+          path: .cache/ac-data-v20.0/Data.zip
+          key: ac-data-v20.0-enUS-a3d4df635ae6c2c8
+
+      - name: Install pinned AzerothCore runtime data
+        run: bash scripts/fetch-ac-data.sh
+
+      - name: Run full M1 worldserver smoke twice
+        env:
+          FURY_STARTUP_TIMEOUT: "600"
+          FURY_SMOKE_RUNS: "2"
+          FURY_WORLDSERVER_CONF: ${{ github.workspace }}/build/dist/etc/worldserver.conf.dist
+          AC_DATA_DIR: ${{ github.workspace }}/build/dist/data
+          AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
+          AC_WORLD_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_world"
+          AC_CHARACTER_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_characters"
+          AC_UPDATES_ENABLE_DATABASES: "7"
+          AC_UPDATES_AUTO_SETUP: "1"
+          AC_PLAYERBOTS_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_playerbots"
+          AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_ENABLE: "1"
+          AC_FURY_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_fury"
+          AC_FURY_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_DATABASE_SOURCE_DIRECTORY: ${{ github.workspace }}/modules/mod-fury
+          AC_CONSOLE_ENABLE: "1"
+          AC_BEEP_AT_START: "0"
+          AC_LOG_ASYNC_ENABLE: "0"
+        run: bash scripts/smoke-worldserver.sh
+ /tmp/fury-changed-files.txt \
+            || grep -Eq '^\.github/workflows/full-runtime\.yml
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: fury
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pfury --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout FURY
+        uses: actions/checkout@v4
+
+      - name: Install AzerothCore build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git cmake make ninja-build gcc g++ clang ccache curl unzip \
+            libssl-dev libbz2-dev libreadline-dev libncurses-dev \
+            libboost-all-dev libmysqlclient-dev default-mysql-client
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
+            fury-ccache-${{ runner.os }}-
+
+      - name: Configure compiler cache
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --set-config=compression=true
+          ccache --zero-stats
+
+      - name: Resolve locked upstream source
+        run: bash scripts/sync-upstreams.sh
+
+      - name: Build
+        env:
+          FURY_BUILD_JOBS: "4"
+        run: bash scripts/build.sh
+
+      - name: Run real FURY database lifecycle smoke
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: fury
+        run: bash scripts/smoke-fury-db-lifecycle.sh
+
+      - name: Reclaim compile workspace before runtime data
+        run: |
+          rm -rf build/azerothcore
+          df -h .
+
+      - name: Restore pinned AzerothCore runtime-data archive
+        uses: actions/cache@v4
+        with:
+          path: .cache/ac-data-v20.0/Data.zip
+          key: ac-data-v20.0-enUS-a3d4df635ae6c2c8
+
+      - name: Install pinned AzerothCore runtime data
+        run: bash scripts/fetch-ac-data.sh
+
+      - name: Run full M1 worldserver smoke twice
+        env:
+          FURY_STARTUP_TIMEOUT: "600"
+          FURY_SMOKE_RUNS: "2"
+          FURY_WORLDSERVER_CONF: ${{ github.workspace }}/build/dist/etc/worldserver.conf.dist
+          AC_DATA_DIR: ${{ github.workspace }}/build/dist/data
+          AC_LOGIN_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_auth"
+          AC_WORLD_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_world"
+          AC_CHARACTER_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_characters"
+          AC_UPDATES_ENABLE_DATABASES: "7"
+          AC_UPDATES_AUTO_SETUP: "1"
+          AC_PLAYERBOTS_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_playerbots"
+          AC_PLAYERBOTS_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_ENABLE: "1"
+          AC_FURY_DATABASE_INFO: "127.0.0.1;3306;root;fury;acore_fury"
+          AC_FURY_UPDATES_ENABLE_DATABASES: "1"
+          AC_FURY_DATABASE_SOURCE_DIRECTORY: ${{ github.workspace }}/modules/mod-fury
+          AC_CONSOLE_ENABLE: "1"
+          AC_BEEP_AT_START: "0"
+          AC_LOG_ASYNC_ENABLE: "0"
+        run: bash scripts/smoke-worldserver.sh
+ /tmp/fury-changed-files.txt; then
+            echo "required=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if grep -qx 'vendor/lock/fury.lock.yaml' /tmp/fury-changed-files.txt; then
+            if python3 - "${BASE_SHA}" <<'PY'
+          import json
+          import subprocess
+          import sys
+
+          base_sha = sys.argv[1]
+
+          try:
+              base_text = subprocess.check_output(
+                  ["git", "show", f"{base_sha}:vendor/lock/fury.lock.yaml"],
+                  text=True,
+              )
+              base = json.loads(base_text)
+              with open("vendor/lock/fury.lock.yaml", "r", encoding="utf-8") as fh:
+                  head = json.load(fh)
+          except Exception:
+              raise SystemExit(0)
+
+          def baseline_view(lock):
+              return {
+                  "core": lock.get("core"),
+                  "modules": {
+                      key: value
+                      for key, value in lock.get("modules", {}).items()
+                      if value.get("tier", "baseline") == "baseline"
+                  },
+              }
+
+          raise SystemExit(0 if baseline_view(base) != baseline_view(head) else 1)
+          PY
+            then
+              echo "required=true" >> "${GITHUB_OUTPUT}"
+              exit 0
+            fi
+          fi
+
+          echo "[FURY] selected-module/client-only change; skip full baseline worldserver runtime"
+          echo "required=false" >> "${GITHUB_OUTPUT}"
+
   build:
     name: Conditional full worldserver + runtime
+    needs: gate
+    if: needs.gate.outputs.required == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 240
 
