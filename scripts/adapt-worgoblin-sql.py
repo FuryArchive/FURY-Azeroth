@@ -13,7 +13,7 @@ HEADER_RE = re.compile(
 
 REMOVED_COLUMNS = {
     "item_template": {"statscount"},
-    "creature_template": {"trainer_type", "trainer_spell", "trainer_class", "trainer_race"},
+    "creature_template": {"trainer_type", "trainer_spell", "trainer_class", "trainer_race", "scale", "mechanic_immune_mask", "spell_school_immune_mask"},
 }
 
 ZEROISH = {"0", "NULL", "null"}
