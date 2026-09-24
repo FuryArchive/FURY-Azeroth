@@ -194,6 +194,8 @@ if [[ "${PROFILE}" == "all" ]]; then
 
     apply_patches "integrations.worgoblin" "${CORE_DIR}" "core_patches"
 
+    python3 "${ROOT}/scripts/adapt-worgoblin-sql.py"       "${worgoblin}/data/sql/db-world/worgoblin.sql"
+
     rm -rf "${CORE_DIR}/modules/mod-worgoblin"
     ln -s "${worgoblin}" "${CORE_DIR}/modules/mod-worgoblin"
     echo "[FURY] linked Worgen/Goblin module with Playerbots-adapted core patch"
