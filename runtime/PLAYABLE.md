@@ -22,6 +22,12 @@ From the extracted `FURY-Azeroth` directory:
 
 The first two positional arguments are the game account name and password. If omitted, both default to `fury`.
 
+The bootstrap is repeat-safe for the packaged one-time Delves/Mythic+ content. Run it again with another account name/password to create the second co-op account without re-importing that content:
+
+```bash
+./runtime/bootstrap-playable.sh fury2 choose-a-password
+```
+
 Useful environment variables:
 
 ```bash
