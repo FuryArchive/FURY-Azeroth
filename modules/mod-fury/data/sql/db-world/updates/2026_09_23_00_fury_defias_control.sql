@@ -1,5 +1,6 @@
--- FURY owns activation authority for the pinned Defias Westfall invasion.
--- AzerothCore's module DB updater applies and hash-tracks this overlay.
-UPDATE `lw_invasion`
-SET `allow_random_start` = 0
-WHERE `id` = 1;
+-- FURY activation authority for the pinned Defias Westfall invasion is
+-- applied directly to mod-living-world's prebuilt SQL by
+-- vendor/patches/mod-living-world/0001-fury-bridge.patch.
+--
+-- Keeping this tracked update file as an intentional no-op avoids a
+-- cross-module DB-updater ordering dependency on lw_invasion existing first.
