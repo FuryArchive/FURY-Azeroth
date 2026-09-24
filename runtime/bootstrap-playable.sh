@@ -100,6 +100,8 @@ path.write_text(text)
 print(f"[FURY] progression bracket selected: {selected}")
 PY
 
+"${ROOT}/runtime/configure-playable-modules.sh" "${progression_bracket}"
+
 cp etc/worldserver.conf.dist etc/worldserver.bootstrap.conf
 python3 - "${ROOT}/etc/worldserver.bootstrap.conf" "${ROOT}/empty-lua" "${ROOT}/runtime-source" "${ROOT}/runtime/mysql-wrapper.sh" "${ROOT}/data" <<'PY'
 from pathlib import Path
