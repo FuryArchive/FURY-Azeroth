@@ -79,7 +79,7 @@ jobs:
           output="$(
             PATH="${fake_bin}:${PATH}" \
             FURY_MYSQL_PASSWORD="runtime-ci-secret" \
-            runtime/mysql-wrapper.sh \
+            bash runtime/mysql-wrapper.sh \
               --defaults-extra-file=/tmp/acore.cnf \
               --host 127.0.0.1 \
               --user root \
