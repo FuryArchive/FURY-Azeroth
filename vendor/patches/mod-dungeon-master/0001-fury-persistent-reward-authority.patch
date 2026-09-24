@@ -49,7 +49,7 @@ diff --git a/src/DMConfig.cpp b/src/DMConfig.cpp
 diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
 --- a/src/DungeonMasterMgr.cpp
 +++ b/src/DungeonMasterMgr.cpp
-@@ -1880,6 +1880,13 @@ void DungeonMasterMgr::HandlePlayerDeath(Player* player, Session* session)
+@@ -1880,6 +1880,12 @@ void DungeonMasterMgr::HandlePlayerDeath(Player* player, Session* session)
  // Rewards
  void DungeonMasterMgr::DistributeRewards(Session* session)
  {
@@ -62,7 +62,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      if (!session) return;
      const DifficultyTier* diff = sDMConfig->GetDifficulty(session->DifficultyId);
      if (!diff) return;
-@@ -1925,6 +1932,9 @@ void DungeonMasterMgr::DistributeRewards(Session* session)
+@@ -1925,6 +1931,9 @@ void DungeonMasterMgr::DistributeRewards(Session* session)
  
  void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
  {
@@ -72,7 +72,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      if (!session) return;
  
      for (const auto& pd : session->Players)
-@@ -1945,6 +1955,9 @@ void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
+@@ -1945,6 +1954,9 @@ void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
  
  void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
  {
@@ -82,7 +82,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      if (!player || !amount) return;
      player->ModifyMoney(amount);
  
-@@ -1960,6 +1973,9 @@ void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
+@@ -1960,6 +1972,9 @@ void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
  
  void DungeonMasterMgr::GiveItemReward(Player* player, uint8 level, uint8 quality)
  {
@@ -92,7 +92,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      uint32 playerClass = player->getClass();
      uint32 itemEntry = SelectRewardItem(level, quality, playerClass);
  
-@@ -2034,6 +2050,9 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
+@@ -2035,5 +2050,8 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
                                         const std::string& subject, const std::string& body)
  {
 +    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
@@ -101,7 +101,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      if (!player || !player->IsInWorld()) return;
  
      uint32 playerClass = player->getClass();
-@@ -2110,6 +2129,13 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
+@@ -2110,6 +2128,12 @@ void DungeonMasterMgr::MailItemReward(Player* player, uint8 level, uint8 quality
  void DungeonMasterMgr::DistributeRoguelikeRewards(uint32 tier, uint8 effectiveLevel,
                                                      const std::vector<ObjectGuid>& playerGuids)
  {
@@ -114,7 +114,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      uint8 rewardLevel = static_cast<uint8>(std::min<uint32>(effectiveLevel, 80));
  
  
-@@ -2397,6 +2423,13 @@ uint32 DungeonMasterMgr::SelectLootItem(uint8 level, uint8 minQuality, uint8 max
+@@ -2397,6 +2421,12 @@ uint32 DungeonMasterMgr::SelectLootItem(uint8 level, uint8 minQuality, uint8 max
  
  void DungeonMasterMgr::FillCreatureLoot(Creature* creature, Session* session, bool isBoss)
  {
