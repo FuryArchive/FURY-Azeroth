@@ -15,23 +15,21 @@ fail() { echo "[FURY][MODULES][FAIL] $*" >&2; exit 1; }
 PLAYERBOTS="${ROOT}/etc/modules/playerbots.conf"
 LIVING="${ROOT}/etc/modules/mod_living_world.conf"
 ZONE="${ROOT}/etc/modules/mod-zone-difficulty.conf"
-AHBOT="${ROOT}/etc/modules/mod_ahbot.conf"
 PROGRESSION="${ROOT}/etc/modules/progression_system.conf"
 
-for file in "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${AHBOT}" "${PROGRESSION}"; do
+for file in "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${PROGRESSION}"; do
   [[ -f "${file}" ]] || fail "required playable module config missing: ${file}"
 done
 
-python3 - "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${AHBOT}" "${PROGRESSION}" "${BRACKET}" "${MIN_BOTS}" "${MAX_BOTS}" <<'PY'
+python3 - "${PLAYERBOTS}" "${LIVING}" "${ZONE}" "${PROGRESSION}" "${BRACKET}" "${MIN_BOTS}" "${MAX_BOTS}" <<'PY'
 from pathlib import Path
 import re
 import sys
 
-playerbots, living, zone, ahbot, progression, bracket, min_bots, max_bots = sys.argv[1:9]
+playerbots, living, zone, progression, bracket, min_bots, max_bots = sys.argv[1:8]
 playerbots = Path(playerbots)
 living = Path(living)
 zone = Path(zone)
-ahbot = Path(ahbot)
 progression = Path(progression)
 
 def set_option(path: Path, key: str, value: str) -> None:
@@ -83,10 +81,6 @@ set_option(zone, "ModZoneDifficulty.Enable", "1")
 set_option(zone, "ModZoneDifficulty.Mythicmode.Enable", "0")
 set_option(zone, "ModZoneDifficulty.MythicmodeAI.Enable", "0")
 
-# AHBot needs a dedicated account/character. Keep it explicitly off until the
-# safe configure-ahbot.sh step has selected one.
-set_option(ahbot, "AuctionHouseBot.EnableSeller", "0")
-set_option(ahbot, "AuctionHouseBot.EnableBuyer", "0")
 
 print(
     f"[FURY][MODULES][PASS] bracket={bracket} "
