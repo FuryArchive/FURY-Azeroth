@@ -64,6 +64,27 @@ Backups are written to `./backups/` by default. To restore one while the realm i
 ./runtime/restore-playable.sh ./backups/FURY-Azeroth-backup-YYYYMMDD-HHMMSS.tar.gz
 ```
 
+### LLM Chatter
+
+The server archive includes the pinned Python LLM Chatter bridge and all of its Python dependencies as an offline wheelhouse. No separate bridge checkout or `pip install` is required.
+
+During bootstrap, FURY checks the local Ollama service. If an installed non-embedding model is found, chatter is configured for Ollama automatically, preferring a roughly 4-8B model when available. If Ollama is absent or has no model installed, LLM Chatter is disabled and the realm starts normally.
+
+To enable it later, install/pull the Ollama model you want, stop the realm, then run:
+
+```bash
+FURY_LLM_MODEL='<ollama-model>' ./runtime/configure-llm-chatter.sh
+./runtime/run-playable.sh
+```
+
+To force chatter off:
+
+```bash
+FURY_LLM_ENABLE=0 ./runtime/configure-llm-chatter.sh
+```
+
+`run-playable.sh` starts the packaged bridge automatically only when chatter is enabled. A bridge startup failure is non-fatal to the WoW realm.
+
 ## Client
 
 Extract `FURY-Azeroth-Client.zip`, then run:
