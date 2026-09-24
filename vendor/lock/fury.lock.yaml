@@ -189,7 +189,10 @@
       "kind": "workspace",
       "selected": true,
       "requires_client_component": true,
-      "note": "Use the platform's mod-solo-collections backend plus matched SoloCollections addon; do not stack legacy mod-transmog/account-mounts."
+      "note": "Use the platform's mod-solo-collections backend plus matched SoloCollections addon; do not stack legacy mod-transmog/account-mounts.",
+      "patches": [
+        "vendor/patches/solo-collections-platform/0001-playerbots-core-hook-compat.patch"
+      ]
     },
     "worgoblin": {
       "repository": "araxiaonline/mod-worgoblin",
