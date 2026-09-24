@@ -51,7 +51,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git cmake make ninja-build gcc g++ clang ccache curl unzip zip rsync \
+            git cmake make ninja-build gcc g++ clang ccache curl unzip zip rsync python3-pip \
             lua5.1 netcat-openbsd \
             libssl-dev libbz2-dev libreadline-dev libncurses-dev \
             libboost-all-dev libmysqlclient-dev default-mysql-client
@@ -276,6 +276,24 @@ jobs:
           test -x "${server_root}/runtime/mysql-wrapper.sh"
           test -f "${server_root}/runtime/PLAYABLE.md"
 
+          # LLM Chatter needs its Python bridge in addition to the compiled
+          # AzerothCore module. Bundle the pinned bridge tools and a complete
+          # offline wheelhouse so realm startup never depends on pip/network.
+          llm_module="upstream/azerothcore-wotlk/modules/mod-llm-chatter"
+          test -f "${llm_module}/tools/llm_chatter_bridge.py"
+          test -f "${llm_module}/tools/requirements.txt"
+
+          mkdir -p "${server_root}/llm-chatter"
+          cp -a "${llm_module}/tools/." "${server_root}/llm-chatter/"
+          mkdir -p "${server_root}/llm-chatter/wheels"
+          python3 -m pip download \
+            --dest "${server_root}/llm-chatter/wheels" \
+            -r "${server_root}/llm-chatter/requirements.txt"
+
+          test -f "${server_root}/llm-chatter/llm_chatter_bridge.py"
+          test -f "${server_root}/llm-chatter/requirements.txt"
+          test -n "$(find "${server_root}/llm-chatter/wheels" -maxdepth 1 -type f -print -quit)"
+
           cp build/playable-profile/PLAYABLE-MANIFEST.txt "${server_root}/"
           cp build/playable-profile/SHA256SUMS "${server_root}/"
 
@@ -287,6 +305,11 @@ jobs:
           chmod +x build/artifacts/client/FURY-Azeroth-Client/runtime/install-client.sh
           cp runtime/PLAYABLE.md build/artifacts/client/FURY-Azeroth-Client/PLAYABLE.md
           cp build/playable-profile/PLAYABLE-MANIFEST.txt build/artifacts/client/FURY-Azeroth-Client/
+
+          docker build \
+            -f "${server_root}/runtime/llm-bridge.Dockerfile" \
+            -t fury-azeroth-llm-bridge-ci \
+            "${server_root}"
 
           tar -C build/artifacts/server -czf build/FURY-Azeroth-Server.tar.gz FURY-Azeroth
           (cd build/artifacts/client && zip -qr ../../FURY-Azeroth-Client.zip FURY-Azeroth-Client)
@@ -315,7 +338,9 @@ jobs:
           grep -Fq 'SourceDirectory = "' etc/worldserver.conf
           grep -Fq 'MySQLExecutable = "' etc/worldserver.conf
           grep -Fq 'DataDir = "' etc/worldserver.conf
-          grep -Fq '[FURY][BOOTSTRAP][PASS]' logs/bootstrap-worldserver.log || true
+          grep -Eq '^LLMChatter\.Enable[[:space:]]*=[[:space:]]*0[[:space:]]*$' etc/modules/mod_llm_chatter.conf
+          test -f llm-chatter/llm_chatter_bridge.py
+          test -n "$(find llm-chatter/wheels -maxdepth 1 -type f -print -quit)"
 
           echo "[FURY][PACKAGE][PASS] extracted downloadable server bootstrapped successfully"
 
