@@ -225,15 +225,37 @@ jobs:
 
       - name: Prepare downloadable server/client packages
         run: |
-          mkdir -p build/artifacts/server/FURY-Azeroth
-          cp -a build/dist/. build/artifacts/server/FURY-Azeroth/
-          mkdir -p build/artifacts/server/FURY-Azeroth/fury-sql
-          cp -a build/playable-profile/server/sql/. build/artifacts/server/FURY-Azeroth/fury-sql/
-          cp -a modules/mod-fury build/artifacts/server/FURY-Azeroth/fury-module
-          cp -a runtime build/artifacts/server/FURY-Azeroth/runtime
-          chmod +x build/artifacts/server/FURY-Azeroth/runtime/*.sh
-          cp build/playable-profile/PLAYABLE-MANIFEST.txt build/artifacts/server/FURY-Azeroth/
-          cp build/playable-profile/SHA256SUMS build/artifacts/server/FURY-Azeroth/
+          server_root="build/artifacts/server/FURY-Azeroth"
+          mkdir -p "${server_root}"
+          cp -a build/dist/. "${server_root}/"
+
+          mkdir -p "${server_root}/fury-sql"
+          cp -a build/playable-profile/server/sql/. "${server_root}/fury-sql/"
+          cp -a modules/mod-fury "${server_root}/fury-module"
+          cp -a runtime "${server_root}/runtime"
+          chmod +x "${server_root}"/runtime/*.sh
+
+          # AzerothCore's runtime DB updater reads base/update SQL from
+          # SourceDirectory, including modules/<name>/data/sql. Bundle the
+          # minimal SQL source tree so the downloaded archive is independent
+          # from the Actions checkout and does not need a Git clone.
+          mkdir -p "${server_root}/runtime-source/data"
+          cp -a upstream/azerothcore-wotlk/data/sql "${server_root}/runtime-source/data/sql"
+
+          mkdir -p "${server_root}/runtime-source/modules"
+          for module in upstream/azerothcore-wotlk/modules/*; do
+            [[ -d "${module}/data/sql" ]] || continue
+            name="$(basename "${module}")"
+            mkdir -p "${server_root}/runtime-source/modules/${name}/data"
+            cp -a "${module}/data/sql" "${server_root}/runtime-source/modules/${name}/data/sql"
+          done
+
+          test -f "${server_root}/runtime-source/data/sql/base/db_world/world_database.sql"
+          test -d "${server_root}/runtime-source/modules/mod-solo-collections/data/sql"
+          test -x "${server_root}/runtime/mysql-wrapper.sh"
+
+          cp build/playable-profile/PLAYABLE-MANIFEST.txt "${server_root}/"
+          cp build/playable-profile/SHA256SUMS "${server_root}/"
 
           mkdir -p build/artifacts/client/FURY-Azeroth-Client
           cp -a build/playable-profile/client/Data build/artifacts/client/FURY-Azeroth-Client/
