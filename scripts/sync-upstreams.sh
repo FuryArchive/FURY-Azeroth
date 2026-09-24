@@ -188,6 +188,13 @@ if [[ "${PROFILE}" == "all" ]]; then
   done < <(list_integration_keys)
 
   requested_integrations=",${INTEGRATION_FILTER},"
+
+  if [[ -z "${INTEGRATION_FILTER}" || "${requested_integrations}" == *",delves,"* ]]; then
+    delves_dir="$(read_lock "integrations.delves" directory)"
+    delves="${INTEGRATIONS_DIR}/${delves_dir}"
+    python3 "${ROOT}/scripts/adapt-delves-sql.py"       "${delves}/data/sql/db-world/base"
+  fi
+
   if [[ -z "${INTEGRATION_FILTER}" || "${requested_integrations}" == *",worgoblin,"* ]]; then
     worgoblin_dir="$(read_lock "integrations.worgoblin" directory)"
     worgoblin="${INTEGRATIONS_DIR}/${worgoblin_dir}"

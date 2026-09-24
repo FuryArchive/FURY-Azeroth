@@ -9,6 +9,7 @@ on:
       - "vendor/patches/**"
       - "scripts/sync-upstreams.sh"
       - "scripts/adapt-worgoblin-sql.py"
+      - "scripts/adapt-delves-sql.py"
       - "scripts/db-preflight.sh"
       - ".github/workflows/database-preflight.yml"
 

@@ -124,3 +124,4 @@ SQL
 fi
 
 echo "[FURY][PASS] T24 Defias content/overlay gate passed"
+exit 0
