@@ -71,4 +71,6 @@ run_case DEP30 "Defias Bestiary + commander mastery"   env MYSQL_DATABASE=acore_
 run_case DEP31 "adaptive Field Relief Profession Order"   env MYSQL_DATABASE=acore_fury   bash "${ROOT}/scripts/test-t31-field-relief.sh"
 
 echo
+bash -n "${ROOT}/scripts/verify-t34-live-acceptance.sh"
+echo "[FURY][PASS] T34 live verifier shell syntax is valid"
 echo "[FURY][PASS] T34 automated Defias vertical-slice suite passed"
