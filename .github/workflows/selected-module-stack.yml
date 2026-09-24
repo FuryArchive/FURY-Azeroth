@@ -6,6 +6,7 @@ on:
     paths:
       - "vendor/lock/fury.lock.yaml"
       - "vendor/patches/**"
+      - "vendor/transforms/**"
       - "scripts/sync-upstreams.sh"
       - "scripts/build.sh"
       - ".github/workflows/selected-module-stack.yml"
