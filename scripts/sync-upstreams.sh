@@ -176,6 +176,12 @@ if [[ "${PROFILE}" == "all" ]]; then
   done < <(list_integration_keys)
 fi
 
+if [[ "${PROFILE}" != "baseline" ]]; then
+  echo
+  echo "[FURY] validate selected-module authority boundaries"
+  bash "${ROOT}/scripts/test-selected-module-authority.sh" "${CORE_DIR}"
+fi
+
 echo
 echo "[FURY] resolved workspace profile: ${PROFILE}"
 printf "  core: %s\n" "$(git -C "${CORE_DIR}" rev-parse HEAD)"
