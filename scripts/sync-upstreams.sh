@@ -168,6 +168,10 @@ while IFS=$'\t' read -r key directory; do
   apply_patches "modules.${key}" "${dest}"
 done < <(list_module_keys)
 
+living_world_dir="$(read_lock "modules.living_world" directory)"
+python3 "${ROOT}/scripts/adapt-living-world-sql.py" \
+  "${CORE_DIR}/modules/${living_world_dir}/data/sql/db-world/prebuilt/900_defias_westfall_invasion.sql"
+
 if [[ -d "${ROOT}/modules/mod-fury" ]]; then
   rm -rf "${CORE_DIR}/modules/mod-fury"
   ln -s "${ROOT}/modules/mod-fury" "${CORE_DIR}/modules/mod-fury"
