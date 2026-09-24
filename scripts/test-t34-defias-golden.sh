@@ -56,6 +56,10 @@ echo "============================================================"
 
 # These are not extra GS numbers; they prove that the gameplay surfaces used
 # by the real two-human run remain green in the same acceptance job.
+run_case DEP26 "Westfall contract board + world overlay" \
+  env MYSQL_DATABASE=fury_t34_board \
+  bash "${ROOT}/scripts/test-t26-contract-board.sh"
+
 run_case DEP27 "six Defias contracts + replay"   env MYSQL_DATABASE=acore_fury   bash "${ROOT}/scripts/test-t27-defias-contracts.sh"
 
 run_case DEP28 "human participation authority"   bash "${ROOT}/scripts/test-t28-participation.sh"
