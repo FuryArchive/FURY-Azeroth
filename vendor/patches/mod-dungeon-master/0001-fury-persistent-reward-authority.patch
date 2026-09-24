@@ -62,7 +62,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      if (!session) return;
      const DifficultyTier* diff = sDMConfig->GetDifficulty(session->DifficultyId);
      if (!diff) return;
-@@ -1926,6 +1932,9 @@ void DungeonMasterMgr::DistributeRewards(Session* session)
+@@ -1926,5 +1932,8 @@ void DungeonMasterMgr::DistributeRewards(Session* session)
  void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
  {
 +    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
@@ -71,7 +71,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      if (!session) return;
  
      for (const auto& pd : session->Players)
-@@ -1947,6 +1956,9 @@ void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
+@@ -1947,5 +1956,8 @@ void DungeonMasterMgr::GiveKillXP(Session* session, bool isBoss, bool isElite)
  void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
  {
 +    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
@@ -80,7 +80,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      if (!player || !amount) return;
      player->ModifyMoney(amount);
  
-@@ -1962,6 +1974,9 @@ void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
+@@ -1962,5 +1974,8 @@ void DungeonMasterMgr::GiveGoldReward(Player* player, uint32 amount)
  void DungeonMasterMgr::GiveItemReward(Player* player, uint8 level, uint8 quality)
  {
 +    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
@@ -112,7 +112,7 @@ diff --git a/src/DungeonMasterMgr.cpp b/src/DungeonMasterMgr.cpp
      uint8 rewardLevel = static_cast<uint8>(std::min<uint32>(effectiveLevel, 80));
  
  
-@@ -2398,6 +2422,12 @@ uint32 DungeonMasterMgr::SelectLootItem(uint8 level, uint8 minQuality, uint8 max
+@@ -2398,5 +2422,11 @@ uint32 DungeonMasterMgr::SelectLootItem(uint8 level, uint8 minQuality, uint8 max
  void DungeonMasterMgr::FillCreatureLoot(Creature* creature, Session* session, bool isBoss)
  {
 +    if (!sDMConfig->AreDirectPersistentRewardsEnabled())
