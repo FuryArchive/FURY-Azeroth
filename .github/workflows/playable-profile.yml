@@ -65,6 +65,8 @@ jobs:
           restore-keys: |
             fury-playable-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
             fury-playable-ccache-${{ runner.os }}-
+            fury-ccache-${{ runner.os }}-${{ hashFiles('vendor/lock/fury.lock.yaml') }}-
+            fury-ccache-${{ runner.os }}-
 
       - name: Configure compiler cache
         run: |
