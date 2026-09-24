@@ -1,6 +1,5 @@
 -- FURY activation authority for the pinned Defias Westfall invasion is
--- applied directly to mod-living-world's prebuilt SQL by
--- vendor/patches/mod-living-world/0001-fury-bridge.patch.
+-- applied during upstream sync by scripts/adapt-living-world-sql.py.
 --
 -- Keeping this tracked update file as an intentional no-op avoids a
 -- cross-module DB-updater ordering dependency on lw_invasion existing first.
