@@ -62,3 +62,46 @@ diff --git a/src/NemesisSystem.cpp b/src/NemesisSystem.cpp
 +
          if (!player)
              return;
+
+diff --git a/data/sql/db-characters/updates/2026_03_22_00_nemesis_last_seen.sql b/data/sql/db-characters/updates/2026_03_22_00_nemesis_last_seen.sql
+--- a/data/sql/db-characters/updates/2026_03_22_00_nemesis_last_seen.sql
++++ b/data/sql/db-characters/updates/2026_03_22_00_nemesis_last_seen.sql
+@@ -1,4 +1,11 @@
+ -- Upgrade pre-2026 character_nemesis rows; base schema already includes these columns.
++
++SET @table_exists := (
++    SELECT COUNT(*)
++    FROM INFORMATION_SCHEMA.TABLES
++    WHERE TABLE_SCHEMA = DATABASE()
++      AND TABLE_NAME = 'character_nemesis'
++);
+ 
+ SET @col_exists := (
+     SELECT COUNT(*)
+@@ -7,7 +14,7 @@
+       AND TABLE_NAME = 'character_nemesis'
+       AND COLUMN_NAME = 'zone_id'
+ );
+-SET @sql := IF(@col_exists = 0,
++SET @sql := IF(@table_exists > 0 AND @col_exists = 0,
+     'ALTER TABLE `character_nemesis` ADD COLUMN `zone_id` int unsigned NOT NULL DEFAULT 0 AFTER `map_id`',
+     'SELECT 1'
+ );
+@@ -22,7 +29,7 @@
+       AND TABLE_NAME = 'character_nemesis'
+       AND COLUMN_NAME = 'last_seen_at'
+ );
+-SET @sql := IF(@col_exists = 0,
++SET @sql := IF(@table_exists > 0 AND @col_exists = 0,
+     'ALTER TABLE `character_nemesis` ADD COLUMN `last_seen_at` int unsigned NOT NULL DEFAULT 0 AFTER `last_victim_guid`',
+     'SELECT 1'
+ );
+@@ -37,7 +44,7 @@
+       AND TABLE_NAME = 'character_nemesis'
+       AND INDEX_NAME = 'idx_character_nemesis_last_seen'
+ );
+-SET @sql := IF(@idx_exists = 0,
++SET @sql := IF(@table_exists > 0 AND @idx_exists = 0,
+     'ALTER TABLE `character_nemesis` ADD KEY `idx_character_nemesis_last_seen` (`last_seen_at`)',
+     'SELECT 1'
+ );
