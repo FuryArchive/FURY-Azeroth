@@ -13,7 +13,7 @@ fail() { echo "[FURY][RESTORE][FAIL] $*" >&2; exit 1; }
 command -v docker >/dev/null 2>&1 || fail "Docker is required"
 docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin is required"
 
-if pgrep -f "${ROOT}/bin/worldserver" >/dev/null 2>&1 || pgrep -f "${ROOT}/bin/authserver" >/dev/null 2>&1; then
+if pgrep -x worldserver >/dev/null 2>&1 || pgrep -x authserver >/dev/null 2>&1; then
   fail "authserver/worldserver is running; stop the realm before restoring"
 fi
 
