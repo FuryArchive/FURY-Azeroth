@@ -1,25 +1,23 @@
 # Standard Eluna + Playerbots Reconciliation
 
-The selected Delves and MythicPlus Extended integrations require standard Eluna semantics. FURY's canonical core is the pinned Playerbots AzerothCore fork, so replacing the core with ElunaAzerothcore is not acceptable.
+The selected Delves and MythicPlus Extended integrations require standard Eluna semantics. FURY's canonical core remains the pinned Playerbots AzerothCore fork.
 
-Both forks share AzerothCore history. FURY therefore treats standard Eluna as a **core merge source**, not as a parallel runtime.
+A real three-way merge audit found twelve conflicts at the current pins:
 
-`scripts/audit-eluna-playerbots-merge.sh`:
+- nine conflicts are upstream GitHub workflow files;
+- three are runtime files: `worldserver.conf.dist`, `Object.cpp`, and `Object.h`.
 
-1. resolves the pinned Playerbots core;
-2. fetches the pinned `ElunaLuaEngine/ElunaAzerothcore` commit;
-3. computes the real git merge-base;
-4. performs a no-commit three-way merge;
-5. records the exact conflict set;
-6. aborts the temporary merge and leaves the generated workspace clean.
+The FURY resolution is deterministic:
 
-This converts the problem from "port Eluna manually" into a finite conflict-resolution queue.
+- all upstream workflow conflicts keep the Playerbots side;
+- `worldserver.conf.dist` keeps Playerbots logging/mail settings and adds Eluna logging/runtime settings;
+- `Object.cpp` keeps Playerbots WorldObject spell/faction extensions and adds Eluna engine access/event processors;
+- `Object.h` keeps Playerbots WorldObject APIs and adds the matching Eluna state/API.
 
-The audit is intentionally red while unresolved conflicts exist. Once those conflicts have explicit FURY resolutions, the same gate becomes the regression check for future Playerbots/Eluna pin updates.
+All other standard-Eluna changes merge automatically from the shared AzerothCore history.
 
-This reconciliation unlocks two selected content tracks at once:
+`scripts/resolve-eluna-playerbots.sh` performs the merge in the generated upstream workspace, commits the synthetic result locally, initializes the pinned Eluna submodule, and leaves FURY's own repository untouched.
 
-- Delves: boss/teleporter Lua scripts;
-- MythicPlus Extended: standard Eluna + AIO execution.
+The reconciliation CI compiles the merged `game` target. Once green, this synthetic core becomes the execution base for both Delves Lua scripts and MythicPlus Extended/AIO testing.
 
-Stock AzerothCore `mod-ale` remains excluded from these integrations because it is not script-compatible with the standard Eluna APIs they target.
+Stock `mod-ale` remains excluded from those integrations because their scripts target standard Eluna APIs.
