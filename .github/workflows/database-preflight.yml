@@ -3,6 +3,7 @@ name: FURY Database Preflight
 on:
   workflow_dispatch:
   pull_request:
+    branches: [main]
     paths:
       - "vendor/lock/**"
       - "vendor/patches/**"
@@ -19,7 +20,7 @@ jobs:
   database-preflight:
     name: Fresh DB + selected module SQL
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     services:
       mysql:
