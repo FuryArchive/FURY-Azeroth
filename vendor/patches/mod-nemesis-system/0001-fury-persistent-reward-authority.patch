@@ -53,7 +53,7 @@ diff --git a/src/NemesisSystem.cpp b/src/NemesisSystem.cpp
          return sConfigMgr->GetOption<uint32>(revenge ? "NemesisSystem.RevengeRewardGold" : "NemesisSystem.BountyRewardGold", revenge ? 10000 : 2500);
      }
  
-@@ -1496,6 +1507,9 @@ namespace
+@@ -1496,5 +1507,8 @@ namespace
  
      void GrantReward(Player* player, bool revenge, uint8 rank, float rewardMultiplier)
      {
