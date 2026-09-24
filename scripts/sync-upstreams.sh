@@ -80,12 +80,13 @@ clone_pin() {
 apply_patches() {
   local key="$1"
   local dest="$2"
+  local field="${3:-patches}"
 
-  mapfile -t patches < <(python3 - "${LOCK}" "${key}" <<'PY'
+  mapfile -t patches < <(python3 - "${LOCK}" "${key}" "${field}" <<'PY'
 import json
 import sys
 
-lock_path, dotted_path = sys.argv[1:3]
+lock_path, dotted_path, field = sys.argv[1:4]
 with open(lock_path, "r", encoding="utf-8") as fh:
     data = json.load(fh)
 
@@ -93,7 +94,7 @@ node = data
 for part in dotted_path.split("."):
     node = node[part]
 
-for patch in node.get("patches", []):
+for patch in node.get(field, []):
     print(patch)
 PY
 )
@@ -174,6 +175,19 @@ if [[ "${PROFILE}" == "all" ]]; then
     [[ -n "${key}" ]] || continue
     clone_pin "integrations.${key}" "${INTEGRATIONS_DIR}/${directory}"
   done < <(list_integration_keys)
+
+  worgoblin_dir="$(read_lock "integrations.worgoblin" directory)"
+  worgoblin="${INTEGRATIONS_DIR}/${worgoblin_dir}"
+  if [[ ! -f "${worgoblin}/include.sh" ]]; then
+    echo "[FURY] Worgen/Goblin module missing from integration workspace: ${worgoblin}" >&2
+    exit 1
+  fi
+
+  apply_patches "integrations.worgoblin" "${CORE_DIR}" "core_patches"
+
+  rm -rf "${CORE_DIR}/modules/mod-worgoblin"
+  ln -s "${worgoblin}" "${CORE_DIR}/modules/mod-worgoblin"
+  echo "[FURY] linked Worgen/Goblin module with Playerbots-adapted core patch"
 fi
 
 echo
