@@ -1,0 +1,11 @@
+diff --git a/src/Worgoblin.cpp b/src/Worgoblin.cpp
+--- a/src/Worgoblin.cpp
++++ b/src/Worgoblin.cpp
+@@ -10,7 +10,7 @@ public:
+     announce() : PlayerScript("announce") { }
+ 
+-    void OnLogin(Player* player) override
++    void OnPlayerLogin(Player* player) override
+     {
+         if (sConfigMgr->GetOption<bool>("Announce.enable", true))
+         {
