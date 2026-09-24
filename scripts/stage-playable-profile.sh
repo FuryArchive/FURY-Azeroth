@@ -40,14 +40,37 @@ mkdir -p   "${SERVER}/lua_scripts"   "${SERVER}/sql/world/delves"   "${SERVER}/s
 bash "${ROOT}/scripts/stage-client-integrations.sh" "${OUT}/solo-collections"
 cp -a "${OUT}/solo-collections/Interface/AddOns/." "${CLIENT}/Interface/AddOns/"
 cp -a "${AIO}/AIO_Client" "${CLIENT}/Interface/AddOns/AIO_Client"
-pass "matched SoloCollections + AIO client AddOns staged"
+cp -a "${DELVES}/addon/DelvesTeleporter" "${CLIENT}/Interface/AddOns/DelvesTeleporter"
+
+# Hide upstream-declared WIP delves from the normal player-facing browser.
+python3 - "${CLIENT}/Interface/AddOns/DelvesTeleporter/DelvesTeleporter.lua" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+lines = p.read_text(encoding="utf-8").splitlines()
+lines = [line for line in lines if "wip = true" not in line]
+p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PY
+pass "matched SoloCollections + AIO + production Delves client AddOns staged"
 
 # --- Server Lua --------------------------------------------------------------
 cp -a "${AIO}/AIO_Server/." "${SERVER}/lua_scripts/"
 cp -a "${MYTHIC}/MythicPlus" "${SERVER}/lua_scripts/MythicPlus"
 mkdir -p "${SERVER}/lua_scripts/Delves"
 cp -a "${DELVES}/lua_scripts/." "${SERVER}/lua_scripts/Delves/"
-pass "AIO + Mythic+ + Delves Lua staged"
+
+# Upstream marks Demon Hunter Cove (4001) and Old Ironforge (4011) WIP.
+# Keep their assets staged for future work but reject direct player teleport now.
+python3 - "${SERVER}/lua_scripts/Delves/delves-teleporter.lua" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+lines = p.read_text(encoding="utf-8").splitlines()
+blocked = ("[4001]", "[4011]")
+lines = [line for line in lines if not any(token in line for token in blocked)]
+p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PY
+pass "AIO + Mythic+ + production Delves Lua staged"
 
 # --- SQL --------------------------------------------------------------------
 cp -a "${DELVES}/data/sql/db-world/base/." "${SERVER}/sql/world/delves/"
