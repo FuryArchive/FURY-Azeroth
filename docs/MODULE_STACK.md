@@ -127,6 +127,15 @@ Do not return to T31-T34 until the selected stack has been worked through in thi
 8. Produce one coherent FURY client/server package.
 9. Resume the remaining Defias M3 acceptance tasks on top of the final stack.
 
+## Authority boundaries now enforced
+
+The selected modules are allowed to provide mechanics, but FURY remains the authority for campaign/progression and persistent reward claims.
+
+- **Zone Difficulty:** its built-in Mythic mode and Mythic AI remain disabled; MythicPlus Extended is the future canonical Mythic+ layer.
+- **AutoBalance:** scaling remains enabled, while its experimental direct boss-token reward system remains disabled.
+- **Challenge Modes:** optional character rules may alter XP behavior, but its title/item/talent/achievement reward slots remain empty by default.
+- **Dungeon Master:** upstream directly injects generated creature loot, custom kill XP, completion gold/items, and roguelike rewards. FURY carries `0001-fury-persistent-reward-authority.patch`, adding `DungeonMaster.Rewards.DirectPersistentEnabled` with a FURY default of `0`. Procedural dungeon mechanics remain available while direct persistent grants are suppressed until a FURY Reward Registry adapter owns them.
+
 ## Compatibility evidence
 
 The first selected-stack compile run reached twelve selected modules successfully before stopping at `mod-challenge-modes`:
