@@ -7,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${FURY_MYSQL_PASSWORD:-fury}
       MYSQL_ROOT_HOST: "%"
     ports:
-      - "${FURY_MYSQL_PORT:-3306}:3306"
+      - "127.0.0.1:${FURY_MYSQL_PORT:-3306}:3306"
     volumes:
       - fury-azeroth-mysql:/var/lib/mysql
     healthcheck:
