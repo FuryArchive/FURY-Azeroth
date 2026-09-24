@@ -10,7 +10,7 @@ diff --git a/src/ChallengeModes.cpp b/src/ChallengeModes.cpp
      {
          if (!sChallengeModes->challengeEnabledForPlayer(SETTING_HARDCORE, player))
          {
-@@ -627,7 +627,7 @@
+@@ -627,6 +627,6 @@
      ChallengeMode_IronMan() : ChallengeMode("ChallengeMode_IronMan", SETTING_IRON_MAN) {}
  
 -    void OnPlayerResurrect(Player* player, float /*restore_percent*/, bool /*applySickness*/) override
