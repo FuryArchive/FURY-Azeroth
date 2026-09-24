@@ -319,6 +319,30 @@ jobs:
 
           echo "[FURY][PACKAGE][PASS] extracted downloadable server bootstrapped successfully"
 
+      - name: Smoke downloadable client overlay
+        run: |
+          set -euo pipefail
+          smoke_root="${GITHUB_WORKSPACE}/build/client-package-smoke"
+          wow_root="${smoke_root}/wow"
+          overlay_root="${smoke_root}/overlay"
+          rm -rf "${smoke_root}"
+          mkdir -p "${wow_root}/Data/enUS" "${wow_root}/Interface/AddOns" "${overlay_root}"
+
+          printf 'original-client-patch\n' > "${wow_root}/Data/patch-Z.MPQ"
+          printf 'set realmlist old.example\n' > "${wow_root}/Data/enUS/realmlist.wtf"
+
+          unzip -q build/FURY-Azeroth-Client.zip -d "${overlay_root}"
+          "${overlay_root}/FURY-Azeroth-Client/runtime/install-client.sh" "${wow_root}" "127.0.0.1"
+
+          test -f "${wow_root}/Data/patch-Z.MPQ"
+          test -n "$(find "${wow_root}/Data" -maxdepth 1 -type f -name 'patch-Z.MPQ.fury-backup-*' -print -quit)"
+          test -d "${wow_root}/Interface/AddOns/SoloCollections"
+          test -d "${wow_root}/Interface/AddOns/AIO_Client"
+          test -d "${wow_root}/Interface/AddOns/DelvesTeleporter"
+          grep -Fxq 'set realmlist 127.0.0.1' "${wow_root}/Data/enUS/realmlist.wtf"
+
+          echo "[FURY][CLIENT-PACKAGE][PASS] extracted client overlay installed successfully"
+
       - name: Upload playable server
         uses: actions/upload-artifact@v4
         with:
