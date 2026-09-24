@@ -28,7 +28,7 @@ if command -v ninja >/dev/null 2>&1; then
 fi
 
 CMAKE_FAST_ARGS=()
-if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "living-world-only" || "${TARGET}" == "selected-modules-only" ]]; then
+if [[ "${TARGET}" == "fury-only" || "${TARGET}" == "living-world-only" || "${TARGET}" == "selected-modules-only" || "${TARGET}" == "integration-module-only" ]]; then
   CMAKE_FAST_ARGS+=(
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
     "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"
@@ -112,6 +112,13 @@ PY
   fi
 
   echo "[FURY][PASS] all selected server modules compile"
+elif [[ "${TARGET}" == "integration-module-only" ]]; then
+  module="${FURY_INTEGRATION_MODULE:-}"
+  if [[ -z "${module}" ]]; then
+    echo "[FURY] FURY_INTEGRATION_MODULE is required for integration-module-only" >&2
+    exit 1
+  fi
+  compile_module_tus "${module}"
 elif [[ -n "${TARGET}" ]]; then
   echo "[FURY] build target '${TARGET}' with ${JOBS} job(s)"
   cmake --build "${BUILD_DIR}" --target "${TARGET}" --parallel "${JOBS}"
